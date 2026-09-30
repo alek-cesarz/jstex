@@ -48,3 +48,16 @@ describe('results — narrow layout support', () => {
     expect(el.querySelectorAll('.jstex-col-collection')).toHaveLength(2); // th + td
   });
 });
+
+describe('results — empty state', () => {
+  it('hides the table (and its header row) until there are items', () => {
+    const { el, store, actions } = setup();
+    mountResults(el, store, actions);
+    const table = el.querySelector('table') as HTMLTableElement;
+    expect(table.hidden).toBe(true);
+    store.set({ items: [item('a')], searched: true });
+    expect(table.hidden).toBe(false);
+    store.set({ items: [], searched: true });
+    expect(table.hidden).toBe(true);
+  });
+});

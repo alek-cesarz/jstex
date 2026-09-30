@@ -215,8 +215,16 @@
 /* tables */
 .jstex .jstex-table { width: 100%; border-collapse: collapse; }
 .jstex .jstex-table th, .jstex .jstex-table td { padding: 3px 6px; border-bottom: 1px solid var(--jstex-border); text-align: left; vertical-align: top; }
-.jstex .jstex-results__head { display: flex; gap: 8px; align-items: baseline; margin-bottom: 4px; }
-.jstex .jstex-results__scroll { max-height: 250px; overflow: auto; border: 1px solid var(--jstex-border); border-radius: 4px; }
+/* results: a card like item details — same title bar, the table inside */
+.jstex .jstex-results__head {
+  display: flex; gap: 8px; align-items: baseline; padding: 6px 10px;
+  background: var(--jstex-bg2); border-bottom: 1px solid var(--jstex-border);
+}
+.jstex .jstex-results__scroll { max-height: 250px; overflow: auto; }
+.jstex .jstex-results__scroll .jstex-table th:first-child,
+.jstex .jstex-results__scroll .jstex-table td:first-child { padding-left: 10px; }
+.jstex .jstex-results__scroll tbody tr:last-child td { border-bottom: 0; }
+.jstex .jstex-results .jstex-empty { padding: 8px 10px; }
 .jstex .jstex-results__scroll thead th { position: sticky; top: 0; background: var(--jstex-bg2); z-index: 1; }
 .jstex .jstex-results__scroll tbody tr { cursor: pointer; }
 .jstex .jstex-results__scroll tbody tr:hover { background: var(--jstex-bg2); }

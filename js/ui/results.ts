@@ -14,8 +14,8 @@ export function mountResults(
   actions: ResultsActions
 ): () => void {
   el.innerHTML = `
-    <div class="jstex-results">
-      <div class="jstex-results__head"><strong>${escapeHtml(S.results)}</strong> <span class="jstex-muted" data-ref="count"></span></div>
+    <div class="jstex-results jstex-card">
+      <div class="jstex-results__head"><span class="jstex-details__label">${escapeHtml(S.results)}</span> <span class="jstex-muted" data-ref="count"></span></div>
       <div class="jstex-results__scroll" data-ref="scroll">
         <table class="jstex-table">
           <thead data-ref="head"></thead>
@@ -74,6 +74,9 @@ export function mountResults(
             ? ''
             : S.resultsNone;
     empty.hidden = empty.textContent === '';
+    // No header row over an empty list.
+    (body.closest('table') as HTMLTableElement).hidden =
+      state.items.length === 0;
     if (state.activeId && prev && prev.activeId !== state.activeId) {
       const row = [...body.querySelectorAll<HTMLElement>('tr[data-id]')].find(
         tr => tr.dataset.id === state.activeId
