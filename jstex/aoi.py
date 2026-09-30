@@ -70,6 +70,9 @@ def _valid_polygon(coords: Any) -> bool:
             lon, lat = pos[0], pos[1]
             if not (-180 <= lon <= 180 and -90 <= lat <= 90):
                 return False
+        # GeoJSON rings must be closed (first == last); CDSE rejects open ones.
+        if ring[0][:2] != ring[-1][:2]:
+            return False
     return True
 
 

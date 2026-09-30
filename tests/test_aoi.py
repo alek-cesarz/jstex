@@ -104,3 +104,10 @@ def test_repair_keeps_valid_geometry_and_fixes_bowtie():
     }
     fixed = repair(bowtie)
     assert fixed["type"] == "MultiPolygon" and len(fixed["coordinates"]) == 2
+
+
+def test_unclosed_ring_rejected():
+    # CDSE rejects the search for an unclosed ring (verified); refuse it at upload time.
+    open_ring = [[[10, 45], [11, 45], [11, 46], [10, 46]]]
+    with pytest.raises(JstexAoiError, match="Invalid coordinates"):
+        parse_aoi_upload(fc({"type": "Polygon", "coordinates": open_ring}))
