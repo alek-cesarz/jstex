@@ -130,3 +130,7 @@ dmypy.json
 .worktrees/
 jstex/static/
 ui-tests/design-review/
+
+# jstex ships its translations (JupyterLab i18n): keep them tracked
+!jstex/locale/
+!jstex/locale/**

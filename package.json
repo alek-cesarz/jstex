@@ -55,7 +55,8 @@
         "watch:labextension": "jupyter-builder watch .",
         "test:watch": "vitest",
         "build:widget": "tsc -p js/tsconfig.json && vite build",
-        "clean:widget": "rimraf jstex/static"
+        "clean:widget": "rimraf jstex/static",
+        "i18n:extract": "python scripts/i18n_extract.py"
     },
     "dependencies": {
         "@eox/drawtools": "^1.6.0",

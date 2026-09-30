@@ -1,0 +1,389 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: jstex VERSION\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: js/strings.ts:100
+msgid "Retry"
+msgstr ""
+
+#: js/strings.ts:101
+msgid "Dismiss"
+msgstr ""
+
+#: js/strings.ts:103
+msgid "Select"
+msgstr ""
+
+#: js/strings.ts:104
+msgid "Results"
+msgstr ""
+
+#: js/strings.ts:105
+msgid "Run a search to see items."
+msgstr ""
+
+#: js/strings.ts:106
+msgid "Searching…"
+msgstr ""
+
+#: js/strings.ts:107
+msgid "No items match this query."
+msgstr ""
+
+#: js/strings.ts:108
+msgid "%1 loaded"
+msgid_plural "%1 loaded"
+msgstr[0] ""
+msgstr[1] ""
+
+#: js/strings.ts:109
+msgid "%1 selected"
+msgid_plural "%1 selected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: js/strings.ts:11
+msgid "Collapse search panel"
+msgstr ""
+
+#: js/strings.ts:111
+msgid "%1 matched"
+msgid_plural "%1 matched"
+msgstr[0] ""
+msgstr[1] ""
+
+#: js/strings.ts:112
+msgid "ID"
+msgstr ""
+
+#: js/strings.ts:113
+msgid "Datetime"
+msgstr ""
+
+#: js/strings.ts:114
+msgid "Collection"
+msgstr ""
+
+#: js/strings.ts:115
+msgid "Cloud %"
+msgstr ""
+
+#: js/strings.ts:117
+msgid "Item details"
+msgstr ""
+
+#: js/strings.ts:118
+msgid "Click a result or a footprint to see its details."
+msgstr ""
+
+#: js/strings.ts:119
+msgid "◀ Prev"
+msgstr ""
+
+#: js/strings.ts:12
+msgid "Expand search panel"
+msgstr ""
+
+#: js/strings.ts:120
+msgid "Next ▶"
+msgstr ""
+
+#: js/strings.ts:121
+msgid "Copy self link"
+msgstr ""
+
+#: js/strings.ts:122
+msgid "Copy id"
+msgstr ""
+
+#: js/strings.ts:123
+msgid "Copy Python"
+msgstr ""
+
+#: js/strings.ts:124
+msgid "Copy"
+msgstr ""
+
+#: js/strings.ts:125
+msgid "Copied"
+msgstr ""
+
+#: js/strings.ts:126
+msgid "Copy failed"
+msgstr ""
+
+#: js/strings.ts:127
+msgid "Properties"
+msgstr ""
+
+#: js/strings.ts:128
+msgid "Assets"
+msgstr ""
+
+#: js/strings.ts:129
+msgid "Links"
+msgstr ""
+
+#: js/strings.ts:130
+msgid "In Python, .selected_item on your Explorer returns this item as a pystac.Item."
+msgstr ""
+
+#: js/strings.ts:135
+msgid "%1 overlapping item"
+msgid_plural "%1 overlapping items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: js/strings.ts:136
+msgid "Close"
+msgstr ""
+
+#: js/strings.ts:14
+msgid "Collections"
+msgstr ""
+
+#: js/strings.ts:15
+msgid "Search collections…"
+msgstr ""
+
+#: js/strings.ts:16
+msgid "Clear search"
+msgstr ""
+
+#: js/strings.ts:17
+msgid "Only selected"
+msgstr ""
+
+#: js/strings.ts:19
+msgid "%1 of %2"
+msgstr ""
+
+#: js/strings.ts:20
+msgid "Loading collections…"
+msgstr ""
+
+#: js/strings.ts:21
+msgid "No collections available."
+msgstr ""
+
+#: js/strings.ts:22
+msgid "No collections match."
+msgstr ""
+
+#: js/strings.ts:23
+msgid "About this collection"
+msgstr ""
+
+#: js/strings.ts:24
+msgid "%1 → %2"
+msgstr ""
+
+#: js/strings.ts:25
+msgid "ongoing"
+msgstr ""
+
+#: js/strings.ts:26
+msgid "License: %1"
+msgstr ""
+
+#: js/strings.ts:28
+msgid "Dates"
+msgstr ""
+
+#: js/strings.ts:29
+msgid "(UTC)"
+msgstr ""
+
+#: js/strings.ts:30
+msgid "From"
+msgstr ""
+
+#: js/strings.ts:31
+msgid "To"
+msgstr ""
+
+#: js/strings.ts:32
+msgid "open"
+msgstr ""
+
+#: js/strings.ts:33
+msgid "Clear dates"
+msgstr ""
+
+#: js/strings.ts:34
+msgid "Either end may stay empty."
+msgstr ""
+
+#: js/strings.ts:36
+msgid "Area of interest"
+msgstr ""
+
+#: js/strings.ts:37 js/strings.ts:46
+msgid "Polygon"
+msgstr ""
+
+#: js/strings.ts:38
+msgid "Box"
+msgstr ""
+
+#: js/strings.ts:39
+msgid "Upload"
+msgstr ""
+
+#: js/strings.ts:40
+msgid "Upload a GeoJSON file (EPSG:4326)"
+msgstr ""
+
+#: js/strings.ts:41
+msgid "Draw on the map or upload a GeoJSON file."
+msgstr ""
+
+#: js/strings.ts:42
+msgid "Click to add points, double-click to finish · Esc cancels"
+msgstr ""
+
+#: js/strings.ts:45
+msgid "Click two opposite corners · Esc cancels"
+msgstr ""
+
+#: js/strings.ts:47
+msgid "Multipolygon"
+msgstr ""
+
+#: js/strings.ts:48
+msgid "Zoom to area"
+msgstr ""
+
+#: js/strings.ts:49
+msgid "Remove area"
+msgstr ""
+
+#: js/strings.ts:51
+msgid "%1: %2 The previous area is unchanged."
+msgstr ""
+
+#: js/strings.ts:53
+msgid "Filters"
+msgstr ""
+
+#: js/strings.ts:54
+msgid "Add filter"
+msgstr ""
+
+#: js/strings.ts:55
+msgid "Remove filter"
+msgstr ""
+
+#: js/strings.ts:56
+msgid "Field"
+msgstr ""
+
+#: js/strings.ts:57
+msgid "Operator"
+msgstr ""
+
+#: js/strings.ts:58
+msgid "Value"
+msgstr ""
+
+#: js/strings.ts:59
+msgid "a, b, c"
+msgstr ""
+
+#: js/strings.ts:60
+msgid "Choose…"
+msgstr ""
+
+#: js/strings.ts:61
+msgid "Loading fields…"
+msgstr ""
+
+#: js/strings.ts:62
+msgid "Select a collection to filter by its attributes."
+msgstr ""
+
+#: js/strings.ts:66
+msgid "Fields of the selected collection."
+msgid_plural "Fields shared by all %1 collections."
+msgstr[0] ""
+msgstr[1] ""
+
+#: js/strings.ts:72
+msgid "No filterable fields."
+msgstr ""
+
+#: js/strings.ts:74
+msgid "%1 is not allowed for %2."
+msgstr ""
+
+#: js/strings.ts:75
+msgid "Enter one or more values, comma-separated."
+msgstr ""
+
+#: js/strings.ts:76
+msgid "Enter a number."
+msgstr ""
+
+#: js/strings.ts:77
+msgid "Enter a whole number."
+msgstr ""
+
+#: js/strings.ts:78
+msgid "Must be at least %1."
+msgstr ""
+
+#: js/strings.ts:79
+msgid "Must be at most %1."
+msgstr ""
+
+#: js/strings.ts:80
+msgid "Choose true or false."
+msgstr ""
+
+#: js/strings.ts:81
+msgid "Choose one of the listed values."
+msgstr ""
+
+#: js/strings.ts:82
+msgid "Enter a value."
+msgstr ""
+
+#: js/strings.ts:83
+msgid "Not available for the selected collections."
+msgstr ""
+
+#: js/strings.ts:87
+msgid "Search"
+msgstr ""
+
+#: js/strings.ts:88
+msgid "Cancel"
+msgstr ""
+
+#: js/strings.ts:89
+msgid "Select at least one collection."
+msgstr ""
+
+#: js/strings.ts:90
+msgid "Fix the filters above to search."
+msgstr ""
+
+#: js/strings.ts:92
+msgid "No area or dates set — showing the first %1 matches."
+msgstr ""
+
+#: js/strings.ts:93
+msgid "Signed in — restricted collections included."
+msgstr ""
+
+#: js/strings.ts:94
+msgid "Not signed in — restricted collections are hidden."
+msgstr ""
+
+#: js/strings.ts:97
+msgid "No access token — restricted collections are hidden. Ask your hub admin to enable auth_state (see jstex README)."
+msgstr ""

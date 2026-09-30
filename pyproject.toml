@@ -48,6 +48,10 @@ test = [
     "ruff>=0.6",
 ]
 
+# Translations shipped in jstex/locale/<ll_CC>/LC_MESSAGES/jstex.json (JupyterLab standard).
+[project.entry-points."jupyterlab.locale"]
+jstex = "jstex"
+
 [tool.hatch.version]
 source = "nodejs"
 
