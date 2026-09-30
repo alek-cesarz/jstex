@@ -8,10 +8,23 @@ except ImportError:
 
     warnings.warn("Importing 'jstex' outside a proper installation.")
     __version__ = "dev"
-from .widget import Explorer
+from typing import Any
 
-__all__ = ["Explorer", "__version__"]
 from .routes import setup_route_handlers
+
+__all__ = ["Explorer", "__version__", "item"]
+
+
+def __getattr__(name: str) -> Any:
+    if name == "Explorer":
+        from .widget import Explorer
+
+        return Explorer
+    if name == "item":
+        from .api import item
+
+        return item
+    raise AttributeError(f"module 'jstex' has no attribute {name!r}")
 
 
 def _jupyter_labextension_paths():
