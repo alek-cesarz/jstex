@@ -187,3 +187,8 @@ def test_share_url():
         == f"https://stex.example.org/?q={encode(s)}"
     )
     assert share_url(s, None) == encode(s)
+
+
+def test_decode_rejects_json_that_is_not_an_object():
+    with pytest.raises(JstexQueryError, match="Invalid query URL"):
+        decode("W10")  # base64url of "[]"

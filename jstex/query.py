@@ -156,7 +156,7 @@ def decode(q: str) -> QueryState:
         raw = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
         obj = json.loads(raw.decode("utf-8"))
         if not isinstance(obj, dict):
-            raise ValueError("not an object")
+            raise TypeError("not an object")
         if "aois" not in obj and "aoi" in obj:
             obj["aois"] = [{"g": obj.pop("aoi"), "s": True}]
         return _validate(obj)
