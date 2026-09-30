@@ -4,6 +4,7 @@ import {
   boxAreaKm2,
   bboxTo3857,
   dateInputToIso,
+  isoToDateInput,
   formatItemDate,
   formatIso,
   formatValue,
@@ -363,10 +364,34 @@ describe('format', () => {
     );
   });
 
-  it('dateInputToIso', () => {
+  it('dateInputToIso: date with optional UTC time; invalid text is null', () => {
     expect(dateInputToIso('2024-07-01', false)).toBe('2024-07-01T00:00:00Z');
     expect(dateInputToIso('2024-07-01', true)).toBe('2024-07-01T23:59:59Z');
+    expect(dateInputToIso(' 2024-07-01 10:30 ', false)).toBe(
+      '2024-07-01T10:30:00Z'
+    );
+    expect(dateInputToIso('2024-07-01T18:05:30', true)).toBe(
+      '2024-07-01T18:05:30Z'
+    );
     expect(dateInputToIso('', true)).toBeUndefined();
+    expect(dateInputToIso('2024-02-30', false)).toBeNull();
+    expect(dateInputToIso('2024-07-01 25:00', false)).toBeNull();
+    expect(dateInputToIso('yesterday', false)).toBeNull();
+  });
+
+  it("isoToDateInput hides each end's default time", () => {
+    expect(isoToDateInput('2024-07-01T00:00:00Z', false)).toBe('2024-07-01');
+    expect(isoToDateInput('2024-07-31T23:59:59Z', true)).toBe('2024-07-31');
+    expect(isoToDateInput('2024-07-01T10:30:00Z', false)).toBe(
+      '2024-07-01 10:30'
+    );
+    expect(isoToDateInput('2024-07-01T10:30:41.5Z', true)).toBe(
+      '2024-07-01 10:30:41'
+    );
+    expect(isoToDateInput('2024-07-31T00:00:00Z', true)).toBe(
+      '2024-07-31 00:00'
+    );
+    expect(isoToDateInput(undefined, false)).toBe('');
   });
 
   it('itemFeatures skips null geometries', () => {

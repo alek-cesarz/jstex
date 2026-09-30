@@ -24,6 +24,48 @@ describe('dates section', () => {
     expect([from.value, to.value]).toEqual(['', '']);
   });
 
+  it('uses text fields (no native date pickers) and accepts a UTC time', () => {
+    const { el, store, actions } = setupView();
+    mountDates(el, store, actions);
+    const from = q(el, 'from') as HTMLInputElement;
+    expect(from.type).toBe('text');
+    expect(from.placeholder).toBe('YYYY-MM-DD HH:MM');
+    from.value = '2024-07-01 10:30';
+    from.dispatchEvent(new Event('change'));
+    expect(store.get().query.datetime).toEqual({
+      from: '2024-07-01T10:30:00Z'
+    });
+    expect(datesSummary(store.get().query.datetime)).toBe(
+      '2024-07-01 10:30 → open'
+    );
+  });
+
+  it('invalid text shows an error and keeps the query; From after To is flagged', () => {
+    const { el, store, actions } = setupView();
+    mountDates(el, store, actions);
+    const from = q(el, 'from') as HTMLInputElement;
+    const to = q(el, 'to') as HTMLInputElement;
+    to.value = '2024-13-01';
+    to.dispatchEvent(new Event('change'));
+    expect(store.get().query.datetime).toBeNull();
+    expect(q(el, 'error').hidden).toBe(false);
+    expect(q(el, 'error').textContent).toBe(
+      'To: use YYYY-MM-DD or YYYY-MM-DD HH:MM (UTC).'
+    );
+    expect(to.classList.contains('jstex-invalid')).toBe(true);
+    to.value = '2024-07-01';
+    to.dispatchEvent(new Event('change'));
+    expect(q(el, 'error').hidden).toBe(true);
+    from.value = '2024-08-01';
+    from.dispatchEvent(new Event('change'));
+    expect(store.get().query.datetime).toEqual({
+      from: '2024-08-01T00:00:00Z',
+      to: '2024-07-01T23:59:59Z'
+    });
+    expect(q(el, 'error').textContent).toBe('From is after To.');
+    expect(from.classList.contains('jstex-invalid')).toBe(true);
+  });
+
   it('reflects a query set from Python and summarises open ends', () => {
     const { el, store, actions } = setupView();
     mountDates(el, store, actions);

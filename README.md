@@ -14,10 +14,14 @@ restricted collections just work.
 
 ## Features
 
-- **Search panel beside the map** (STEX-like, folds to an icon rail):
+- **Search panel beside the map** (STEX-like). Drag the divider to resize it,
+  fold it to an icon rail, or hide the map to work with just the panel and
+  the results:
   - **Collections:** search by title or id, "only selected", ⓘ for the
     description, time extent and license.
-  - **Dates (UTC):** either end may be left open.
+  - **Dates and times (UTC):** a calendar with a 24-hour time picker, as in
+    STEX, or type `YYYY-MM-DD [HH:MM]`; either end may be left open, and From
+    after To is flagged.
   - **Area of interest:** one area. Draw a polygon or a box, or upload
     GeoJSON; invalid geometries are repaired before searching.
   - **Attribute filters:** built from the collections' queryables (`=`, `!=`,
@@ -25,7 +29,8 @@ restricted collections just work.
 - **Results ↔ map.** Clicking a row highlights its footprint. Clicking a
   footprint opens that item; where footprints overlap, a popup lists them, as
   in STEX.
-- **Item details** with Prev/Next and copy buttons for:
+- **Item details** (sections folded by default) with Prev/Next and copy
+  buttons for:
   - the self link and id;
   - every property value;
   - asset hrefs, including alternates such as S3;

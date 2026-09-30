@@ -25,6 +25,25 @@ describe('search panel', () => {
     expect((q(el, 'search') as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('From after To blocks Search; the reason opens the section at fault', () => {
+    const { el, store, actions } = setupView();
+    mountPanel(el, store, actions);
+    actions.setQuery({
+      collections: ['c1'],
+      datetime: { from: '2024-08-01T00:00:00Z', to: '2024-07-01T23:59:59Z' }
+    });
+    expect(searchBlocker(store.get())).toBe('From is after To.');
+    expect((q(el, 'search') as HTMLButtonElement).disabled).toBe(true);
+    actions.toggleSection('dates');
+    q(el, 'reason').click();
+    expect(store.get().sections.dates).toBe(true);
+    // The "no area or dates" hint points at the area of interest.
+    actions.setQuery({ datetime: null });
+    actions.toggleSection('aoi');
+    q(el, 'reason').click();
+    expect(store.get().sections.aoi).toBe(true);
+  });
+
   it('closed sections show a summary and badge', () => {
     const { el, store, actions } = setupView();
     mountPanel(el, store, actions);

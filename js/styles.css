@@ -71,7 +71,7 @@
   color: #fff;
   font-weight: 600;
 }
-.jstex input[type='date'],
+.jstex input[type='text'],
 .jstex input[type='search'] {
   font: inherit;
   color: inherit;
@@ -194,6 +194,10 @@
 .jstex .jstex-splitter:focus-visible::before,
 .jstex .jstex-body--resizing .jstex-splitter::before {
   background: var(--jstex-accent);
+}
+/* with the map folded away there is nothing to collapse the panel towards */
+.jstex .jstex-body--map-collapsed .jstex-panel__collapse {
+  display: none;
 }
 .jstex .jstex-splitter--fixed {
   cursor: default;
@@ -1106,4 +1110,104 @@
 }
 .jstex .jstex-fp__item.jstex-active {
   box-shadow: inset 3px 0 0 var(--jstex-accent);
+}
+
+/* dates: From / To rows (text fields opening the calendar popup) */
+.jstex .jstex-dates {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 8px;
+}
+.jstex .jstex-dates__label {
+  grid-column: 1;
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jstex-muted);
+}
+.jstex .jstex-dates__input {
+  grid-column: 2;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.jstex .jstex-dates__clear {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+/* vanilla-calendar-pro popup: appended to <body>, outside .jstex, so it gets
+   the widget colours as inline custom properties (dates.ts POPUP_VARS) */
+body > .vc.jstex-vc {
+  /* surfaces follow the widget's (JupyterLab's) colours in both themes */
+  --vc-bg: var(--jstex-bg);
+  --vc-color: var(--jstex-fg);
+  --vc-date-bg: transparent;
+  --vc-date-weekend-outside-bg: transparent;
+  --vc-date-bg-hover: var(--jstex-bg2);
+  --vc-date-hover-bg: var(--jstex-bg2);
+  --vc-date-weekend-bg-hover: var(--jstex-bg2);
+  --vc-date-today-bg: transparent;
+  --vc-months-years-bg: var(--jstex-bg);
+  --vc-months-years-bg-hover: var(--jstex-bg2);
+  --vc-time-input-bg: var(--jstex-bg);
+  --vc-time-input-color: var(--jstex-fg);
+  --vc-time-input-bg-hover: var(--jstex-bg2);
+  --vc-time-range-bg: var(--jstex-bg);
+  z-index: 10000 !important;
+  font-family: var(--jstex-font, inherit);
+  border: 1px solid var(--jstex-border, #d1d9e0);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+body > .vc.jstex-vc [data-vc='calendar'] {
+  padding: 0.5rem;
+}
+body > .vc.jstex-vc [data-vc-date-btn] {
+  min-height: 1.6rem;
+  min-width: 1.6rem;
+  font-size: 0.75rem;
+}
+body > .vc.jstex-vc [data-vc='month'],
+body > .vc.jstex-vc [data-vc='year'] {
+  font-size: 0.85rem;
+}
+body > .vc.jstex-vc [data-vc-week-day] {
+  font-size: 0.7rem;
+}
+body > .vc.jstex-vc [data-vc='time'] {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  gap: 0.5rem;
+}
+body > .vc.jstex-vc [data-vc-date-selected] [data-vc-date-btn] {
+  background-color: var(--jstex-accent, #ff8225) !important;
+  color: #fff !important;
+}
+body > .vc.jstex-vc [data-vc-date-today] [data-vc-date-btn] {
+  color: var(--jstex-accent, #ff8225);
+}
+body > .vc.jstex-vc .jstex-vc__actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-top: 1px solid var(--jstex-border, #d1d9e0);
+}
+body > .vc.jstex-vc .jstex-vc__actions button {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--jstex-border, #d1d9e0);
+  border-radius: 4px;
+  background: var(--jstex-bg2, #f6f8fa);
+  color: var(--jstex-fg, #1f2328);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+body > .vc.jstex-vc .jstex-vc__actions button:hover {
+  background: var(--jstex-accent, #ff8225);
+  border-color: var(--jstex-accent, #ff8225);
+  color: #fff;
 }

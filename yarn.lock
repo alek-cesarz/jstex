@@ -598,6 +598,7 @@ __metadata:
     stylelint-prettier: ^4.0.0
     typescript: ~5.5.4
     typescript-eslint: ^8.0.0
+    vanilla-calendar-pro: ^3.4.0
     vite: ^7.3.1
     vitest: ^3.1.0
     yjs: ^13.5.0
@@ -6246,6 +6247,13 @@ __metadata:
   version: 1.0.3
   resolution: "validate.io-number@npm:1.0.3"
   checksum: 42418aeb6c969efa745475154fe576809b02eccd0961aad0421b090d6e7a12d23a3e28b0d5dddd2c6347c1a6bdccb82bba5048c716131cd20207244d50e07282
+  languageName: node
+  linkType: hard
+
+"vanilla-calendar-pro@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "vanilla-calendar-pro@npm:3.4.0"
+  checksum: 5737088206e2b404a429eb593372239fae7f3cdee6f2c9ac2a108c5f2d8cfa1d2edb31cb1f03a40108a86437a21d2c603642d04388a0472e8431bf82f97f9b7e
   languageName: node
   linkType: hard
 

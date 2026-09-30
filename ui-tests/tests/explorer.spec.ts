@@ -169,13 +169,51 @@ test.describe('jstex Explorer', () => {
     const w = await explorerCell(page);
     await w.locator('input[value="sentinel-2-l2a"]').check();
     await w.locator('[data-ref="collapse"]').click();
-    await expect(w.locator('.jstex-rail')).toBeVisible();
+    await expect(w.locator('[data-ref="rail"]')).toBeVisible();
     await expect(w.locator('[data-rail="collections"]')).toHaveAttribute(
       'title',
       'Collections: sentinel-2-l2a'
     );
     await w.locator('[data-rail="filters"]').click();
     await expect(w.locator('.jstex-panel')).toBeVisible();
+  });
+
+  test('the divider resizes the panel and the map can be hidden', async ({
+    page
+  }) => {
+    const w = await explorerCell(page);
+    const panel = w.locator('[data-slot="panel"]');
+    const before = (await panel.boundingBox())!.width;
+    const sp = (await w.locator('[data-ref="splitter"]').boundingBox())!;
+    await page.mouse.move(sp.x + sp.width / 2, sp.y + 100);
+    await page.mouse.down();
+    await page.mouse.move(sp.x + sp.width / 2 + 120, sp.y + 100, { steps: 4 });
+    await page.mouse.up();
+    const after = (await panel.boundingBox())!.width;
+    expect(after - before).toBeGreaterThan(110);
+
+    await w.locator('[data-ref="hideMap"]').click();
+    await expect(w.locator('[data-slot="map"]')).toBeHidden();
+    await expect(w.locator('[data-ref="mapRail"]')).toBeVisible();
+    await page.notebook.addCell(
+      'code',
+      'print(ex.panel_width, ex.map_collapsed)'
+    );
+    const printCell = (await page.notebook.getCellCount()) - 1;
+    await page.notebook.runCell(printCell);
+    await expect(
+      page.locator('.jp-Cell').nth(printCell).locator('.jp-OutputArea-output')
+    ).toContainText(`${Math.round(after)} True`);
+
+    await w.locator('[data-ref="showMap"]').click();
+    await expect(w.locator('[data-slot="map"]')).toBeVisible();
+    // The map re-measures itself after being shown again.
+    await expect
+      .poll(
+        async () =>
+          (await w.locator('eox-map canvas').first().boundingBox())?.width ?? 0
+      )
+      .toBeGreaterThan(300);
   });
 
   test('follows the JupyterLab light/dark theme, including the basemap', async ({

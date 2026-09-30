@@ -14,7 +14,7 @@ import { S } from '../strings';
 import type { ExplorerState, SectionId } from '../types';
 import { aoiSummary, mountAoiSection } from './aoi-section';
 import { mountCollections } from './collections';
-import { datesSummary, mountDates } from './dates';
+import { datesInverted, datesSummary, mountDates } from './dates';
 import { mountFiltersSection } from './filters-section';
 import { createSection } from './section';
 
@@ -22,7 +22,16 @@ import { createSection } from './section';
 export function searchBlocker(s: ExplorerState): string {
   if (!s.query.collections.length) return S.needCollection;
   if (s.filterRows.some(r => r.error)) return S.fixFilters;
+  if (datesInverted(s.query.datetime)) return S.fromAfterTo;
   return '';
+}
+
+/** The section the Search hint points at (the blocker, or the missing area). */
+function hintSection(s: ExplorerState): SectionId {
+  if (!s.query.collections.length) return 'collections';
+  if (s.filterRows.some(r => r.error)) return 'filters';
+  if (datesInverted(s.query.datetime)) return 'dates';
+  return 'aoi';
 }
 
 export function mountPanel(
@@ -160,9 +169,7 @@ export function mountPanel(
   // scroll it into view inside the panel (a filter error may be scrolled away).
   ref('reason').addEventListener('click', () => {
     const s = store.get();
-    const id: SectionId = s.query.collections.length
-      ? 'filters'
-      : 'collections';
+    const id = hintSection(s);
     if (!s.sections[id]) actions.toggleSection(id);
     const invalidRow =
       id === 'filters'

@@ -45,6 +45,11 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
 
 ## Gotchas
 
+- `vanilla-calendar-pro` ≥ 3.2 needs `extensions: [time]` for
+  `selectionTimeMode` (STEX pins 3.1 and does not); without it opening the
+  calendar throws. Its popup lives in `<body>`, outside `.jstex`: style it via
+  `body > .vc.jstex-vc` and the `--vc-*` variables (see `js/styles.css`).
+
 - The bundle must be one file (anywidget loads it from a blob URL):
   `inlineDynamicImports`, and @eox/ui icon fonts are dropped (their
   `@font-face` falls back to jsdelivr).

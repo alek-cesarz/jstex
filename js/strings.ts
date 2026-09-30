@@ -38,7 +38,12 @@ export function createStrings(trans: TranslationBundle) {
     to: trans.__('To'),
     open: trans.__('open'),
     clearDates: trans.__('Clear dates'),
-    datesHint: trans.__('Either end may stay empty.'),
+    datesHint: trans.__('Either end may stay empty; the time is optional.'),
+    invalidDate: (field: string) =>
+      trans.__('%1: use YYYY-MM-DD or YYYY-MM-DD HH:MM (UTC).', field),
+    fromAfterTo: trans.__('From is after To.'),
+    today: trans.__('Today'),
+    clear: trans.__('Clear'),
     // area of interest (one area)
     aoi: trans.__('Area of interest'),
     polygon: trans.__('Polygon'),

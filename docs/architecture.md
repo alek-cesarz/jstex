@@ -119,7 +119,8 @@ that render into plain DOM, with EOX custom elements for the map.
 | `js/selection.ts`, `js/clipboard.ts`, `js/snippets.ts`, `js/icons.ts`      | Small helpers.                                                                                                                   |
 | `js/ui/panel.ts`                                                           | Search panel: collapsible sections, pinned Search button with a "why disabled" hint, collapse to an icon rail.                   |
 | `js/ui/section.ts`                                                         | Generic collapsible section (caret, title, summary, badge).                                                                      |
-| `js/ui/collections.ts`, `dates.ts`, `aoi-section.ts`, `filters-section.ts` | The four panel sections.                                                                                                         |
+| `js/ui/layout.ts`                                                          | Theme and height, the panel/map splitter (drag, arrow keys, double-click resets) and the collapsible map.                        |
+| `js/ui/collections.ts`, `dates.ts`, `aoi-section.ts`, `filters-section.ts` | The four panel sections. Dates use `vanilla-calendar-pro` (as STEX) for the date + 24 h time popup.                              |
 | `js/ui/map.ts`                                                             | `eox-map` + `eox-drawtools`: basemap, AOI, footprints, highlight; click-to-activate; drawing.                                    |
 | `js/ui/footprint-popup.ts`                                                 | List of items under a clicked point when footprints overlap.                                                                     |
 | `js/ui/results.ts`                                                         | Results table (checkbox selection, row activation).                                                                              |
@@ -135,18 +136,20 @@ Two channels connect a view and its `Explorer`.
 
 ### 6.1 Synced traitlets (small state, both directions)
 
-| Trait             | Type                             | Written by                | Meaning                                                    |
-| ----------------- | -------------------------------- | ------------------------- | ---------------------------------------------------------- |
-| `query`           | dict                             | JS (on Search) and Python | The QueryState dict (same keys as `QueryState.to_dict()`). |
-| `selected_ids`    | list[str]                        | JS                        | Checked result rows → `ex.selected_items`.                 |
-| `active_id`       | str \| None                      | JS                        | Item shown in details → `ex.selected_item`.                |
-| `status`          | `idle` \| `searching` \| `error` | Python                    | Search state.                                              |
-| `error`           | str                              | Python                    | Message for the error banner.                              |
-| `auth_source`     | `hub` \| `env` \| `anonymous`    | Python                    | Drives the "Not signed in" hint.                           |
-| `can_cancel`      | bool                             | Python                    | False when searches run synchronously.                     |
-| `map_height`      | int                              | Python / JS               | Panel + map height (drag-resizable).                       |
-| `basemap`         | dict                             | Python                    | Light/dark tile URL + attribution (key already applied).   |
-| `panel_collapsed` | bool                             | JS                        | Panel folded to the rail.                                  |
+| Trait             | Type                             | Written by                | Meaning                                                       |
+| ----------------- | -------------------------------- | ------------------------- | ------------------------------------------------------------- |
+| `query`           | dict                             | JS (on Search) and Python | The QueryState dict (same keys as `QueryState.to_dict()`).    |
+| `selected_ids`    | list[str]                        | JS                        | Checked result rows → `ex.selected_items`.                    |
+| `active_id`       | str \| None                      | JS                        | Item shown in details → `ex.selected_item`.                   |
+| `status`          | `idle` \| `searching` \| `error` | Python                    | Search state.                                                 |
+| `error`           | str                              | Python                    | Message for the error banner.                                 |
+| `auth_source`     | `hub` \| `env` \| `anonymous`    | Python                    | Drives the "Not signed in" hint.                              |
+| `can_cancel`      | bool                             | Python                    | False when searches run synchronously.                        |
+| `map_height`      | int                              | Python / JS               | Panel + map height (drag-resizable).                          |
+| `basemap`         | dict                             | Python                    | Light/dark tile URL + attribution (key already applied).      |
+| `panel_collapsed` | bool                             | JS                        | Panel folded to the rail.                                     |
+| `panel_width`     | int                              | JS / Python               | Search panel width in px (divider drag; clamped by layout).   |
+| `map_collapsed`   | bool                             | JS / Python               | Map folded to a rail (never together with `panel_collapsed`). |
 
 ### 6.2 Custom messages (requests and large payloads)
 
@@ -367,11 +370,21 @@ from the store as GeoJSON data URLs.
 
 ## 13. Layout and theming
 
-- **Layout A.** The search panel (300 px) sits beside the map; results and item
-  details follow below. CSS container queries react to the cell width, not the
-  window: below 760 px the panel stacks above the map, and below 600 px the
-  results table drops the collection column. The panel can fold to an icon
-  rail with badges.
+- **Layout A.** The search panel sits beside the map, separated by a 12 px
+  splitter; results and item details follow below. Dragging the splitter sets
+  `panel_width` (default 300 px, at least 240 px, always leaving the map
+  320 px; the grid clamps it too when the cell shrinks). The panel can fold to
+  an icon rail with badges, or the map can fold to a rail on the right
+  ("Hide map" / "Show map"), never both. Drawing an area or zooming to it
+  brings the map back; an upload does not. CSS container queries react to the
+  cell width, not the window: below 760 px the panel stacks above the map (no
+  splitter; a hidden map becomes a bar), and below 600 px the results table
+  drops the collection column.
+- **Dates.** From/To are text fields (`YYYY-MM-DD [HH:MM]`, UTC) that open a
+  `vanilla-calendar-pro` popup with a 24 h time picker, as in STEX. Without a
+  time, From starts the day and To ends it. The popup is appended to `<body>`
+  (outside the widget), so it gets the widget colours as inline custom
+  properties.
 - **Theme.** `js/theme.ts` follows the host: JupyterLab
   (`body[data-jp-theme-light]`), VS Code, Colab, then the OS preference. It
   watches for changes and sets `data-theme` on the widget root. All colours are

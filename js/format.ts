@@ -134,16 +134,41 @@ export function formatArea(km2: number): string {
 }
 
 /** <input type=date> value -> ISO instant at the start or end of that UTC day. */
+const DATE_TIME_RE =
+  /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/;
+
+/**
+ * "YYYY-MM-DD" or "YYYY-MM-DD HH:MM[:SS]" (UTC) -> ISO for the query.
+ * Without a time, From starts the day and To ends it (as in STEX).
+ * Returns undefined for empty text and null for text that is not a valid date.
+ */
 export function dateInputToIso(
   value: string,
   endOfDay: boolean
-): string | undefined {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
-  return `${value}T${endOfDay ? '23:59:59' : '00:00:00'}Z`;
+): string | undefined | null {
+  const text = value.trim();
+  if (!text) return undefined;
+  const m = DATE_TIME_RE.exec(text);
+  if (!m) return null;
+  const [, y, mo, d, h, mi, sec] = m;
+  const date = new Date(Date.UTC(+y, +mo - 1, +d));
+  if (date.getUTCMonth() !== +mo - 1 || date.getUTCDate() !== +d) return null;
+  if (h === undefined)
+    return `${y}-${mo}-${d}T${endOfDay ? '23:59:59' : '00:00:00'}Z`;
+  if (+h > 23 || +mi > 59 || +(sec ?? 0) > 59) return null;
+  return `${y}-${mo}-${d}T${h}:${mi}:${sec ?? '00'}Z`;
 }
 
-export function isoToDateInput(iso: string | undefined): string {
-  return iso ? iso.slice(0, 10) : '';
+/** ISO -> input text; the default time of each end (00:00:00 / 23:59:59) is hidden. */
+export function isoToDateInput(
+  iso: string | undefined,
+  endOfDay: boolean
+): string {
+  if (!iso) return '';
+  const date = iso.slice(0, 10);
+  const time = iso.slice(11, 19);
+  if (!time || time === (endOfDay ? '23:59:59' : '00:00:00')) return date;
+  return `${date} ${time.endsWith(':00') ? time.slice(0, 5) : time}`;
 }
 
 /** lon/lat bbox -> EPSG:3857 extent, padded by `pad` of its size on each side. */
