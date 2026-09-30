@@ -55,8 +55,11 @@ source = "nodejs"
 fields = ["description", "authors", "urls", "keywords"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["jstex/labextension"]
+artifacts = ["jstex/labextension", "jstex/static"]
 exclude = [".github", "binder"]
+
+[tool.hatch.build.targets.wheel]
+artifacts = ["jstex/static"]
 
 [tool.hatch.build.targets.wheel.shared-data]
 "jstex/labextension" = "share/jupyter/labextensions/@jstex/labextension"
@@ -71,6 +74,7 @@ dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
     "jstex/labextension/static/style.js",
+    "jstex/static/widget.js",
     "jstex/labextension/package.json",
 ]
 skip-if-exists = ["jstex/labextension/static/style.js"]

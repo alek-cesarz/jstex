@@ -128,3 +128,4 @@ dmypy.json
 .yarn/
 
 .worktrees/
+jstex/static/

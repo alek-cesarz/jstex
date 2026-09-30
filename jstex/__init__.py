@@ -7,6 +7,9 @@ except ImportError:
     import warnings
     warnings.warn("Importing 'jstex' outside a proper installation.")
     __version__ = "dev"
+from .widget import Explorer
+
+__all__ = ["Explorer", "__version__"]
 from .routes import setup_route_handlers
 
 
