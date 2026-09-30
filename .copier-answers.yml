@@ -1,0 +1,16 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.6.5
+_src_path: https://github.com/jupyterlab/extension-template
+advanced: false
+author_email: alek.cesarz@gmail.com
+author_name: Aleksander Cesarz
+has_ai_rules: false
+has_binder: false
+has_settings: false
+kind: frontend-and-server
+labextension_name: '@jstex/labextension'
+project_short_description: 'STEX-light: STAC explorer widget for JupyterLab'
+python_name: jstex
+repository: https://github.com/alek-cesarz/jstex
+test: true
+
