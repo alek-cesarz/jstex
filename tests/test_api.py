@@ -6,6 +6,8 @@ import jstex
 
 @responses.activate
 def test_item_opens_with_bearer_token(monkeypatch):
+    # The token goes only to the configured catalogue (see test_stac foreign-host test).
+    monkeypatch.setenv("JSTEX_STAC_URL", "https://stac.test/v1/")
     monkeypatch.setenv("JSTEX_ACCESS_TOKEN", "T")
     href = "https://stac.test/v1/collections/c1/items/a"
     responses.get(

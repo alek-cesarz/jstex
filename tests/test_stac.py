@@ -268,3 +268,16 @@ def test_non_json_response_is_a_stac_error():
     )
     with pytest.raises(JstexStacError, match="non-JSON"):
         StacBackend(URL).search_page(QueryState(collections=["c1"]))
+
+
+@responses.activate
+def test_token_is_sent_only_to_the_configured_stac_host(monkeypatch):
+    # Item self links and rel=next hrefs are server data: a foreign host must not get the token.
+    monkeypatch.setenv("JSTEX_ACCESS_TOKEN", "T")
+    responses.get(URL + "collections/c1/items/a", json=item("a"))
+    responses.get("https://evil.example.org/items/a", json=item("a"))
+    b = StacBackend(URL)
+    b.read_item(URL + "collections/c1/items/a")
+    b.read_item("https://evil.example.org/items/a")
+    assert responses.calls[0].request.headers.get("Authorization") == "Bearer T"
+    assert "Authorization" not in responses.calls[1].request.headers

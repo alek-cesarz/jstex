@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlsplit
 
 import pystac
 from pystac import Link
@@ -76,6 +77,16 @@ def _message(err: APIError, status: int | None) -> str:
     )
 
 
+def _origin(url: str) -> tuple[str, str, int | None]:
+    parts = urlsplit(url)
+    scheme = parts.scheme.lower()
+    return (
+        scheme,
+        (parts.hostname or "").lower(),
+        parts.port or {"https": 443, "http": 80}.get(scheme),
+    )
+
+
 class StacBackend:
     def __init__(self, url: str, *, retry: Retry | None = None, timeout: float = 30):
         self.url = url
@@ -86,8 +97,11 @@ class StacBackend:
         )
         self._queryables: dict[str, dict] = {}
 
-    @staticmethod
-    def _add_auth(request: Request) -> Request:
+    def _add_auth(self, request: Request) -> Request:
+        # Only the configured STAC host gets the user's token: item self links
+        # and rel=next hrefs are server data and may point anywhere.
+        if _origin(request.url) != _origin(self.url):
+            return request
         token = auth.get_token()
         if token:
             request.headers["Authorization"] = f"Bearer {token}"
