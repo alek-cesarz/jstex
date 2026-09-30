@@ -89,7 +89,15 @@ def _from_hub() -> str | None:
             f"jstex: JupyterHub API returned {resp.status_code}; searching anonymously.",
         )
         return None
-    state = resp.json().get("auth_state") or {}
+    try:
+        body = resp.json()
+    except ValueError:
+        _warn_once(
+            "json",
+            "jstex: the JupyterHub API answer is not JSON (proxy or login page?); searching anonymously.",
+        )
+        return None
+    state = (body.get("auth_state") if isinstance(body, dict) else None) or {}
     token = state.get("access_token")
     if not token:
         _warn_once(

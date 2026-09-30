@@ -105,7 +105,13 @@ class StacBackend:
                     text = self.io.read_text(source, parameters=parameters or {})
                 else:
                     text = self.io.request(source, method=method, parameters=parameters)
-                return json.loads(text)
+                try:
+                    return json.loads(text)
+                except ValueError as err:
+                    # e.g. CDSE's firewall: HTTP 200 text/html "Request Rejected"
+                    raise JstexStacError(
+                        "The STAC API returned a non-JSON response (the request may have been rejected)."
+                    ) from err
             except APIError as err:
                 status = getattr(err, "status_code", None)
                 if status == 401 and attempt == 0:

@@ -135,21 +135,19 @@ class Explorer(anywidget.AnyWidget):
 
     def _reply_collections(self, req_id: Any) -> None:
         self.auth_source = auth.current().source
-        try:
-            data = self._backend.list_collections()
-        except JstexError as err:
-            self.send(
-                {"type": "reply", "req_id": req_id, "ok": False, "error": str(err)}
-            )
-            return
-        self.send({"type": "reply", "req_id": req_id, "ok": True, "data": data})
+        self._reply(req_id, self._backend.list_collections)
 
     def _reply(self, req_id: Any, fn: Callable[[], Any]) -> None:
         try:
             data = fn()
-        except JstexError as err:
+        except Exception as err:  # noqa: BLE001 - every request must get a reply, or the UI waits forever
             self.send(
-                {"type": "reply", "req_id": req_id, "ok": False, "error": str(err)}
+                {
+                    "type": "reply",
+                    "req_id": req_id,
+                    "ok": False,
+                    "error": str(err) or type(err).__name__,
+                }
             )
             return
         self.send({"type": "reply", "req_id": req_id, "ok": True, "data": data})
@@ -191,9 +189,9 @@ class Explorer(anywidget.AnyWidget):
     def _do_search(self, gen: int, state: QueryState) -> None:
         try:
             page = self._backend.search_page(state)
-        except JstexError as err:
+        except Exception as err:  # noqa: BLE001 - never leave the UI in "searching"
             if self._is_current(gen):
-                self.error, self.status = str(err), "error"
+                self.error, self.status = str(err) or type(err).__name__, "error"
             return
         if not self._is_current(gen):
             return

@@ -256,3 +256,15 @@ def test_read_item_sets_self_href_when_missing():
     responses.get(URL + "collections/c1/items/a", json=d)
     it = StacBackend(URL).read_item(URL + "collections/c1/items/a")
     assert it.id == "a" and it.get_self_href() == URL + "collections/c1/items/a"
+
+
+@responses.activate
+def test_non_json_response_is_a_stac_error():
+    # CDSE's firewall answers some requests with HTTP 200 text/html "Request Rejected".
+    responses.post(
+        URL + "search",
+        body="<html><title>Request Rejected</title></html>",
+        content_type="text/html",
+    )
+    with pytest.raises(JstexStacError, match="non-JSON"):
+        StacBackend(URL).search_page(QueryState(collections=["c1"]))

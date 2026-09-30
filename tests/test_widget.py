@@ -254,3 +254,19 @@ def test_aoi_upload_validates_without_touching_the_query():
 
 def test_panel_collapsed_defaults_to_open():
     assert make(FakeBackend())[0].panel_collapsed is False
+
+
+class Boom(FakeBackend):
+    def list_collections(self):
+        raise RuntimeError("unexpected")
+
+    def search_page(self, state):
+        raise RuntimeError("unexpected")
+
+
+def test_unexpected_errors_never_leave_the_widget_stuck():
+    ex, sent = make(Boom())
+    ex._on_msg(ex, {"type": "collections", "req_id": 3}, [])
+    assert sent[-1]["ok"] is False and "unexpected" in sent[-1]["error"]
+    ex._on_msg(ex, search_msg(), [])
+    assert ex.status == "error" and "unexpected" in ex.error

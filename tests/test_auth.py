@@ -87,3 +87,10 @@ def test_env_token_used_outside_hub(monkeypatch):
 def test_anonymous_has_no_headers():
     assert auth.get_token() is None
     assert auth.headers() == {}
+
+
+@responses.activate
+def test_hub_non_json_answer_falls_back_to_anonymous(hub_env):
+    responses.get(hub_env, body="<html>login</html>", content_type="text/html")
+    with pytest.warns(UserWarning, match="not JSON"):
+        assert auth.current().source == "anonymous"
