@@ -45,7 +45,7 @@ jobs:
         jupyter server extension list 2>&1 | grep -ie "jstex.*OK"
 
         jupyter labextension list
-        jupyter labextension list 2>&1 | grep -ie "@jstex/labextension.*OK"
+        jupyter labextension list 2>&1 | grep -ie "jupyterlab-jstex.*OK"
         python -m jupyterlab.browser_check
 
     - name: Check that all endpoints are authenticated
@@ -65,7 +65,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: extension-artifacts
-        path: dist/jstex*
+        path: dist/jupyterlab_jstex*
         if-no-files-found: error
 
   test_isolated:
@@ -88,14 +88,14 @@ jobs:
         sudo rm -rf $(which node)
         sudo rm -rf $(which node)
 
-        pip install "jupyterlab>=4.0.0,<5" jstex*.whl
+        pip install "jupyterlab>=4.0.0,<5" jupyterlab_jstex*.whl
 
 
         jupyter server extension list
         jupyter server extension list 2>&1 | grep -ie "jstex.*OK"
 
         jupyter labextension list
-        jupyter labextension list 2>&1 | grep -ie "@jstex/labextension.*OK"
+        jupyter labextension list 2>&1 | grep -ie "jupyterlab-jstex.*OK"
         python -m jupyterlab.browser_check --no-browser-test
 
   integration-tests:
@@ -121,7 +121,7 @@ jobs:
     - name: Install the extension
       run: |
         set -eux
-        python -m pip install "jupyterlab>=4.0.0,<5" jstex*.whl
+        python -m pip install "jupyterlab>=4.0.0,<5" jupyterlab_jstex*.whl
 
     - name: Install dependencies
       working-directory: ui-tests

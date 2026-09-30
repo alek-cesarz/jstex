@@ -1,4 +1,8 @@
-# jstex — STAC explorer for JupyterLab
+<p align="center"><img src="docs/images/stex-logo.svg" width="88" alt="STEX logo"></p>
+
+# jupyterlab-jstex — STAC explorer for JupyterLab
+
+The package is `jupyterlab-jstex`; in Python you `import jstex`.
 
 Find Earth-observation products on a map inside a notebook, then use them in
 code. `jstex` is the light, notebook-native sibling of
@@ -94,7 +98,7 @@ for item in ex.results:
 
 ## Installation (hub image)
 
-jstex is a private package: it is not on PyPI. CI attaches the wheel to each
+jupyterlab-jstex is a private package: it is not on PyPI. CI attaches the wheel to each
 GitHub Release. Install it in the single-user image, passing a read-only
 token as a build secret:
 
@@ -108,9 +112,9 @@ RUN --mount=type=secret,id=gh_token,uid=1000 \
       https://api.github.com/repos/alek-cesarz/jstex/releases/tags/v${JSTEX_VERSION} \
       | python -c 'import json,sys; print(next(a["url"] for a in json.load(sys.stdin)["assets"] if a["name"].endswith(".whl")))')" && \
     curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/octet-stream" \
-      -o /tmp/jstex-${JSTEX_VERSION}-py3-none-any.whl "$ASSET_URL" && \
-    pip install --no-cache-dir /tmp/jstex-${JSTEX_VERSION}-py3-none-any.whl && \
-    rm /tmp/jstex-*.whl
+      -o /tmp/jupyterlab_jstex-${JSTEX_VERSION}-py3-none-any.whl "$ASSET_URL" && \
+    pip install --no-cache-dir /tmp/jupyterlab_jstex-${JSTEX_VERSION}-py3-none-any.whl && \
+    rm /tmp/jupyterlab_jstex-*.whl
 ```
 
 Build with `docker build --secret id=gh_token,env=GH_TOKEN .`

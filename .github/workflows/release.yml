@@ -19,11 +19,11 @@ jobs:
           python -m pip install -U "jupyterlab>=4.6,<5" build
           python -m build
       - name: Check the wheel version matches the tag
-        run: test -f "dist/jstex-${GITHUB_REF_NAME#v}-py3-none-any.whl"
+        run: test -f "dist/jupyterlab_jstex-${GITHUB_REF_NAME#v}-py3-none-any.whl"
       - name: Create GitHub Release with the wheel
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           awk -v v="$VERSION" '$0 ~ "^## \\[" v "\\]" {p=1; next} /^## \[/ {p=0} p' CHANGELOG.md > notes.md
-          gh release create "$GITHUB_REF_NAME" dist/* --title "jstex $GITHUB_REF_NAME" --notes-file notes.md
+          gh release create "$GITHUB_REF_NAME" dist/* --title "jupyterlab-jstex $GITHUB_REF_NAME" --notes-file notes.md

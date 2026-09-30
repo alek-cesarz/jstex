@@ -61,14 +61,15 @@ flowchart LR
 
 ## 3. What ships in the wheel
 
-One wheel (`python -m build`) contains four things:
+One wheel, `jupyterlab_jstex-<version>-py3-none-any.whl` (distribution
+`jupyterlab-jstex`, import package `jstex`), contains four things:
 
-| Artefact                                     | Source                        | Built by                                 | Loaded by                                                   |
-| -------------------------------------------- | ----------------------------- | ---------------------------------------- | ----------------------------------------------------------- |
-| Python package `jstex`                       | `jstex/*.py`                  | hatchling                                | the kernel (`import jstex`)                                 |
-| Widget bundle `jstex/static/widget.{js,css}` | `js/`                         | Vite library build (`jlpm build:widget`) | anywidget, from a blob URL, once per `Explorer()`           |
-| JupyterLab extension `jstex/labextension/`   | `src/index.ts`, `style/`      | `tsc` + `jupyter-builder`                | JupyterLab at page load                                     |
-| Translations `jstex/locale/`                 | `js/strings.ts` → `jstex.pot` | `jupyterlab-translate`                   | the Jupyter server, via the `jupyterlab.locale` entry point |
+| Artefact                                                        | Source                                  | Built by                                 | Loaded by                                                   |
+| --------------------------------------------------------------- | --------------------------------------- | ---------------------------------------- | ----------------------------------------------------------- |
+| Python package `jstex`                                          | `jstex/*.py`                            | hatchling                                | the kernel (`import jstex`)                                 |
+| Widget bundle `jstex/static/widget.{js,css}`                    | `js/`                                   | Vite library build (`jlpm build:widget`) | anywidget, from a blob URL, once per `Explorer()`           |
+| JupyterLab extension `jupyterlab-jstex` (`jstex/labextension/`) | `src/index.ts`, `src/icon.ts`, `style/` | `tsc` + `jupyter-builder`                | JupyterLab at page load                                     |
+| Translations `jstex/locale/`                                    | `js/strings.ts` → `jstex.pot`           | `jupyterlab-translate`                   | the Jupyter server, via the `jupyterlab.locale` entry point |
 
 Notes:
 
@@ -77,8 +78,10 @@ Notes:
   file. It is about 4.2 MB (1.1 MB gzip) because it includes OpenLayers and
   the EOX Elements.
 - **Why a labextension at all.** The widget is not a JupyterLab plugin and
-  cannot request `ITranslator`. The labextension's only stage-1 job is to
-  load the `jstex` translation bundle and publish it for the widget (§10).
+  cannot request `ITranslator`. In stage 1 the labextension loads the `jstex`
+  translation bundle and publishes it for the widget (§14), and registers the
+  extension icon: STEX's logo as the LabIcon `jupyterlab-jstex:logo`
+  (`src/icon.ts`, exported as `stexIcon` for the stage-3 panel/launcher).
 - **Server extension.** `jstex/routes.py` and `src/request.ts` are the
   extension template's authenticated `/jstex/hello` route. They are kept as
   the scaffold for stage 3's REST backend and are unused by the widget.

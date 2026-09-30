@@ -1,5 +1,5 @@
 {
-    "name": "@jstex/labextension",
+    "name": "jupyterlab-jstex",
     "version": "0.1.0",
     "description": "STEX-light: STAC explorer widget for JupyterLab",
     "keywords": [
@@ -65,6 +65,7 @@
         "@jupyterlab/coreutils": "^6.0.0",
         "@jupyterlab/services": "^7.0.0",
         "@jupyterlab/translation": "^4.0.0",
+        "@jupyterlab/ui-components": "^4.0.0",
         "vanilla-calendar-pro": "^3.4.0"
     },
     "devDependencies": {

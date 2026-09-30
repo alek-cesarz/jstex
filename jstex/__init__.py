@@ -28,7 +28,7 @@ def __getattr__(name: str) -> Any:
 
 
 def _jupyter_labextension_paths():
-    return [{"src": "labextension", "dest": "@jstex/labextension"}]
+    return [{"src": "labextension", "dest": "jupyterlab-jstex"}]
 
 
 def _jupyter_server_extension_points():

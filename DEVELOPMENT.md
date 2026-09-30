@@ -45,6 +45,14 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
 
 ## Gotchas
 
+- Names: distribution and labextension are `jupyterlab-jstex`, the import
+  package is `jstex` (`[tool.hatch.build.targets.wheel] packages`), the
+  gettext domain is `jstex`. Switching an old dev env: `pip uninstall jstex`,
+  delete `share/jupyter/labextensions/@jstex`, then `pip install -e .` and
+  `jupyter labextension develop . --overwrite`.
+- The GitHub social preview (`docs/images/social-preview.png`, 1280×640) has
+  no API: upload it in the repo's Settings → General → Social preview.
+
 - `vanilla-calendar-pro` ≥ 3.2 needs `extensions: [time]` for
   `selectionTimeMode` (STEX pins 3.1 and does not); without it opening the
   calendar throws. Its popup lives in `<body>`, outside `.jstex`: style it via

@@ -26,6 +26,6 @@ describe('labextension i18n plugin', () => {
     publishTranslations(null);
     expect((globalThis as Record<symbol, unknown>)[I18N_KEY]).toBeUndefined();
     expect(plugin.autoStart).toBe(true);
-    expect(plugin.id).toBe('@jstex/labextension:i18n');
+    expect(plugin.id).toBe('jupyterlab-jstex:i18n');
   });
 });
