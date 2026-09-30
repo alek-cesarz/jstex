@@ -79,3 +79,14 @@ describe('filters section', () => {
     expect(el.querySelectorAll('[data-row]')).toHaveLength(0);
   });
 });
+
+describe('filters section — long titles', () => {
+  it('the field select carries the full field title as a tooltip', async () => {
+    const { el } = await ready();
+    q(el, 'add').click();
+    expect(
+      (el.querySelector('[data-row] [data-f="field"]') as HTMLSelectElement)
+        .title
+    ).toBe('Cloud cover (eo:cloud_cover)');
+  });
+});

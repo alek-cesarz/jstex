@@ -49,7 +49,8 @@ function rowHtml(row: FilterRow, fields: FilterField[]): string {
     .join('');
   const ops = operatorsFor(field?.type ?? 'string');
   return `<div class="jstex-filter" data-row="${row.id}">
-    <select class="jstex-control" data-f="field" aria-label="${escapeHtml(S.field)}">${fieldOptions}</select>
+    <select class="jstex-control" data-f="field" aria-label="${escapeHtml(S.field)}"
+      title="${escapeHtml(field ? `${field.title} (${field.name})` : row.field)}">${fieldOptions}</select>
     <select class="jstex-control" data-f="op" aria-label="${escapeHtml(S.operator)}">${ops.map(o => option(o, o === 'IN' ? 'in' : o, o === row.op)).join('')}</select>
     ${valueControl(row, field)}
     <button type="button" class="jstex-icon" data-remove="${row.id}" title="${escapeHtml(S.removeFilter)}" aria-label="${escapeHtml(S.removeFilter)}">${ICON.close}</button>

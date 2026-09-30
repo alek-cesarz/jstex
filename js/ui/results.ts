@@ -32,7 +32,7 @@ export function mountResults(
   const renderRows = (state: ExplorerState) => {
     const withCloud = state.items.some(i => cloudCover(i) !== undefined);
     ref('head').innerHTML =
-      `<tr><th></th><th>${S.colId}</th><th>${S.colDatetime}</th><th>${S.colCollection}</th>${
+      `<tr><th></th><th class="jstex-col-id">${S.colId}</th><th>${S.colDatetime}</th><th class="jstex-col-collection">${S.colCollection}</th>${
         withCloud ? `<th class="jstex-num">${S.colCloud}</th>` : ''
       }</tr>`;
     body.innerHTML = state.items
@@ -40,9 +40,9 @@ export function mountResults(
         const cc = cloudCover(item);
         return `<tr data-id="${escapeHtml(item.id)}">
           <td><input type="checkbox" data-toggle="${escapeHtml(item.id)}" aria-label="${escapeHtml(S.select)}"></td>
-          <td class="jstex-mono" title="${escapeHtml(item.id)}">${escapeHtml(shortId(item.id))}</td>
+          <td class="jstex-mono jstex-col-id" title="${escapeHtml(item.id)}">${escapeHtml(shortId(item.id))}</td>
           <td>${escapeHtml(formatItemDate(item))}</td>
-          <td>${escapeHtml(item.collection ?? '')}</td>
+          <td class="jstex-col-collection">${escapeHtml(item.collection ?? '')}</td>
           ${withCloud ? `<td class="jstex-num">${cc === undefined ? '' : cc.toFixed(1)}</td>` : ''}
         </tr>`;
       })

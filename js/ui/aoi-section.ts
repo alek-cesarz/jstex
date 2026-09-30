@@ -27,7 +27,7 @@ export function mountAoiSection(
   actions: AoiActions
 ): () => void {
   el.innerHTML = `
-    <div class="jstex-row jstex-wrap">
+    <div class="jstex-aoi-tools">
       <button type="button" class="jstex-control" data-draw="Polygon">${ICON.polygon}<span>${escapeHtml(S.polygon)}</span></button>
       <button type="button" class="jstex-control" data-draw="Box">${ICON.box}<span>${escapeHtml(S.box)}</span></button>
       <button type="button" class="jstex-control" data-ref="upload" title="${escapeHtml(S.uploadTitle)}">${ICON.upload}<span>${escapeHtml(S.upload)}</span></button>

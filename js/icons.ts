@@ -34,5 +34,20 @@ export const ICON = {
     `<rect x="2.5" y="3.5" width="11" height="10" rx="1.2" ${stroke}/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" ${stroke}/>`
   ),
   filter: svg(`<path d="M2.5 3.5h11L9.3 8.6v4.2l-2.6-1.3V8.6z" ${stroke}/>`),
-  plus: svg(`<path d="M8 3v10M3 8h10" ${stroke}/>`)
+  plus: svg(`<path d="M8 3v10M3 8h10" ${stroke}/>`),
+  copy: svg(
+    `<rect x="5.5" y="5.5" width="8" height="8" rx="1.2" ${stroke}/><path d="M10.5 3.5v-.3c0-.7-.5-1.2-1.2-1.2H3.7c-.7 0-1.2.5-1.2 1.2v5.6c0 .7.5 1.2 1.2 1.2h.3" ${stroke}/>`
+  ),
+  link: svg(
+    `<path d="M6.8 9.2a2.8 2.8 0 0 0 4 0l2-2a2.8 2.8 0 0 0-4-4l-.7.7M9.2 6.8a2.8 2.8 0 0 0-4 0l-2 2a2.8 2.8 0 0 0 4 4l.7-.7" ${stroke}/>`
+  ),
+  code: svg(
+    `<path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5" ${stroke}/>`
+  ),
+  clock: svg(
+    `<circle cx="8" cy="8" r="6" ${stroke}/><path d="M8 4.8V8l2.2 1.4" ${stroke}/>`
+  ),
+  cloud: svg(
+    `<path d="M4.6 12.5h7a2.9 2.9 0 0 0 .3-5.8 3.9 3.9 0 0 0-7.5.9 2.5 2.5 0 0 0 .2 4.9z" ${stroke}/>`
+  )
 };

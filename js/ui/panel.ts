@@ -9,6 +9,7 @@ import { escapeHtml } from '../format';
 import { filterSummary } from '../filters';
 import { ICON } from '../icons';
 import type { Store } from '../store';
+import { scrollWithin } from '../selection';
 import { S } from '../strings';
 import type { ExplorerState, SectionId } from '../types';
 import { aoiSummary, mountAoiSection } from './aoi-section';
@@ -37,7 +38,7 @@ export function mountPanel(
           <button type="button" class="jstex-control jstex-primary jstex-grow" data-ref="search">${ICON.search}<span>${escapeHtml(S.search)}</span></button>
           <button type="button" class="jstex-control" data-ref="cancel">${escapeHtml(S.cancel)}</button>
         </div>
-        <div class="jstex-hint" data-ref="reason"></div>
+        <button type="button" class="jstex-hint jstex-reason" data-ref="reason"></button>
         <div class="jstex-hint jstex-hint--icon" data-ref="auth">${ICON.info}<span data-ref="authText"></span></div>
         <div class="jstex-error" role="alert" data-ref="errorBanner">
           <span data-ref="errorText"></span>
@@ -155,6 +156,22 @@ export function mountPanel(
   ref('collapse').addEventListener('click', () =>
     actions.setPanelCollapsed(true)
   );
+  // "Why is Search disabled?" — jump to the problem: open its section and
+  // scroll it into view inside the panel (a filter error may be scrolled away).
+  ref('reason').addEventListener('click', () => {
+    const s = store.get();
+    const id: SectionId = s.query.collections.length
+      ? 'filters'
+      : 'collections';
+    if (!s.sections[id]) actions.toggleSection(id);
+    const invalidRow =
+      id === 'filters'
+        ? scroll
+            .querySelector<HTMLElement>('.jstex-invalid')
+            ?.closest<HTMLElement>('[data-row]')
+        : null;
+    scrollWithin(scroll, invalidRow ?? sections[id].el);
+  });
 
   update(store.get());
   const unsubscribe = store.subscribe(update);

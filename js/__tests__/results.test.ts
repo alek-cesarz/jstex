@@ -39,3 +39,12 @@ describe('results', () => {
     expect(q(el, 'empty').textContent).toBe('No items match this query.');
   });
 });
+
+describe('results — narrow layout support', () => {
+  it('collection cells carry a class so narrow widgets can hide the column', () => {
+    const { el, store, actions } = setup();
+    mountResults(el, store, actions);
+    store.set({ items: [item('a')], searched: true });
+    expect(el.querySelectorAll('.jstex-col-collection')).toHaveLength(2); // th + td
+  });
+});

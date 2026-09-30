@@ -88,3 +88,26 @@ describe('search panel', () => {
     expect(actions.search).toHaveBeenCalled();
   });
 });
+
+describe('search panel — jump to the problem', () => {
+  it('clicking the reason opens the filters section when a filter is invalid', async () => {
+    const { el, store, actions } = setupView();
+    mountPanel(el, store, actions);
+    actions.setQuery({ collections: ['c1'] });
+    await actions.loadFields();
+    actions.addFilterRow();
+    actions.updateFilterRow(store.get().filterRows[0].id, { value: 'x' });
+    actions.toggleSection('filters');
+    expect(store.get().sections.filters).toBe(false);
+    q(el, 'reason').click();
+    expect(store.get().sections.filters).toBe(true);
+  });
+
+  it('clicking the reason opens the collections section when none is selected', () => {
+    const { el, store, actions } = setupView();
+    mountPanel(el, store, actions);
+    actions.toggleSection('collections');
+    q(el, 'reason').click();
+    expect(store.get().sections.collections).toBe(true);
+  });
+});

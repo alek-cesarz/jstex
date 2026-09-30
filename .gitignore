@@ -129,3 +129,4 @@ dmypy.json
 
 .worktrees/
 jstex/static/
+ui-tests/design-review/

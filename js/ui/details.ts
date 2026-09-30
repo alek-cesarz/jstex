@@ -1,7 +1,14 @@
 /** Item details: header copy actions, Prev/Next, Properties / Assets / Links. */
 import type { Actions } from '../actions';
 import { copyText } from '../clipboard';
-import { escapeHtml, formatItemDate, formatValue, selfHref } from '../format';
+import {
+  cloudCover,
+  escapeHtml,
+  formatItemDate,
+  formatValue,
+  selfHref
+} from '../format';
+import { ICON } from '../icons';
 import { neighbour } from '../selection';
 import { pythonItemSnippet } from '../snippets';
 import type { Store } from '../store';
@@ -11,23 +18,32 @@ import type { ExplorerState, StacAsset, StacItem } from '../types';
 type DetailsActions = Pick<Actions, 'activate'>;
 type Section = 'properties' | 'assets' | 'links';
 
-const copyBtn = (text: string, label = S.copy) =>
-  `<button type="button" class="jstex-copy" data-copy="${escapeHtml(text)}">${escapeHtml(label)}</button>`;
+const copyBtn = (text: string) =>
+  `<button type="button" class="jstex-icon jstex-copy" data-copy="${escapeHtml(text)}" title="${escapeHtml(S.copy)}" aria-label="${escapeHtml(S.copy)}">${ICON.copy}</button>`;
 
-function assetRow(key: string, a: StacAsset): string {
-  const meta = [a.title, a.type, a.roles?.join(', ')]
+const actionBtn = (text: string, label: string, icon: string) =>
+  `<button type="button" class="jstex-control jstex-btn-sm" data-copy="${escapeHtml(text)}">${icon}<span>${escapeHtml(label)}</span></button>`;
+
+const hrefLine = (href: string, scheme = '') =>
+  `<div class="jstex-href">${scheme ? `<span class="jstex-tag">${escapeHtml(scheme)}</span>` : ''}<span class="jstex-mono jstex-href__url">${escapeHtml(href)}</span>${copyBtn(href)}</div>`;
+
+function assetBlock(key: string, a: StacAsset): string {
+  const tags = [a.type, ...(a.roles ?? [])]
     .filter(Boolean)
-    .map(x => escapeHtml(x))
-    .join(' · ');
+    .map(x => `<span class="jstex-tag">${escapeHtml(x)}</span>`)
+    .join('');
   const alternates = Object.entries(a.alternate ?? {})
     .filter(([, alt]) => alt?.href)
-    .map(
-      ([name, alt]) =>
-        `<div class="jstex-href"><span class="jstex-muted">${escapeHtml(name)}:</span> <span class="jstex-mono">${escapeHtml(alt.href!)}</span> ${copyBtn(alt.href!)}</div>`
-    )
+    .map(([name, alt]) => hrefLine(alt.href!, name))
     .join('');
-  return `<tr><td class="jstex-mono">${escapeHtml(key)}</td><td>${meta}</td>
-    <td><div class="jstex-href"><span class="jstex-mono">${escapeHtml(a.href)}</span> ${copyBtn(a.href)}</div>${alternates}</td></tr>`;
+  return `<div class="jstex-asset">
+    <div class="jstex-asset__head"><span class="jstex-tag jstex-tag--key jstex-mono">${escapeHtml(key)}</span>${
+      a.title
+        ? `<span class="jstex-asset__title">${escapeHtml(a.title)}</span>`
+        : ''
+    }${tags}</div>
+    ${hrefLine(a.href)}${alternates}
+  </div>`;
 }
 
 function renderItem(
@@ -40,45 +56,64 @@ function renderItem(
   const props = Object.keys(item.properties ?? {}).sort();
   const assets = Object.entries(item.assets ?? {});
   const links = item.links ?? [];
-  const sec = (name: Section, title: string, n: number, rows: string) =>
+  const cc = cloudCover(item);
+  const sec = (name: Section, title: string, n: number, body: string) =>
     `<details class="jstex-sec" data-section="${name}"${open[name] ? ' open' : ''}>
-      <summary>${escapeHtml(title)} (${n})</summary><table class="jstex-table jstex-kv">${rows}</table></details>`;
+      <summary class="jstex-sec__head"><span class="jstex-sec__caret">${ICON.chevronRight}</span>${escapeHtml(title)}<span class="jstex-count">${n}</span></summary>
+      <div class="jstex-sec__body">${body}</div></details>`;
+  const kvRow = (key: string, value: string, copy: string) =>
+    `<div class="jstex-kv__row"><dt class="jstex-mono">${escapeHtml(key)}</dt><dd>${value}</dd>${copyBtn(copy)}</div>`;
   return `
-    <div class="jstex-details__nav">
-      <strong>${escapeHtml(S.details)}</strong>
-      <button type="button" data-nav="-1"${index === 0 ? ' disabled' : ''}>${escapeHtml(S.prev)}</button>
-      <span class="jstex-muted">${index + 1} / ${total}</span>
-      <button type="button" data-nav="1"${index === total - 1 ? ' disabled' : ''}>${escapeHtml(S.next)}</button>
+    <div class="jstex-details__bar">
+      <span class="jstex-details__label">${escapeHtml(S.details)}</span>
       <span class="jstex-toast" data-ref="toast" hidden></span>
+      <span class="jstex-details__nav">
+        <button type="button" class="jstex-control jstex-btn-sm" data-nav="-1"${index === 0 ? ' disabled' : ''}>${escapeHtml(S.prev)}</button>
+        <span class="jstex-muted">${index + 1} / ${total}</span>
+        <button type="button" class="jstex-control jstex-btn-sm" data-nav="1"${index === total - 1 ? ' disabled' : ''}>${escapeHtml(S.next)}</button>
+      </span>
     </div>
-    <h3 class="jstex-mono jstex-details__id">${escapeHtml(item.id)}</h3>
-    <div class="jstex-muted">${escapeHtml(item.collection ?? '')} · ${escapeHtml(formatItemDate(item))}</div>
-    <div class="jstex-details__actions">
-      ${self ? copyBtn(self, S.copySelf) : ''}${copyBtn(item.id, S.copyId)}${self ? copyBtn(pythonItemSnippet(self), S.copyPython) : ''}
+    <div class="jstex-details__head">
+      <h3 class="jstex-mono jstex-details__id">${escapeHtml(item.id)}</h3>
+      <div class="jstex-details__meta">
+        ${item.collection ? `<span class="jstex-tag">${escapeHtml(item.collection)}</span>` : ''}
+        <span class="jstex-meta">${ICON.clock}${escapeHtml(formatItemDate(item))}</span>
+        ${cc === undefined ? '' : `<span class="jstex-meta">${ICON.cloud}${escapeHtml(cc.toFixed(1))} %</span>`}
+      </div>
+      <div class="jstex-details__actions">
+        ${self ? actionBtn(self, S.copySelf, ICON.link) : ''}${actionBtn(item.id, S.copyId, ICON.copy)}${
+          self
+            ? actionBtn(pythonItemSnippet(self), S.copyPython, ICON.code)
+            : ''
+        }
+      </div>
+      <p class="jstex-note">${ICON.info}<span>${escapeHtml(S.pythonHint)}</span></p>
     </div>
-    <p class="jstex-hint">${escapeHtml(S.pythonHint)}</p>
     ${sec(
       'properties',
       S.properties,
       props.length,
-      props
+      `<dl class="jstex-kv">${props
         .map(k => {
           const v = formatValue(item.properties[k]);
-          return `<tr><td class="jstex-mono">${escapeHtml(k)}</td><td class="jstex-val">${escapeHtml(v)}</td><td>${copyBtn(v)}</td></tr>`;
+          return kvRow(k, `<span class="jstex-val">${escapeHtml(v)}</span>`, v);
         })
-        .join('')
+        .join('')}</dl>`
     )}
-    ${sec('assets', S.assets, assets.length, assets.map(([k, a]) => assetRow(k, a)).join(''))}
+    ${sec('assets', S.assets, assets.length, assets.map(([k, a]) => assetBlock(k, a)).join(''))}
     ${sec(
       'links',
       S.links,
       links.length,
-      links
-        .map(
-          l =>
-            `<tr><td class="jstex-mono">${escapeHtml(l.rel)}</td><td><div class="jstex-href"><span class="jstex-mono">${escapeHtml(l.href)}</span> ${copyBtn(l.href)}</div></td></tr>`
+      `<dl class="jstex-kv">${links
+        .map(l =>
+          kvRow(
+            l.rel,
+            `<span class="jstex-mono jstex-href__url">${escapeHtml(l.href)}</span>`,
+            l.href
+          )
         )
-        .join('')
+        .join('')}</dl>`
     )}`;
 }
 
@@ -93,7 +128,8 @@ export function mountDetails(
     assets: true,
     links: true
   };
-  el.innerHTML = '<section class="jstex-details" data-ref="root"></section>';
+  el.innerHTML =
+    '<section class="jstex-details jstex-card" data-ref="root"></section>';
   const root = el.querySelector('[data-ref="root"]') as HTMLElement;
 
   const update = (state: ExplorerState, prev: ExplorerState | null) => {

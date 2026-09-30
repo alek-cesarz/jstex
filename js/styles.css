@@ -181,7 +181,12 @@
 
 /* filters */
 .jstex .jstex-filter-rows { display: flex; flex-direction: column; gap: 6px; }
-.jstex .jstex-filter { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(52px, 0.6fr) minmax(0, 1fr) auto; gap: 4px; align-items: center; }
+/* filter rows: field on its own line (titles are long), then operator | value | remove */
+.jstex .jstex-filter {
+  display: grid; grid-template-columns: minmax(64px, 0.45fr) minmax(0, 1fr) auto; gap: 4px; align-items: center;
+  padding-bottom: 6px; border-bottom: 1px dashed var(--jstex-border);
+}
+.jstex .jstex-filter [data-f='field'] { grid-column: 1 / -1; }
 .jstex .jstex-filter [data-err] { grid-column: 1 / -1; }
 
 /* errors */
@@ -218,18 +223,72 @@
 .jstex .jstex-results__scroll tr.jstex-active { box-shadow: inset 3px 0 0 var(--jstex-accent); background: var(--jstex-bg2); }
 .jstex .jstex-empty { padding: 8px; }
 
-/* details */
-.jstex .jstex-details__nav { display: flex; gap: 8px; align-items: center; }
-.jstex .jstex-details__id { margin: 6px 0 2px; font-size: 1.05em; word-break: break-all; }
-.jstex .jstex-details__actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-.jstex .jstex-hint { color: var(--jstex-muted); margin: 4px 0 8px; }
-.jstex .jstex-sec { margin: 6px 0; }
-.jstex .jstex-sec summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
-.jstex .jstex-kv td:first-child { white-space: nowrap; }
-.jstex .jstex-val, .jstex .jstex-href .jstex-mono { word-break: break-all; }
-.jstex .jstex-href { display: flex; gap: 6px; align-items: baseline; }
-.jstex .jstex-copy { padding: 0 6px; font-size: 0.9em; }
-.jstex .jstex-toast { color: var(--jstex-accent); }
+/* item details: a card below the results */
+.jstex .jstex-card { border: 1px solid var(--jstex-border); border-radius: 6px; background: var(--jstex-bg); overflow: hidden; }
+.jstex .jstex-card > p.jstex-muted { margin: 0; padding: 12px; }
+.jstex .jstex-btn-sm { height: 26px; padding: 0 8px; gap: 5px; font-size: 0.92em; }
+.jstex .jstex-btn-sm .jstex-svg { width: 14px; height: 14px; }
+.jstex .jstex-details__bar {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  background: var(--jstex-bg2); border-bottom: 1px solid var(--jstex-border);
+}
+.jstex .jstex-details__label { font-weight: 600; }
+.jstex .jstex-details__nav { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.jstex .jstex-toast { color: var(--jstex-accent); font-weight: 600; }
+.jstex .jstex-details__head { padding: 10px 12px 6px; display: flex; flex-direction: column; gap: 8px; }
+.jstex .jstex-details__id { margin: 0; font-size: 1.15em; font-weight: 600; word-break: break-all; }
+.jstex .jstex-details__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; color: var(--jstex-muted); }
+.jstex .jstex-meta { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.jstex .jstex-meta .jstex-svg { width: 14px; height: 14px; }
+.jstex .jstex-details__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.jstex .jstex-note {
+  display: flex; align-items: center; gap: 6px; margin: 0; padding: 6px 8px; border-radius: 4px;
+  background: var(--jstex-bg2); color: var(--jstex-muted); font-size: 0.92em;
+}
+.jstex .jstex-tag {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 10px;
+  background: var(--jstex-bg2); border: 1px solid var(--jstex-border); color: var(--jstex-fg); font-size: 0.85em; white-space: nowrap;
+}
+.jstex .jstex-tag--key { background: color-mix(in srgb, var(--jstex-accent) 14%, transparent); border-color: transparent; font-weight: 600; }
+.jstex .jstex-sec { border-top: 1px solid var(--jstex-border); }
+.jstex .jstex-sec > summary { list-style: none; }
+.jstex .jstex-sec > summary::-webkit-details-marker { display: none; }
+.jstex .jstex-sec__head { display: flex; align-items: center; gap: 6px; padding: 8px 12px; cursor: pointer; font-weight: 600; }
+.jstex .jstex-sec__head:hover { background: var(--jstex-bg2); }
+.jstex .jstex-sec__caret .jstex-svg { width: 12px; height: 12px; transition: transform 0.12s; }
+.jstex .jstex-sec[open] .jstex-sec__caret .jstex-svg { transform: rotate(90deg); }
+.jstex .jstex-count { margin-left: 2px; padding: 0 6px; border-radius: 9px; background: var(--jstex-bg2); color: var(--jstex-muted); font-size: 0.85em; font-weight: 600; }
+.jstex .jstex-sec__body { padding: 0 12px 10px; }
+.jstex .jstex-kv { margin: 0; display: grid; grid-template-columns: minmax(120px, max-content) minmax(0, 1fr) auto; }
+.jstex .jstex-kv__row { display: contents; }
+.jstex .jstex-kv__row > * { padding: 4px 8px 4px 0; border-bottom: 1px solid var(--jstex-border); margin: 0; min-width: 0; }
+.jstex .jstex-kv__row:last-child > * { border-bottom: 0; }
+.jstex .jstex-kv dt { color: var(--jstex-muted); font-size: 0.9em; }
+.jstex .jstex-kv .jstex-copy { justify-self: end; align-self: start; }
+.jstex .jstex-val { word-break: break-word; }
+.jstex .jstex-copy { width: 24px; height: 24px; opacity: 0.55; }
+.jstex .jstex-copy:hover, .jstex .jstex-copy:focus-visible { opacity: 1; }
+.jstex .jstex-copy .jstex-svg { width: 14px; height: 14px; }
+.jstex .jstex-asset { padding: 8px 0; border-bottom: 1px solid var(--jstex-border); display: flex; flex-direction: column; gap: 4px; }
+.jstex .jstex-asset:last-child { border-bottom: 0; }
+.jstex .jstex-asset__head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.jstex .jstex-asset__title { font-weight: 600; }
+.jstex .jstex-href { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.jstex .jstex-href__url { flex: 1; min-width: 0; word-break: break-all; font-size: 0.9em; }
+
+/* search-panel details: area tools, "why disabled" line */
+.jstex .jstex-aoi-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.jstex .jstex-aoi-tools .jstex-control { justify-content: center; gap: 4px; padding: 0 4px; }
+.jstex .jstex-reason { display: block; width: 100%; padding: 0; border: 0; background: transparent; font: inherit; font-size: 0.92em; text-align: left; cursor: pointer; }
+.jstex .jstex-reason:hover { text-decoration: underline; }
+
+/* results: one line per cell; narrow widgets drop the collection column */
+.jstex .jstex-results__scroll td { white-space: nowrap; }
+.jstex .jstex-results__scroll td.jstex-col-id { max-width: 0; width: 45%; overflow: hidden; text-overflow: ellipsis; }
+@container (max-width: 600px) {
+  .jstex .jstex-col-collection { display: none; }
+  .jstex .jstex-results__scroll td.jstex-col-id { width: 55%; }
+}
 
 /* footprint popup (overlapping items), same role as STEX's .stex-footprint-popup */
 .jstex .jstex-fp {

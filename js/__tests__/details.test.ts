@@ -66,3 +66,20 @@ describe('details', () => {
     expect(el.textContent).toContain('Copy id');
   });
 });
+
+describe('details header and copy buttons', () => {
+  it('shows collection, date and cloud cover; row copy buttons are labelled icon buttons', () => {
+    const { el, store, actions } = setup();
+    mountDetails(el, store, actions);
+    store.set({ items: [item('a')], activeId: 'a' });
+    const meta = el.querySelector('.jstex-details__meta')!.textContent!;
+    expect(meta).toContain('sentinel-2-l2a');
+    expect(meta).toContain('2024-07-12 10:30Z');
+    expect(meta).toContain('4.1');
+    const rowCopy = el.querySelector(
+      '.jstex-kv [data-copy]'
+    ) as HTMLButtonElement;
+    expect(rowCopy.getAttribute('aria-label')).toBe('Copy');
+    expect(rowCopy.textContent!.trim()).toBe('');
+  });
+});
