@@ -82,6 +82,18 @@ export function bindModel(
         key === 'query'
           ? { ...DEFAULT_QUERY, ...(value as object) }
           : (value ?? (key === 'activeId' ? null : value));
+      if (key === 'query') {
+        // `ex.query = …` from Python: filters that differ from what the
+        // current rows commit to replace the rows, so they show in the
+        // builder and survive the next field reload.
+        const incoming = (patch.query as QueryStateDict).filters;
+        if (
+          JSON.stringify(incoming) !== JSON.stringify(store.get().query.filters)
+        ) {
+          let id = Math.max(0, ...store.get().filterRows.map(r => r.id));
+          patch.filterRows = rowsFromFilters(incoming, () => ++id);
+        }
+      }
       store.set(patch);
     };
     model.on(`change:${trait}`, cb);

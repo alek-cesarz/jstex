@@ -55,7 +55,6 @@ export function createActions(
   backend: Backend,
   S: Strings
 ): Actions {
-  let nextRowId = Math.max(0, ...store.get().filterRows.map(r => r.id)) + 1;
   const push = (trait: string, value: unknown) => {
     model.set(trait, value);
     model.save_changes();
@@ -123,7 +122,8 @@ export function createActions(
     addFilterRow() {
       const first = store.get().fields[0];
       const row: FilterRow = {
-        id: nextRowId++,
+        // Derived from the current rows: rows may also come from Python (bindModel).
+        id: Math.max(0, ...store.get().filterRows.map(r => r.id)) + 1,
         field: first?.name ?? '',
         op: '=',
         value: '',

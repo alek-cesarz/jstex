@@ -451,3 +451,24 @@ describe('snippets and theme', () => {
     expect(custom.basemap.dark.url).toBe('D');
   });
 });
+
+describe('ex.query set from Python', () => {
+  it('rebuilds the filter rows so its filters show and survive a field reload', async () => {
+    const { model, store, actions } = setupView({ query: {} });
+    bindModel(model, store);
+    model.pyset('query', {
+      collections: ['c1'],
+      filters: [{ field: 'eo:cloud_cover', op: '<=', value: 20 }]
+    });
+    expect(store.get().filterRows.map(r => [r.field, r.op, r.value])).toEqual([
+      ['eo:cloud_cover', '<=', '20']
+    ]);
+    await actions.loadFields();
+    expect(store.get().query.filters).toEqual([
+      { field: 'eo:cloud_cover', op: '<=', value: 20 }
+    ]);
+    actions.addFilterRow();
+    const ids = store.get().filterRows.map(r => r.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
