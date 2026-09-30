@@ -45,6 +45,11 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
 
 ## Gotchas
 
+- `vite.config.ts` pins `resolve.conditions` to production: with
+  `NODE_ENV=development` in the shell (as on the dev host), Vite otherwise
+  bundles Lit's development build (slower, "Lit is in dev mode" warnings).
+  `tests/test_bundle.py` guards the built bundle.
+
 - Names: distribution and labextension are `jupyterlab-jstex`, the import
   package is `jstex` (`[tool.hatch.build.targets.wheel] packages`), the
   gettext domain is `jstex`. Switching an old dev env: `pip uninstall jstex`,

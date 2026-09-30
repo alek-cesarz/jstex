@@ -16,6 +16,9 @@ export default defineConfig({
     }
   ],
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },
+  // Vite picks 'development' export conditions whenever NODE_ENV=development is
+  // set in the shell, which bundled Lit's dev build. Pin production.
+  resolve: { conditions: ['module', 'browser', 'production'] },
   build: {
     lib: {
       entry: 'js/widget.ts',
