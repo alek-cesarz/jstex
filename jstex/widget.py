@@ -77,6 +77,8 @@ class Explorer(anywidget.AnyWidget):
     panel_collapsed = traitlets.Bool(False).tag(
         sync=True
     )  # search panel folded to a rail
+    panel_width = traitlets.Int(300).tag(sync=True)  # search panel width (px)
+    map_collapsed = traitlets.Bool(False).tag(sync=True)  # map folded to a rail
 
     def __init__(
         self,

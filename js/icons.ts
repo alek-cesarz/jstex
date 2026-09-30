@@ -33,6 +33,9 @@ export const ICON = {
   calendar: svg(
     `<rect x="2.5" y="3.5" width="11" height="10" rx="1.2" ${stroke}/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" ${stroke}/>`
   ),
+  map: svg(
+    `<path d="M2 4.2 6 2.5l4 1.7 4-1.7v9.3l-4 1.7-4-1.7-4 1.7zM6 2.5v9.3M10 4.2v9.3" ${stroke}/>`
+  ),
   filter: svg(`<path d="M2.5 3.5h11L9.3 8.6v4.2l-2.6-1.3V8.6z" ${stroke}/>`),
   plus: svg(`<path d="M8 3v10M3 8h10" ${stroke}/>`),
   copy: svg(

@@ -124,22 +124,101 @@
 }
 .jstex .jstex-body {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 12px;
+  /* panel | splitter | map. The panel width (dragged, --jstex-panel-w) always
+     leaves the map 320 px, also when the cell gets narrower. */
+  grid-template-columns:
+    clamp(240px, var(--jstex-panel-w, 300px), calc(100% - 332px))
+    12px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   height: var(--jstex-h, 600px);
   min-height: 320px;
   resize: vertical;
   overflow: hidden;
 }
 .jstex .jstex-body--collapsed {
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: 44px 12px minmax(0, 1fr);
+}
+.jstex .jstex-body--map-collapsed {
+  grid-template-columns: minmax(0, 1fr) 12px 44px;
 }
 .jstex .jstex-body__panel {
+  grid-column: 1;
+  grid-row: 1;
   min-height: 0;
   display: flex;
 }
 .jstex .jstex-body__map {
+  grid-column: 3;
+  grid-row: 1;
+  position: relative;
   min-height: 0;
+}
+.jstex .jstex-body__map[hidden] {
+  display: none;
+}
+.jstex .jstex-maprail {
+  grid-column: 3;
+  grid-row: 1;
+}
+.jstex .jstex-maprail[hidden] {
+  display: none;
+}
+.jstex .jstex-maprail__label {
+  writing-mode: vertical-rl;
+  color: var(--jstex-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* splitter between panel and map: drag, arrow keys, double-click resets */
+.jstex .jstex-splitter {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+.jstex .jstex-splitter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+  border-radius: 1px;
+  background: transparent;
+  transition: background 0.12s;
+}
+.jstex .jstex-splitter:hover::before,
+.jstex .jstex-splitter:focus-visible::before,
+.jstex .jstex-body--resizing .jstex-splitter::before {
+  background: var(--jstex-accent);
+}
+.jstex .jstex-splitter--fixed {
+  cursor: default;
+}
+.jstex .jstex-splitter--fixed:hover::before {
+  background: transparent;
+}
+.jstex .jstex-body--resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+.jstex .jstex-body--resizing .jstex-body__map {
+  pointer-events: none;
+}
+
+/* "Hide map" on the map's top-right corner */
+.jstex .jstex-map-hide {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  background: var(--jstex-bg);
+  border: 1px solid var(--jstex-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  color: var(--jstex-fg);
 }
 .jstex .jstex-body__map > .jstex-map-wrap {
   height: 100%;
@@ -589,11 +668,28 @@
 /* narrow cells: panel above the map; no rail (sections fold instead) */
 @container (max-width: 760px) {
   .jstex .jstex-body,
-  .jstex .jstex-body--collapsed {
+  .jstex .jstex-body--collapsed,
+  .jstex .jstex-body--map-collapsed {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    row-gap: 12px;
     height: auto;
     resize: none;
     overflow: visible;
+  }
+  .jstex .jstex-body > * {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .jstex .jstex-splitter {
+    display: none;
+  }
+  .jstex .jstex-maprail {
+    flex-direction: row;
+    padding: 4px 8px;
+  }
+  .jstex .jstex-maprail__label {
+    writing-mode: horizontal-tb;
   }
   .jstex .jstex-panel__scroll {
     overflow: visible;

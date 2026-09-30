@@ -115,6 +115,23 @@ describe('model sync', () => {
     expect(s.status).toBe('idle');
     expect(s.activeId).toBeNull();
     expect(s.canCancel).toBe(true);
+    expect([s.panelWidth, s.mapCollapsed]).toEqual([300, false]);
+  });
+
+  it('panel width and map state come from the model and follow Python', () => {
+    const m = new FakeModel({ panel_width: 420, map_collapsed: true });
+    const store = createStore(stateFromModel(m));
+    expect([store.get().panelWidth, store.get().mapCollapsed]).toEqual([
+      420,
+      true
+    ]);
+    bindModel(m, store);
+    m.pyset('panel_width', 360);
+    m.pyset('map_collapsed', false);
+    expect([store.get().panelWidth, store.get().mapCollapsed]).toEqual([
+      360,
+      false
+    ]);
   });
 
   it('bindModel mirrors Python trait changes', () => {

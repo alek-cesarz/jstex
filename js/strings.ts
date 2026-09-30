@@ -10,6 +10,13 @@ export function createStrings(trans: TranslationBundle) {
     // ── search panel ──
     collapsePanel: trans.__('Collapse search panel'),
     expandPanel: trans.__('Expand search panel'),
+    resizePanel: trans.__(
+      'Resize the search panel (drag, or use the arrow keys)'
+    ),
+    // ── map ──
+    map: trans.__('Map'),
+    hideMap: trans.__('Hide map'),
+    showMap: trans.__('Show map'),
     // collections
     collections: trans.__('Collections'),
     collectionsSearch: trans.__('Search collections…'),

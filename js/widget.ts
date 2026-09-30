@@ -3,8 +3,9 @@
  * store; nothing is module-global, so several explorers (or several views of
  * one explorer) coexist in a notebook.
  *
- * Layout A: search panel | map (same height, drag-resizable together), then
- * results and item details below. Below ~760 px the panel stacks above the map.
+ * Layout A: search panel | splitter | map (same height, drag-resizable
+ * together; see ui/layout.ts), then results and item details below. Below
+ * ~760 px the panel stacks above the map.
  */
 import './define-guard'; // must stay first: see define-guard.ts
 import '@eox/map';
@@ -18,6 +19,7 @@ import { S } from './strings';
 import { isDark, watchTheme } from './theme';
 import type { MinimalModel } from './types';
 import { mountDetails } from './ui/details';
+import { mountLayout } from './ui/layout';
 import { mountMap } from './ui/map';
 import { mountPanel } from './ui/panel';
 import { mountResults } from './ui/results';
@@ -38,27 +40,13 @@ function render({ model, el }: RenderProps): () => void {
   el.appendChild(root);
   const slot = (name: string) =>
     root.querySelector(`[data-slot="${name}"]`) as HTMLElement;
-  const body = root.querySelector('[data-ref="body"]') as HTMLElement;
 
   const store = createStore({ ...stateFromModel(m), dark: isDark() });
   const backend = new CommBackend(m, { onPage: msg => applyPage(store, msg) });
   const actions = createActions(m, store, backend, S);
 
-  const applyLayout = () => {
-    const s = store.get();
-    root.dataset.theme = s.dark ? 'dark' : 'light';
-    body.style.setProperty('--jstex-h', `${s.mapHeight}px`);
-    body.classList.toggle('jstex-body--collapsed', s.panelCollapsed);
-  };
-  applyLayout();
   const stopTheme = watchTheme(() => store.set({ dark: isDark() }));
   const unsubscribe = store.subscribe((s, prev) => {
-    if (
-      s.dark !== prev.dark ||
-      s.mapHeight !== prev.mapHeight ||
-      s.panelCollapsed !== prev.panelCollapsed
-    )
-      applyLayout();
     // Filterable fields follow the collection selection (also when Python sets ex.query).
     if (s.query.collections !== prev.query.collections)
       void actions.loadFields();
@@ -71,6 +59,7 @@ function render({ model, el }: RenderProps): () => void {
 
   const cleanups = [
     bindModel(m, store),
+    mountLayout(root, store, actions),
     mountPanel(slot('panel'), store, actions),
     mountMap(slot('map'), store, actions),
     mountResults(slot('results'), store, actions),

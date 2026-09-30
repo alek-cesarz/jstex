@@ -30,7 +30,11 @@ export interface Actions {
   ): void;
   removeFilterRow(id: number): void;
   toggleSection(id: SectionId): void;
+  /** Panel and map are never both collapsed: collapsing one shows the other. */
   setPanelCollapsed(collapsed: boolean): void;
+  /** `save: false` while dragging; the width is saved to the model on release. */
+  setPanelWidth(width: number, save?: boolean): void;
+  setMapCollapsed(collapsed: boolean): void;
   search(): void;
   cancel(): void;
   dismissError(): void;
@@ -79,6 +83,7 @@ export function createActions(
       });
     },
     setDrawMode(mode) {
+      if (mode && store.get().mapCollapsed) actions.setMapCollapsed(false);
       store.set({ drawMode: mode, aoiError: '' });
     },
     async uploadAoi(file) {
@@ -86,7 +91,8 @@ export function createActions(
       try {
         const geometry = await backend.uploadAoi(await readText(file));
         actions.setAoi(geometry);
-        actions.zoomToAoi();
+        // Zoom without un-hiding a map the user folded away.
+        store.set({ zoomToAoi: store.get().zoomToAoi + 1 });
       } catch (err) {
         store.set({
           aoiError: S.uploadRejected(file.name, (err as Error).message)
@@ -94,6 +100,7 @@ export function createActions(
       }
     },
     zoomToAoi() {
+      if (store.get().mapCollapsed) actions.setMapCollapsed(false);
       store.set({ zoomToAoi: store.get().zoomToAoi + 1 });
     },
     async loadFields() {
@@ -147,8 +154,19 @@ export function createActions(
       store.set({ sections: { ...sections, [id]: !sections[id] } });
     },
     setPanelCollapsed(collapsed) {
+      if (collapsed && store.get().mapCollapsed) actions.setMapCollapsed(false);
       store.set({ panelCollapsed: collapsed });
       push('panel_collapsed', collapsed);
+    },
+    setPanelWidth(width, save = true) {
+      store.set({ panelWidth: width });
+      if (save) push('panel_width', width);
+    },
+    setMapCollapsed(collapsed) {
+      if (collapsed && store.get().panelCollapsed)
+        actions.setPanelCollapsed(false);
+      store.set({ mapCollapsed: collapsed });
+      push('map_collapsed', collapsed);
     },
     search() {
       store.set({ error: '', drawMode: null });

@@ -53,6 +53,8 @@ export function stateFromModel(model: MinimalModel): ExplorerState {
     fieldsError: '',
     filterRows: rowsFromFilters(query.filters ?? [], () => ++rowId),
     panelCollapsed: model.get('panel_collapsed') === true,
+    panelWidth: (model.get('panel_width') as number) || 300,
+    mapCollapsed: model.get('map_collapsed') === true,
     sections: { collections: true, dates: true, aoi: true, filters: true }
   };
 }
@@ -66,7 +68,9 @@ const TRAITS: Array<[string, keyof ExplorerState]> = [
   ['auth_source', 'authSource'],
   ['can_cancel', 'canCancel'],
   ['map_height', 'mapHeight'],
-  ['panel_collapsed', 'panelCollapsed']
+  ['panel_collapsed', 'panelCollapsed'],
+  ['panel_width', 'panelWidth'],
+  ['map_collapsed', 'mapCollapsed']
 ];
 
 /** Mirror trait changes made in Python into the store. Returns an unbind function. */

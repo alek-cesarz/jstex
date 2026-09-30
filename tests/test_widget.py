@@ -278,6 +278,12 @@ def test_panel_collapsed_defaults_to_open():
     assert make(FakeBackend())[0].panel_collapsed is False
 
 
+def test_layout_traits_default_and_sync():
+    ex = make(FakeBackend())[0]
+    assert (ex.panel_width, ex.map_collapsed) == (300, False)
+    assert {"panel_width", "map_collapsed"} <= set(ex.keys)
+
+
 class Boom(FakeBackend):
     def list_collections(self):
         raise RuntimeError("unexpected")

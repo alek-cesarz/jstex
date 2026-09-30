@@ -125,6 +125,10 @@ export interface ExplorerState {
   fieldsError: string;
   filterRows: FilterRow[];
   panelCollapsed: boolean;
+  /** Search panel width in px (drag the splitter); clamped by the layout. */
+  panelWidth: number;
+  /** Map folded to a rail; never together with panelCollapsed. */
+  mapCollapsed: boolean;
   sections: Record<SectionId, boolean>;
 }
 
