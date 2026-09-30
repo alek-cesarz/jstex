@@ -7,13 +7,19 @@ test.describe('feasibility spikes', () => {
     await page.notebook.run();
     const map = page.locator('.jp-OutputArea-output .jstex eox-map');
     await expect(map).toBeVisible({ timeout: 30000 });
-    await expect(map.locator('canvas').first()).toBeAttached({ timeout: 30000 });
+    await expect(map.locator('canvas').first()).toBeAttached({
+      timeout: 30000
+    });
     // Re-running the cell re-evaluates the bundle: the define guard must keep it working.
     await page.notebook.runCell(0);
-    await expect(page.locator('.jp-OutputArea-output .jstex eox-map canvas').first()).toBeAttached({ timeout: 30000 });
+    await expect(
+      page.locator('.jp-OutputArea-output .jstex eox-map canvas').first()
+    ).toBeAttached({ timeout: 30000 });
   });
 
-  test('messages and trait updates sent from a worker thread arrive', async ({ page }) => {
+  test('messages and trait updates sent from a worker thread arrive', async ({
+    page
+  }) => {
     await page.notebook.createNew();
     const code = [
       'import anywidget, threading, time, traitlets',
@@ -27,7 +33,7 @@ test.describe('feasibility spikes', () => {
       'def work():',
       '    for n in range(1, 51):',
       '        time.sleep(0.02); t.send({"n": n}); t.v = n',
-      'threading.Thread(target=work, daemon=True).start()',
+      'threading.Thread(target=work, daemon=True).start()'
     ].join('\n');
     // One line + `t`: the notebook editor auto-indents typed continuation lines.
     await page.notebook.setCell(0, 'code', `exec(${JSON.stringify(code)})\nt`);
