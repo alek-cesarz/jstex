@@ -11,15 +11,15 @@ jlpm build:widget          # after every change under js/
 
 ## Commands
 
-| Command                                             | What                                                      |
-| --------------------------------------------------- | --------------------------------------------------------- |
-| `pytest -q tests`                                   | Python unit tests (backend, auth, codec, widget protocol) |
-| `jlpm vitest run`                                   | Front-end unit tests (jsdom)                              |
-| `npx tsc -p js/tsconfig.json`                       | Typecheck the widget                                      |
-| `ruff check jstex tests && ruff format jstex tests` | Python lint/format                                        |
-| `jlpm lint`                                         | Template lint for the labextension + prettier             |
-| `cd ui-tests && jlpm playwright test`               | Galata e2e (starts `fake_stac.py` + JupyterLab)           |
-| `python -m build`                                   | Wheel with the prebuilt labextension and widget bundle    |
+| Command                                             | What                                                            |
+| --------------------------------------------------- | --------------------------------------------------------------- |
+| `pytest -q tests`                                   | Python unit tests (backend, auth, codec, widget protocol)       |
+| `jlpm vitest run`                                   | Front-end unit tests (jsdom)                                    |
+| `npx tsc -p js/tsconfig.json`                       | Typecheck the widget                                            |
+| `ruff check jstex tests && ruff format jstex tests` | Python lint/format                                              |
+| `jlpm lint`                                         | Template lint for the labextension + prettier                   |
+| `cd ui-tests && jlpm playwright test`               | Galata e2e (starts `fake_stac.py` + JupyterLab)                 |
+| `jlpm build:prod && python -m build --wheel`        | Wheel with a fresh labextension and widget bundle (see Gotchas) |
 
 ## Architecture
 
@@ -72,6 +72,16 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
   template ignores `*.pot`/`*.mo`).
 - Changing `eox-drawtools`' `type` rebuilds its draw interaction
   asynchronously; `js/ui/map.ts` starts drawing after `updateComplete`.
+- **Local wheels:** `python -m build` skips the whole front-end build when
+  `jstex/labextension/static/style.js` exists (the template's
+  `skip-if-exists`, so an sdist builds without Node) and silently packages
+  whatever `jstex/static/widget.js` is in the tree. Build a local wheel with
+  `jlpm build:prod && python -m build --wheel`. CI and releases start from a
+  clean checkout and are not affected.
+- After `jlpm build:prod`, run `jlpm build` (development labextension) before
+  local Galata runs: with the production labextension from the tree, Galata
+  locally stays on the JupyterLab splash (a plain browser loads fine, and CI's
+  integration tests pass on the production wheel).
 - Galata's default viewport (1024 px) puts the widget in the narrow, stacked
   layout; `explorer.spec.ts` sets 1600 × 1200. Running a cell leaves an empty
   cell below it — address cells by index/count, not `last()`.
