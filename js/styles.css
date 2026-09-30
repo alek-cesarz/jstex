@@ -811,9 +811,35 @@
 }
 .jstex .jstex-details__nav {
   margin-left: auto;
+}
+/* Prev · n / N · Next as one segmented control (stands out on the bar's bg2) */
+.jstex .jstex-pager {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--jstex-border);
+  border-radius: 4px;
+  background: var(--jstex-bg);
+  overflow: hidden;
+}
+.jstex .jstex-pager .jstex-control {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--jstex-fg);
+  gap: 3px;
+}
+.jstex .jstex-pager .jstex-control:hover:not(:disabled) {
+  background: var(--jstex-bg2);
+  color: var(--jstex-accent);
+}
+.jstex .jstex-pager__pos {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  padding: 0 8px;
+  border-left: 1px solid var(--jstex-border);
+  border-right: 1px solid var(--jstex-border);
+  color: var(--jstex-muted);
+  font-size: 0.92em;
   font-variant-numeric: tabular-nums;
 }
 .jstex .jstex-toast {

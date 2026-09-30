@@ -34,6 +34,11 @@ describe('details', () => {
       'details[data-section]'
     );
     expect([...sections].map(d => d.open)).toEqual([false, false, false]);
+    const navs = el.querySelectorAll<HTMLButtonElement>(
+      '.jstex-pager button[data-nav]'
+    );
+    expect([...navs].map(b => b.textContent!.trim())).toEqual(['Prev', 'Next']);
+    expect([...navs].every(b => b.querySelector('svg'))).toBe(true);
     (el.querySelector('button[data-nav="1"]') as HTMLButtonElement).click();
     expect(actions.activate).toHaveBeenCalledWith('b');
     expect(

@@ -123,8 +123,10 @@ export function createStrings(trans: TranslationBundle) {
     // ── item details ──
     details: trans.__('Item details'),
     detailsEmpty: trans.__('Click a result or a footprint to see its details.'),
-    prev: trans.__('◀ Prev'),
-    next: trans.__('Next ▶'),
+    prev: trans.__('Prev'),
+    next: trans.__('Next'),
+    prevItem: trans.__('Previous item'),
+    nextItem: trans.__('Next item'),
     copySelf: trans.__('Copy self link'),
     copyId: trans.__('Copy id'),
     copyPython: trans.__('Copy Python'),

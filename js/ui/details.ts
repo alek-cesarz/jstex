@@ -67,10 +67,10 @@ function renderItem(
     <div class="jstex-details__bar">
       <span class="jstex-details__label">${escapeHtml(S.details)}</span>
       <span class="jstex-toast" data-ref="toast" hidden></span>
-      <span class="jstex-details__nav">
-        <button type="button" class="jstex-control jstex-btn-sm" data-nav="-1"${index === 0 ? ' disabled' : ''}>${escapeHtml(S.prev)}</button>
-        <span class="jstex-muted">${index + 1} / ${total}</span>
-        <button type="button" class="jstex-control jstex-btn-sm" data-nav="1"${index === total - 1 ? ' disabled' : ''}>${escapeHtml(S.next)}</button>
+      <span class="jstex-details__nav jstex-pager">
+        <button type="button" class="jstex-control jstex-btn-sm" data-nav="-1" title="${escapeHtml(S.prevItem)}"${index === 0 ? ' disabled' : ''}>${ICON.chevronLeft}<span>${escapeHtml(S.prev)}</span></button>
+        <span class="jstex-pager__pos">${index + 1} / ${total}</span>
+        <button type="button" class="jstex-control jstex-btn-sm" data-nav="1" title="${escapeHtml(S.nextItem)}"${index === total - 1 ? ' disabled' : ''}><span>${escapeHtml(S.next)}</span>${ICON.chevronRight}</button>
       </span>
     </div>
     <div class="jstex-details__head">
