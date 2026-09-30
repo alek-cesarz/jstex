@@ -3,7 +3,8 @@
  * JupyterLab (body[data-jp-theme-light]), VS Code (body.vscode-dark /
  * vscode-high-contrast), Colab (html[theme=dark]), then the OS preference.
  */
-import type { BasemapConfig } from './types';
+import MapboxStyle from '@eox/map/src/custom/layers/MapboxStyle.js';
+import type { BasemapConfig, BasemapSource } from './types';
 
 export function isDark(doc: Document = document): boolean {
   const body = doc.body;
@@ -51,26 +52,51 @@ export function watchTheme(
   };
 }
 
-/** Only used when Python sent no basemap (e.g. an old kernel). Same defaults as jstex.config / STEX. */
+/** Only used when Python sent no basemap (e.g. an old kernel). Same default as jstex.config. */
+const POSITRON: BasemapSource = {
+  url: 'https://tiles.openfreemap.org/styles/positron',
+  attribution:
+    '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+  kind: 'style'
+};
 export const DEFAULT_BASEMAP: BasemapConfig = {
-  light: {
-    url: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-    attribution: '© OpenStreetMap contributors © CARTO'
-  },
-  dark: {
-    url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}@2x.png',
-    attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap'
-  }
+  light: POSITRON,
+  dark: POSITRON
 };
 
+/**
+ * eox-map ships its MapboxStyle layer (ol-mapbox-style) in the "advanced
+ * layers" plugin, which also pulls in STAC, WebGL layers and proj4. Register
+ * just this layer type, through the same window hook the plugin uses.
+ */
+function registerMapboxStyle(): void {
+  const w = window as unknown as {
+    eoxMapAdvancedOlLayers?: Record<string, unknown>;
+  };
+  if (!w.eoxMapAdvancedOlLayers?.MapboxStyle)
+    w.eoxMapAdvancedOlLayers = { ...w.eoxMapAdvancedOlLayers, MapboxStyle };
+}
+
+/**
+ * The eox-map layer for the themed basemap. Each kind has its own layer id
+ * (eox-map cannot change a layer's type in place) and sits below the data layers.
+ */
 export function basemapLayer(
   basemap: BasemapConfig,
   dark: boolean
 ): Record<string, unknown> {
   const source = dark ? basemap.dark : basemap.light;
+  const kind = source.kind ?? (source.url.includes('{z}') ? 'xyz' : 'style');
+  if (kind === 'style') {
+    registerMapboxStyle();
+    return {
+      type: 'MapboxStyle',
+      properties: { id: 'basemap-style', zIndex: -1, mapboxStyle: source.url }
+    };
+  }
   return {
     type: 'Tile',
-    properties: { id: 'basemap' },
+    properties: { id: 'basemap-xyz', zIndex: -1 },
     source: { type: 'XYZ', url: source.url, attributions: source.attribution }
   };
 }

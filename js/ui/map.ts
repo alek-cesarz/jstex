@@ -63,6 +63,94 @@ const HIGHLIGHT_STYLE = {
   'stroke-width': 2.5,
   'fill-color': 'rgba(255,130,37,0.2)'
 };
+/**
+ * OpenLayers controls live in eox-map's shadow root; eox-map exposes only their
+ * colours (--map-controls-*), so the shape comes from this sheet: the zoom
+ * buttons as one bordered 28 px group like the widget's other controls
+ * (selectors are more specific than eox-map's own, which load after this).
+ * Colours inherit the widget's --jstex-* tokens through the shadow boundary.
+ */
+const CONTROLS_CSS = `
+div.ol-zoom.ol-control {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--jstex-border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--jstex-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+div.ol-zoom.ol-control button.ol-zoom-in,
+div.ol-zoom.ol-control button.ol-zoom-out,
+div.ol-zoom.ol-control button.ol-zoom-in:hover,
+div.ol-zoom.ol-control button.ol-zoom-out:hover,
+div.ol-zoom.ol-control button.ol-zoom-in:focus,
+div.ol-zoom.ol-control button.ol-zoom-out:focus {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--jstex-bg);
+  color: var(--jstex-fg);
+  font: 600 18px/1 var(--jstex-font);
+}
+div.ol-zoom.ol-control button.ol-zoom-in {
+  border-bottom: 1px solid var(--jstex-border);
+}
+div.ol-zoom.ol-control button.ol-zoom-in:hover,
+div.ol-zoom.ol-control button.ol-zoom-out:hover {
+  background: var(--jstex-bg2);
+  color: var(--jstex-accent);
+}
+div.ol-zoom.ol-control button:hover:after {
+  display: none;
+}
+.ol-attribution {
+  font: 11px/1.4 var(--jstex-font);
+  color: var(--jstex-fg);
+}
+/* wrap the credits instead of eox-map's 300 px one-line scroller */
+div.ol-attribution.ol-control {
+  max-width: min(460px, 75%);
+  height: auto;
+  align-items: flex-end;
+}
+div.ol-attribution.ol-control ul {
+  height: auto;
+  white-space: normal;
+  overflow: visible;
+  padding: 3px 8px;
+  margin: 0 4px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  background: color-mix(in srgb, var(--jstex-bg) 88%, transparent);
+  color: var(--jstex-fg);
+  border: 1px solid var(--jstex-border);
+  border-radius: 4px;
+}
+div.ol-attribution.ol-control ul a {
+  color: var(--jstex-accent);
+  font-weight: 600;
+}
+div.ol-attribution.ol-control button,
+div.ol-attribution.ol-control button:hover,
+div.ol-attribution.ol-control button:focus {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--jstex-border);
+  border-radius: 4px;
+  background: var(--jstex-bg);
+  color: var(--jstex-muted);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  font: 600 12px/1 var(--jstex-font);
+}
+div.ol-attribution.ol-control button:hover {
+  color: var(--jstex-accent);
+}
+`;
+
 const AOI_STYLE = {
   'stroke-color': '#0b7285',
   'stroke-width': 2,
@@ -129,15 +217,28 @@ export function mountMap(
   wrap.append(map, draw, tip);
   el.appendChild(wrap);
 
+  // Attribution is required by the basemap providers (OpenFreeMap / OSM).
+  map.controls = { Zoom: {}, Attribution: { collapsible: true } };
+  let basemap = basemapLayer(store.get().basemap, store.get().dark);
+  basemap.visible = true;
+  const renderBasemap = (s: ExplorerState) => {
+    const next = basemapLayer(s.basemap, s.dark);
+    const prevId = (basemap.properties as { id: string }).id;
+    const nextId = (next.properties as { id: string }).id;
+    // A different kind is a different layer: hide the old one, show the new.
+    // (eox-map takes `visible` from the top level of a layer definition.)
+    if (prevId !== nextId) map.addOrUpdateLayer({ ...basemap, visible: false });
+    map.addOrUpdateLayer({ ...next, visible: true });
+    basemap = { ...next, visible: true };
+  };
   map.layers = [
-    basemapLayer(store.get().basemap, store.get().dark),
+    basemap,
     vectorLayer('aoi', [], AOI_STYLE),
     vectorLayer('footprints', [], FOOTPRINT_STYLE),
     vectorLayer('highlight', [], HIGHLIGHT_STYLE)
   ];
   map.center = [1668000, 6048000]; // Europe, EPSG:3857 (same default as STEX)
   map.zoom = 4;
-  map.controls = { Zoom: {} };
 
   draw.for = map;
   draw.type = 'Polygon';
@@ -216,8 +317,7 @@ export function mountMap(
       renderHighlight(s);
     if (s.drawMode !== prev.drawMode) setDrawMode(s);
     if (s.zoomToAoi !== prev.zoomToAoi) zoomToAoi(s);
-    if (s.dark !== prev.dark || s.basemap !== prev.basemap)
-      map.addOrUpdateLayer(basemapLayer(s.basemap, s.dark));
+    if (s.dark !== prev.dark || s.basemap !== prev.basemap) renderBasemap(s);
   });
 
   // The OL map is created asynchronously by eox-map: attach once it exists.
@@ -228,6 +328,13 @@ export function mountMap(
     if (!ol?.on) {
       requestAnimationFrame(attachClick);
       return;
+    }
+    const shadow = map.shadowRoot;
+    if (shadow && !shadow.querySelector('style[data-jstex-controls]')) {
+      const sheet = document.createElement('style');
+      sheet.dataset.jstexControls = '';
+      sheet.textContent = CONTROLS_CSS;
+      shadow.appendChild(sheet);
     }
     ol.on('singleclick', evt => {
       const s = store.get();

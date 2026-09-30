@@ -131,12 +131,20 @@ Set these environment variables on the single-user server (e.g.
 | ------------------------------------------------------------------ | ----------------------------------------------------- | ----------------------------------------- |
 | `JSTEX_STAC_URL`                                                   | `https://stac.opensearch.dataspace.copernicus.eu/v1/` | STAC API                                  |
 | `JSTEX_STEX_URL`                                                   | unset                                                 | STEX base URL for `stex_url()` links      |
-| `JSTEX_BASEMAP_LIGHT_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION` | Carto Voyager (key param `key`)                       | Light-theme basemap (same as STEX)        |
-| `JSTEX_BASEMAP_DARK_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION`  | Stadia Alidade Smooth Dark (key param `api_key`)      | Dark-theme basemap (same as STEX)         |
+| `JSTEX_BASEMAP_LIGHT_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION` | OpenFreeMap Positron (no key needed)                  | Light-theme basemap                       |
+| `JSTEX_BASEMAP_DARK_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION`  | OpenFreeMap Positron (no key needed)                  | Dark-theme basemap                        |
 | `JSTEX_ACCESS_TOKEN`                                               | unset                                                 | Token for local development outside a hub |
 
-Both default basemaps need an API key or a registered domain; without one
-they serve watermarked tiles.
+The default basemap is [OpenFreeMap](https://openfreemap.org) Positron
+(`https://tiles.openfreemap.org/styles/positron`) in both themes; it needs no
+API key. Each theme can use another provider:
+
+- `_URL`: an XYZ raster tile template (contains `{z}/{x}/{y}`; `{r}` becomes
+  `@2x`), or any other URL is read as a MapLibre/Mapbox style JSON (vector).
+- `_KEY` / `_KEY_PARAM`: an API key, added to the URL as `?<KEY_PARAM>=<KEY>`
+  (default parameter name `key`).
+- `_ATTRIBUTION`: credits shown for raster tiles; a vector style brings its
+  own credits from its sources.
 
 ### JupyterHub prerequisites
 

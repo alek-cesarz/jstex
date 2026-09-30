@@ -89,6 +89,8 @@ export type Status = 'idle' | 'searching' | 'error';
 export interface BasemapSource {
   url: string;
   attribution: string;
+  /** 'style': MapLibre/Mapbox style JSON (vector); 'xyz': raster tile template. */
+  kind?: 'style' | 'xyz';
 }
 
 /** Deployment basemaps (JSTEX_BASEMAP_{LIGHT,DARK}_* env vars). */

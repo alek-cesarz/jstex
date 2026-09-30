@@ -7,37 +7,34 @@ from dataclasses import dataclass, field
 
 DEFAULT_STAC_URL = "https://stac.opensearch.dataspace.copernicus.eu/v1/"
 
-# Basemaps: same providers and defaults as STEX (src/lib/config.ts). Both need
-# an API key or a registered domain; set them per deployment.
-DEFAULT_BASEMAP_LIGHT_URL = (
-    "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-)
-DEFAULT_BASEMAP_LIGHT_KEY_PARAM = "key"
-DEFAULT_BASEMAP_LIGHT_ATTRIBUTION = (
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors '
-    '&copy; <a href="https://carto.com/attributions">CARTO</a>'
-)
-DEFAULT_BASEMAP_DARK_URL = (
-    "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
-)
-DEFAULT_BASEMAP_DARK_KEY_PARAM = "api_key"
-DEFAULT_BASEMAP_DARK_ATTRIBUTION = (
-    '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> '
-    '&copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> '
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+# Basemap default: OpenFreeMap Positron, a vector (MapLibre) style that needs
+# no key, in both themes. A deployment can set any other style URL or an XYZ
+# raster tile template (with an API key) per theme via JSTEX_BASEMAP_*.
+DEFAULT_BASEMAP_URL = "https://tiles.openfreemap.org/styles/positron"
+DEFAULT_BASEMAP_KEY_PARAM = "key"
+DEFAULT_BASEMAP_ATTRIBUTION = (
+    '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> '
+    '<a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> '
+    'Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
 )
 
 
 @dataclass(frozen=True)
 class Basemap:
-    """An XYZ tile template. ``{r}`` becomes ``@2x`` (retina), as in STEX."""
+    """A basemap: an XYZ raster tile template (``{z}/{x}/{y}``; ``{r}`` becomes
+    ``@2x``) or, for any other URL, a MapLibre/Mapbox style JSON (vector)."""
 
     url: str
     key: str = field(default="", repr=False)
-    key_param: str = "key"
+    key_param: str = DEFAULT_BASEMAP_KEY_PARAM
     attribution: str = ""
 
+    @property
+    def kind(self) -> str:
+        return "xyz" if "{z}" in self.url else "style"
+
     def tile_url(self, retina: bool = True) -> str:
+        """The URL to load, with the API key (if any) as a query parameter."""
         url = self.url.replace("{r}", "@2x" if retina else "")
         if not self.key:
             return url
@@ -57,14 +54,14 @@ def _with_slash(url: str) -> str:
     return url if url.endswith("/") else url + "/"
 
 
-def _basemap(theme: str, url: str, key_param: str, attribution: str) -> Basemap:
+def _basemap(theme: str) -> Basemap:
     env = os.environ.get
     prefix = f"JSTEX_BASEMAP_{theme}_"
     return Basemap(
-        url=env(prefix + "URL") or url,
+        url=env(prefix + "URL") or DEFAULT_BASEMAP_URL,
         key=env(prefix + "KEY") or "",
-        key_param=env(prefix + "KEY_PARAM") or key_param,
-        attribution=env(prefix + "ATTRIBUTION") or attribution,
+        key_param=env(prefix + "KEY_PARAM") or DEFAULT_BASEMAP_KEY_PARAM,
+        attribution=env(prefix + "ATTRIBUTION") or DEFAULT_BASEMAP_ATTRIBUTION,
     )
 
 
@@ -73,16 +70,6 @@ def load_config(*, stac_url: str | None = None, stex_url: str | None = None) -> 
     return Config(
         stac_url=_with_slash(stac_url or env("JSTEX_STAC_URL") or DEFAULT_STAC_URL),
         stex_url=stex_url or env("JSTEX_STEX_URL") or None,
-        basemap_light=_basemap(
-            "LIGHT",
-            DEFAULT_BASEMAP_LIGHT_URL,
-            DEFAULT_BASEMAP_LIGHT_KEY_PARAM,
-            DEFAULT_BASEMAP_LIGHT_ATTRIBUTION,
-        ),
-        basemap_dark=_basemap(
-            "DARK",
-            DEFAULT_BASEMAP_DARK_URL,
-            DEFAULT_BASEMAP_DARK_KEY_PARAM,
-            DEFAULT_BASEMAP_DARK_ATTRIBUTION,
-        ),
+        basemap_light=_basemap("LIGHT"),
+        basemap_dark=_basemap("DARK"),
     )

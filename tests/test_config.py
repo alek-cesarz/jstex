@@ -1,6 +1,9 @@
+import inspect
+
+from jstex import config as config_module
 from jstex.config import (
-    DEFAULT_BASEMAP_DARK_URL,
-    DEFAULT_BASEMAP_LIGHT_URL,
+    DEFAULT_BASEMAP_ATTRIBUTION,
+    DEFAULT_BASEMAP_URL,
     DEFAULT_STAC_URL,
     Basemap,
     load_config,
@@ -15,8 +18,21 @@ def test_defaults():
         == "https://stac.opensearch.dataspace.copernicus.eu/v1/"
     )
     assert cfg.stex_url is None
-    assert cfg.basemap_light.url == DEFAULT_BASEMAP_LIGHT_URL
-    assert cfg.basemap_dark.url == DEFAULT_BASEMAP_DARK_URL
+    # OpenFreeMap Positron (vector style, no key) in both themes.
+    assert (
+        cfg.basemap_light.url
+        == cfg.basemap_dark.url
+        == DEFAULT_BASEMAP_URL
+        == "https://tiles.openfreemap.org/styles/positron"
+    )
+    assert cfg.basemap_light.kind == cfg.basemap_dark.kind == "style"
+    assert "OpenFreeMap" in DEFAULT_BASEMAP_ATTRIBUTION
+    assert cfg.basemap_light.attribution == DEFAULT_BASEMAP_ATTRIBUTION
+
+
+def test_no_carto_or_stadia_defaults_left():
+    source = inspect.getsource(config_module).lower()
+    assert "carto" not in source and "stadia" not in source
 
 
 def test_env_overrides_default_and_gets_trailing_slash(monkeypatch):
@@ -35,26 +51,36 @@ def test_kwargs_override_env(monkeypatch):
     )
 
 
-def test_basemap_tile_url_matches_stex_rules():
-    assert (
-        load_config().basemap_light.tile_url()
-        == "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png"
-    )
-    b = Basemap(
+def test_basemap_kind_and_key():
+    xyz = Basemap(
         "https://t.example.org/{z}/{x}/{y}{r}.png?style=a", key="K", key_param="api_key"
     )
+    assert xyz.kind == "xyz"
     assert (
-        b.tile_url(retina=False)
+        xyz.tile_url(retina=False)
         == "https://t.example.org/{z}/{x}/{y}.png?style=a&api_key=K"
     )
-    assert "K" not in repr(b)
+    assert (
+        xyz.tile_url() == "https://t.example.org/{z}/{x}/{y}@2x.png?style=a&api_key=K"
+    )
+    style = Basemap("https://maps.example.org/styles/basic/style.json", key="K")
+    assert style.kind == "style"
+    assert style.tile_url() == "https://maps.example.org/styles/basic/style.json?key=K"
+    assert "K" not in repr(xyz)
 
 
 def test_basemap_env(monkeypatch):
-    monkeypatch.setenv("JSTEX_BASEMAP_DARK_KEY", "secret")
     monkeypatch.setenv(
-        "JSTEX_BASEMAP_LIGHT_URL", "https://tiles.example.org/{z}/{x}/{y}.png"
+        "JSTEX_BASEMAP_DARK_URL", "https://tiles.example.org/{z}/{x}/{y}.png"
     )
+    monkeypatch.setenv("JSTEX_BASEMAP_DARK_KEY", "secret")
+    monkeypatch.setenv("JSTEX_BASEMAP_DARK_KEY_PARAM", "api_key")
+    monkeypatch.setenv("JSTEX_BASEMAP_DARK_ATTRIBUTION", "© Example")
     cfg = load_config()
-    assert cfg.basemap_dark.tile_url().endswith("@2x.png?api_key=secret")
-    assert cfg.basemap_light.tile_url() == "https://tiles.example.org/{z}/{x}/{y}.png"
+    assert cfg.basemap_dark.kind == "xyz"
+    assert (
+        cfg.basemap_dark.tile_url()
+        == "https://tiles.example.org/{z}/{x}/{y}.png?api_key=secret"
+    )
+    assert cfg.basemap_dark.attribution == "© Example"
+    assert cfg.basemap_light.url == DEFAULT_BASEMAP_URL

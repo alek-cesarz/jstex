@@ -73,7 +73,7 @@ class Explorer(anywidget.AnyWidget):
     can_cancel = traitlets.Bool(True).tag(sync=True)
     basemap = traitlets.Dict().tag(
         sync=True
-    )  # {"light": {url, attribution}, "dark": {...}}
+    )  # {"light": {url, attribution, kind: "style"|"xyz"}, "dark": {...}}
     panel_collapsed = traitlets.Bool(False).tag(
         sync=True
     )  # search panel folded to a rail
@@ -96,14 +96,15 @@ class Explorer(anywidget.AnyWidget):
             map_height=height,
             can_cancel=run is not sync_runner,
             basemap={
-                "light": {
-                    "url": config.basemap_light.tile_url(),
-                    "attribution": config.basemap_light.attribution,
-                },
-                "dark": {
-                    "url": config.basemap_dark.tile_url(),
-                    "attribution": config.basemap_dark.attribution,
-                },
+                theme: {
+                    "url": b.tile_url(),
+                    "attribution": b.attribution,
+                    "kind": b.kind,
+                }
+                for theme, b in (
+                    ("light", config.basemap_light),
+                    ("dark", config.basemap_dark),
+                )
             },
             **kwargs,
         )

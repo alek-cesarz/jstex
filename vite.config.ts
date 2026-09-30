@@ -37,6 +37,8 @@ export default defineConfig({
   test: {
     include: ['js/__tests__/**/*.test.ts', 'src/__tests__/**/*.test.ts'],
     environment: 'jsdom',
-    setupFiles: ['src/__tests__/setup.ts']
+    setupFiles: ['src/__tests__/setup.ts'],
+    // @eox/map sources import 'ol/...' without extensions: let Vite resolve them.
+    server: { deps: { inline: [/@eox\/map/] } }
   }
 });

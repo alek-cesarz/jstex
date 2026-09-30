@@ -1,5 +1,6 @@
 import pytest
 
+from jstex.config import DEFAULT_BASEMAP_ATTRIBUTION
 from jstex.errors import JstexError, JstexQueryError, JstexStacError
 from jstex.stac import Page
 from jstex.widget import Explorer, sync_runner
@@ -220,16 +221,23 @@ def test_sync_resends_current_page_without_clearing_selection():
 
 
 def test_basemap_trait_from_config(monkeypatch):
+    positron = {
+        "url": "https://tiles.openfreemap.org/styles/positron",
+        "attribution": DEFAULT_BASEMAP_ATTRIBUTION,
+        "kind": "style",
+    }
+    ex, _ = make(FakeBackend())
+    assert ex.basemap == {"light": positron, "dark": positron}
+    monkeypatch.setenv(
+        "JSTEX_BASEMAP_DARK_URL", "https://t.example.org/{z}/{x}/{y}.png"
+    )
     monkeypatch.setenv("JSTEX_BASEMAP_DARK_KEY", "K")
     ex, _ = make(FakeBackend())
-    assert (
-        ex.basemap["light"]["url"]
-        == "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png"
-    )
-    assert ex.basemap["dark"]["url"].endswith(
-        "alidade_smooth_dark/{z}/{x}/{y}@2x.png?api_key=K"
-    )
-    assert "CARTO" in ex.basemap["light"]["attribution"]
+    assert ex.basemap["dark"] == {
+        "url": "https://t.example.org/{z}/{x}/{y}.png?key=K",
+        "attribution": DEFAULT_BASEMAP_ATTRIBUTION,
+        "kind": "xyz",
+    }
 
 
 def test_queryables_message_replies_merged_fields():

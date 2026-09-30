@@ -66,9 +66,16 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
   load).
 - After rebuilding the bundle, restart kernels that hold old explorers,
   otherwise reopening the notebook logs `[anywidget] Failed to initialize model`.
-- The default basemaps (Carto / Stadia, as in STEX) need an API key or a
-  registered domain; without one they serve watermark tiles. Set
-  `JSTEX_BASEMAP_{LIGHT,DARK}_KEY` on the hub.
+- Basemaps: the default is OpenFreeMap Positron, a vector style, drawn by
+  eox-map's `MapboxStyle` layer (ol-mapbox-style). Only that layer type is
+  registered (`registerMapboxStyle()` in `js/theme.ts`), not eox-map's whole
+  advanced-layers plugin. A layer cannot change type in place, so the style
+  and XYZ basemaps use separate layer ids (`basemap-style` / `basemap-xyz`,
+  `zIndex: -1`), and a theme switch between kinds hides one and shows the
+  other; eox-map reads `visible` from the top level of a layer definition.
+- Map controls (zoom, attribution) live in eox-map's shadow root, which exposes
+  only colour variables; `js/ui/map.ts` adds a `<style>` there (CONTROLS_CSS)
+  with selectors more specific than eox-map's own.
 - Open-ended dates are sent closed (1900-01-01 / 2099-12-31): the CDSE
   firewall rejects `../end` intervals.
 - ESLint (template config) ignores `js/`; the widget is checked by

@@ -12,4 +12,5 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - **JupyterHub token support**: the user's OIDC access token (hub `auth_state`) is sent with every STAC request, so restricted collections work; anonymous fallback with a visible badge.
 - **Light and dark mode** following the JupyterLab (VS Code, Colab) theme, with light/dark basemaps.
 - **Translation-ready UI** using the JupyterLab i18n standard (gettext domain `jstex`, `jupyterlab.locale` entry point); English only in this release.
-- **Deployment config** via `JSTEX_*` environment variables (STAC URL, STEX URL, basemaps as in STEX) and a z2jh example.
+- **Basemap**: OpenFreeMap Positron (vector, no API key) in both themes, with map credits shown; each theme can be switched to another XYZ tile template or vector style, with an API key (`JSTEX_BASEMAP_{LIGHT,DARK}_*`). Zoom and credits controls match the widget's style.
+- **Deployment config** via `JSTEX_*` environment variables (STAC URL, STEX URL, basemaps) and a z2jh example.

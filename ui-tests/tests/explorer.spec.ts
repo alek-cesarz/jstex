@@ -219,24 +219,84 @@ test.describe('jstex Explorer', () => {
   test('follows the JupyterLab light/dark theme, including the basemap', async ({
     page
   }) => {
-    const w = await explorerCell(page);
-    const basemapUrl = () =>
-      w.locator('eox-map').evaluate(
-        (el: any) =>
+    // Default: OpenFreeMap Positron (vector style). The dark theme gets a raster
+    // XYZ basemap here, so switching themes swaps layer kinds too.
+    await page.notebook.setCell(
+      0,
+      'code',
+      [
+        'import os',
+        'os.environ["JSTEX_BASEMAP_DARK_URL"] = "https://tiles.example.org/{z}/{x}/{y}.png"',
+        'import jstex',
+        `ex = jstex.Explorer(stac_url="${STAC}")`,
+        'ex'
+      ].join('\n')
+    );
+    await page.notebook.runCell(0);
+    const w = page.locator('.jp-OutputArea-output .jstex').first();
+    await expect(w.locator('eox-map canvas').first()).toBeAttached({
+      timeout: 30000
+    });
+    const basemaps = () =>
+      w.locator('eox-map').evaluate((el: any) =>
+        Object.fromEntries(
           el.map
             .getLayers()
             .getArray()
-            .find((l: any) => l.get('id') === 'basemap')
-            .getSource()
-            .getUrls()[0] as string
+            .filter((l: any) => String(l.get('id')).startsWith('basemap-'))
+            .map((l: any) => [
+              l.get('id'),
+              {
+                visible: l.getVisible(),
+                style: l.get('mapboxStyle') ?? null,
+                url: l.getSource?.()?.getUrls?.()?.[0] ?? null
+              }
+            ])
+        )
       );
     await expect(w).toHaveAttribute('data-theme', 'light');
-    expect(await basemapUrl()).toContain('voyager');
+    expect(await basemaps()).toEqual({
+      'basemap-style': {
+        visible: true,
+        style: 'https://tiles.openfreemap.org/styles/positron',
+        url: null
+      }
+    });
     await page.theme.setDarkTheme();
     await expect(w).toHaveAttribute('data-theme', 'dark');
-    expect(await basemapUrl()).toContain('alidade_smooth_dark');
+    await expect.poll(basemaps).toEqual({
+      'basemap-style': {
+        visible: false,
+        style: 'https://tiles.openfreemap.org/styles/positron',
+        url: null
+      },
+      'basemap-xyz': {
+        visible: true,
+        style: null,
+        url: 'https://tiles.example.org/{z}/{x}/{y}.png'
+      }
+    });
     await page.theme.setLightTheme();
     await expect(w).toHaveAttribute('data-theme', 'light');
+    await expect
+      .poll(async () => (await basemaps())['basemap-style'].visible)
+      .toBe(true);
+
+    // Zoom buttons follow the widget's control style; attribution is shown.
+    const controls = await w.locator('eox-map').evaluate((el: any) => {
+      const zoomIn = el.shadowRoot.querySelector('button.ol-zoom-in');
+      const cs = getComputedStyle(zoomIn);
+      return {
+        width: cs.width,
+        radius: cs.borderTopLeftRadius,
+        attribution: Boolean(el.shadowRoot.querySelector('.ol-attribution'))
+      };
+    });
+    expect(controls).toEqual({
+      width: '28px',
+      radius: '0px',
+      attribution: true
+    });
   });
 
   test('two explorers in one notebook are independent', async ({ page }) => {

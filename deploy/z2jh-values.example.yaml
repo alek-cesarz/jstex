@@ -39,10 +39,11 @@ singleuser:
     JSTEX_STAC_URL: https://stac.example.org/v1/
     # Optional:
     # JSTEX_STEX_URL: https://stex.example.org/           # enables Explorer.stex_url() links
-    # Basemaps default to the STEX providers (Carto Voyager / Stadia Alidade Smooth Dark).
-    # Both need an API key or a registered domain, otherwise they serve watermark tiles:
-    JSTEX_BASEMAP_LIGHT_KEY: "<carto key, or leave empty if the hub domain is registered>"
-    JSTEX_BASEMAP_DARK_KEY: "<stadia key, or leave empty if the hub domain is registered>"
-    # Optional overrides (same meaning as STEX's basemap* settings):
-    # JSTEX_BASEMAP_LIGHT_URL / _KEY_PARAM / _ATTRIBUTION
-    # JSTEX_BASEMAP_DARK_URL  / _KEY_PARAM / _ATTRIBUTION
+    # Basemaps default to OpenFreeMap Positron (vector style, no key) in both themes.
+    # Optional per-theme overrides: an XYZ tile template ({z}/{x}/{y}) or a
+    # MapLibre/Mapbox style JSON URL, with an API key if the provider needs one:
+    # JSTEX_BASEMAP_LIGHT_URL: https://tiles.example.org/{z}/{x}/{y}{r}.png
+    # JSTEX_BASEMAP_LIGHT_KEY: "<api key>"
+    # JSTEX_BASEMAP_LIGHT_KEY_PARAM: key          # query parameter name for the key
+    # JSTEX_BASEMAP_LIGHT_ATTRIBUTION: "© Example, © OpenStreetMap contributors"
+    # (same for JSTEX_BASEMAP_DARK_*)

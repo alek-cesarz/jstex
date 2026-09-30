@@ -465,23 +465,49 @@ describe('snippets and theme', () => {
     delete document.body.dataset.jpThemeLight;
   });
 
-  it('basemapLayer picks the themed source', () => {
+  it('basemapLayer: vector style or XYZ tiles, below the data layers', () => {
     const cfg = {
-      light: { url: 'L/{z}/{x}/{y}', attribution: 'a' },
-      dark: { url: 'D/{z}/{x}/{y}', attribution: 'b' }
+      light: {
+        url: 'https://s.example/style.json',
+        attribution: 'a',
+        kind: 'style' as const
+      },
+      dark: { url: 'D/{z}/{x}/{y}', attribution: 'b', kind: 'xyz' as const }
     };
-    expect(basemapLayer(cfg, true).source).toEqual({
-      type: 'XYZ',
-      url: 'D/{z}/{x}/{y}',
-      attributions: 'b'
+    expect(basemapLayer(cfg, false)).toEqual({
+      type: 'MapboxStyle',
+      properties: {
+        id: 'basemap-style',
+        zIndex: -1,
+        mapboxStyle: 'https://s.example/style.json'
+      }
     });
-    expect((basemapLayer(cfg, false).source as { url: string }).url).toBe(
-      'L/{z}/{x}/{y}'
-    );
+    expect(basemapLayer(cfg, true)).toEqual({
+      type: 'Tile',
+      properties: { id: 'basemap-xyz', zIndex: -1 },
+      source: { type: 'XYZ', url: 'D/{z}/{x}/{y}', attributions: 'b' }
+    });
   });
 
-  it('stateFromModel falls back to the STEX default basemaps', () => {
+  it('basemapLayer registers only the MapboxStyle layer type with eox-map', () => {
+    const w = window as unknown as {
+      eoxMapAdvancedOlLayers?: Record<string, unknown>;
+    };
+    w.eoxMapAdvancedOlLayers = { Other: 1 };
+    basemapLayer(DEFAULT_BASEMAP, false);
+    expect(Object.keys(w.eoxMapAdvancedOlLayers).sort()).toEqual([
+      'MapboxStyle',
+      'Other'
+    ]);
+    delete w.eoxMapAdvancedOlLayers;
+  });
+
+  it('stateFromModel falls back to OpenFreeMap Positron in both themes', () => {
     expect(stateFromModel(new FakeModel()).basemap).toEqual(DEFAULT_BASEMAP);
+    expect(DEFAULT_BASEMAP.light).toEqual(DEFAULT_BASEMAP.dark);
+    expect(DEFAULT_BASEMAP.light.url).toBe(
+      'https://tiles.openfreemap.org/styles/positron'
+    );
     const custom = stateFromModel(
       new FakeModel({
         basemap: {

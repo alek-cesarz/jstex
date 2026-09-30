@@ -46,7 +46,7 @@ flowchart LR
   end
   HUB["JupyterHub API<br/>/hub/api/users/{name}"]
   STAC["STAC API<br/>(CDSE by default)"]
-  TILES["Basemap tiles<br/>(Carto / Stadia)"]
+  TILES["Basemap<br/>(OpenFreeMap by default)"]
 
   LX -. "Symbol.for('jstex.i18n')" .-> W
   W <-- "traitlets + custom messages<br/>(ipywidgets comm)" --> E
@@ -139,20 +139,20 @@ Two channels connect a view and its `Explorer`.
 
 ### 6.1 Synced traitlets (small state, both directions)
 
-| Trait             | Type                             | Written by                | Meaning                                                       |
-| ----------------- | -------------------------------- | ------------------------- | ------------------------------------------------------------- |
-| `query`           | dict                             | JS (on Search) and Python | The QueryState dict (same keys as `QueryState.to_dict()`).    |
-| `selected_ids`    | list[str]                        | JS                        | Checked result rows → `ex.selected_items`.                    |
-| `active_id`       | str \| None                      | JS                        | Item shown in details → `ex.selected_item`.                   |
-| `status`          | `idle` \| `searching` \| `error` | Python                    | Search state.                                                 |
-| `error`           | str                              | Python                    | Message for the error banner.                                 |
-| `auth_source`     | `hub` \| `env` \| `anonymous`    | Python                    | Drives the "Not signed in" hint.                              |
-| `can_cancel`      | bool                             | Python                    | False when searches run synchronously.                        |
-| `map_height`      | int                              | Python / JS               | Panel + map height (drag-resizable).                          |
-| `basemap`         | dict                             | Python                    | Light/dark tile URL + attribution (key already applied).      |
-| `panel_collapsed` | bool                             | JS                        | Panel folded to the rail.                                     |
-| `panel_width`     | int                              | JS / Python               | Search panel width in px (divider drag; clamped by layout).   |
-| `map_collapsed`   | bool                             | JS / Python               | Map folded to a rail (never together with `panel_collapsed`). |
+| Trait             | Type                             | Written by                | Meaning                                                            |
+| ----------------- | -------------------------------- | ------------------------- | ------------------------------------------------------------------ |
+| `query`           | dict                             | JS (on Search) and Python | The QueryState dict (same keys as `QueryState.to_dict()`).         |
+| `selected_ids`    | list[str]                        | JS                        | Checked result rows → `ex.selected_items`.                         |
+| `active_id`       | str \| None                      | JS                        | Item shown in details → `ex.selected_item`.                        |
+| `status`          | `idle` \| `searching` \| `error` | Python                    | Search state.                                                      |
+| `error`           | str                              | Python                    | Message for the error banner.                                      |
+| `auth_source`     | `hub` \| `env` \| `anonymous`    | Python                    | Drives the "Not signed in" hint.                                   |
+| `can_cancel`      | bool                             | Python                    | False when searches run synchronously.                             |
+| `map_height`      | int                              | Python / JS               | Panel + map height (drag-resizable).                               |
+| `basemap`         | dict                             | Python                    | Light/dark URL (key applied), attribution, `kind` (`style`/`xyz`). |
+| `panel_collapsed` | bool                             | JS                        | Panel folded to the rail.                                          |
+| `panel_width`     | int                              | JS / Python               | Search panel width in px (divider drag; clamped by layout).        |
+| `map_collapsed`   | bool                             | JS / Python               | Map folded to a rail (never together with `panel_collapsed`).      |
 
 ### 6.2 Custom messages (requests and large payloads)
 
@@ -361,9 +361,19 @@ jstex keeps exactly one AOI; a new one replaces the old one.
 
 ## 12. Map
 
-`eox-map` holds four layers: `basemap` (XYZ, light or dark per theme), `aoi`,
-`footprints` and `highlight` (the active item). Vector layers are rebuilt
-from the store as GeoJSON data URLs.
+`eox-map` holds the basemap and three data layers: `aoi`, `footprints` and
+`highlight` (the active item). Data layers are rebuilt from the store as
+GeoJSON data URLs.
+
+- **Basemap.** Default OpenFreeMap Positron in both themes, a vector style
+  drawn by eox-map's `MapboxStyle` layer (ol-mapbox-style; only that layer
+  type is registered). A deployment may configure an XYZ raster template or
+  another style per theme (`kind` in the `basemap` trait). Style and XYZ
+  basemaps are separate layers (`basemap-style` / `basemap-xyz`) below the
+  data (`zIndex: -1`); a theme switch between kinds hides one, shows the
+  other.
+- **Controls.** Zoom and a collapsible attribution, restyled to the widget's
+  look through a `<style>` added to eox-map's shadow root.
 
 - Footprints are drawn only for loaded items, split at the antimeridian.
 - A click on the map lists every footprint under the point. One item →

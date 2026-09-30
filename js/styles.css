@@ -213,16 +213,22 @@
   pointer-events: none;
 }
 
-/* "Hide map" on the map's top-right corner */
-.jstex .jstex-map-hide {
+/* "Hide map" on the map's top-right corner, styled like the zoom buttons
+   (the extra class beats the generic transparent .jstex-icon rule) */
+.jstex .jstex-icon.jstex-map-hide {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   z-index: 2;
   background: var(--jstex-bg);
   border: 1px solid var(--jstex-border);
+  border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   color: var(--jstex-fg);
+}
+.jstex .jstex-icon.jstex-map-hide:hover {
+  background: var(--jstex-bg2);
+  color: var(--jstex-accent);
 }
 .jstex .jstex-body__map > .jstex-map-wrap {
   height: 100%;
