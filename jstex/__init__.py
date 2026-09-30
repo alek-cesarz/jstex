@@ -5,22 +5,34 @@ except ImportError:
     # in editable mode with pip. It is highly recommended to install
     # the package from a stable release or in editable mode: https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
     import warnings
+
     warnings.warn("Importing 'jstex' outside a proper installation.")
     __version__ = "dev"
+from typing import Any
+
 from .routes import setup_route_handlers
+
+__all__ = ["Explorer", "__version__", "item"]
+
+
+def __getattr__(name: str) -> Any:
+    if name == "Explorer":
+        from .widget import Explorer
+
+        return Explorer
+    if name == "item":
+        from .api import item
+
+        return item
+    raise AttributeError(f"module 'jstex' has no attribute {name!r}")
 
 
 def _jupyter_labextension_paths():
-    return [{
-        "src": "labextension",
-        "dest": "@jstex/labextension"
-    }]
+    return [{"src": "labextension", "dest": "jupyterlab-jstex"}]
 
 
 def _jupyter_server_extension_points():
-    return [{
-        "module": "jstex"
-    }]
+    return [{"module": "jstex"}]
 
 
 def _load_jupyter_server_extension(server_app):

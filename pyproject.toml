@@ -1,13 +1,14 @@
 [build-system]
-requires = ["hatchling>=1.5.0", "hatch-nodejs-version>=0.3.2", "jupyter-builder>=1.2.0,<2"]
+requires = ["hatchling>=1.27", "hatch-nodejs-version>=0.3.2", "jupyter-builder>=1.2.0,<2"]
 build-backend = "hatchling.build"
 
 [project]
-name = "jstex"
+name = "jupyterlab-jstex"
 readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 classifiers = [
-    "Private :: Do Not Upload",
     "Framework :: Jupyter",
     "Framework :: Jupyter :: JupyterLab",
     "Framework :: Jupyter :: JupyterLab :: 4",
@@ -48,6 +49,10 @@ test = [
     "ruff>=0.6",
 ]
 
+# Translations shipped in jstex/locale/<ll_CC>/LC_MESSAGES/jstex.json (JupyterLab standard).
+[project.entry-points."jupyterlab.locale"]
+jstex = "jstex"
+
 [tool.hatch.version]
 source = "nodejs"
 
@@ -55,12 +60,17 @@ source = "nodejs"
 fields = ["description", "authors", "urls", "keywords"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["jstex/labextension"]
+artifacts = ["jstex/labextension", "jstex/static"]
 exclude = [".github", "binder"]
 
+[tool.hatch.build.targets.wheel]
+# Distribution "jupyterlab-jstex", import package "jstex".
+packages = ["jstex"]
+artifacts = ["jstex/static"]
+
 [tool.hatch.build.targets.wheel.shared-data]
-"jstex/labextension" = "share/jupyter/labextensions/@jstex/labextension"
-"install.json" = "share/jupyter/labextensions/@jstex/labextension/install.json"
+"jstex/labextension" = "share/jupyter/labextensions/jupyterlab-jstex"
+"install.json" = "share/jupyter/labextensions/jupyterlab-jstex/install.json"
 "jupyter-config/server-config" = "etc/jupyter/jupyter_server_config.d"
 
 [tool.hatch.build.hooks.version]
@@ -71,6 +81,7 @@ dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
     "jstex/labextension/static/style.js",
+    "jstex/static/widget.js",
     "jstex/labextension/package.json",
 ]
 skip-if-exists = ["jstex/labextension/static/style.js"]

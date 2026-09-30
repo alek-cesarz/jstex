@@ -9,9 +9,9 @@ async def test_hello(jp_fetch):
     assert response.code == 200
     payload = json.loads(response.body)
     assert payload == {
-            "data": (
-                "Hello, world!"
-                " This is the '/jstex/hello' endpoint."
-                " Try visiting me in your browser!"
-            ),
-        }
+        "data": (
+            "Hello, world!"
+            " This is the '/jstex/hello' endpoint."
+            " Try visiting me in your browser!"
+        ),
+    }

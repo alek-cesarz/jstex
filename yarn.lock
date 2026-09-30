@@ -564,46 +564,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jstex/labextension@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "@jstex/labextension@workspace:."
-  dependencies:
-    "@anywidget/types": ^0.4.0
-    "@eox/drawtools": ^1.6.0
-    "@eox/map": ^2.8.0
-    "@eslint/js": ^9.0.0
-    "@jupyter/builder": ^1.2.0
-    "@jupyter/eslint-plugin": ^1.1.0
-    "@jupyterlab/application": ^4.0.0
-    "@jupyterlab/coreutils": ^6.0.0
-    "@jupyterlab/services": ^7.0.0
-    "@jupyterlab/translation": ^4.0.0
-    "@types/geojson": ^7946.0.14
-    "@types/json-schema": ^7.0.11
-    "@types/react": ^18.0.26
-    "@types/react-addons-linked-state-mixin": ^0.14.22
-    eslint: ^9.0.0
-    eslint-config-prettier: ^9.0.0
-    eslint-plugin-prettier: ^5.0.0
-    globals: ^15.0.0
-    jsdom: ^26
-    mkdirp: ^1.0.3
-    npm-run-all2: ^7.0.1
-    prettier: ^3.0.0
-    rimraf: ^5.0.1
-    stylelint: ^15.10.1
-    stylelint-config-recommended: ^13.0.0
-    stylelint-config-standard: ^34.0.0
-    stylelint-csstree-validator: ^3.0.0
-    stylelint-prettier: ^4.0.0
-    typescript: ~5.5.4
-    typescript-eslint: ^8.0.0
-    vite: ^7.3.1
-    vitest: ^3.1.0
-    yjs: ^13.5.0
-  languageName: unknown
-  linkType: soft
-
 "@jupyter/builder@npm:^1.2.0":
   version: 1.2.3
   resolution: "@jupyter/builder@npm:1.2.3"
@@ -937,7 +897,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/ui-components@npm:^4.6.4":
+"@jupyterlab/ui-components@npm:^4.0.0, @jupyterlab/ui-components@npm:^4.6.4":
   version: 4.6.4
   resolution: "@jupyterlab/ui-components@npm:4.6.4"
   dependencies:
@@ -4175,6 +4135,48 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jupyterlab-jstex@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "jupyterlab-jstex@workspace:."
+  dependencies:
+    "@anywidget/types": ^0.4.0
+    "@eox/drawtools": ^1.6.0
+    "@eox/map": ^2.8.0
+    "@eslint/js": ^9.0.0
+    "@jupyter/builder": ^1.2.0
+    "@jupyter/eslint-plugin": ^1.1.0
+    "@jupyterlab/application": ^4.0.0
+    "@jupyterlab/coreutils": ^6.0.0
+    "@jupyterlab/services": ^7.0.0
+    "@jupyterlab/translation": ^4.0.0
+    "@jupyterlab/ui-components": ^4.0.0
+    "@types/geojson": ^7946.0.14
+    "@types/json-schema": ^7.0.11
+    "@types/react": ^18.0.26
+    "@types/react-addons-linked-state-mixin": ^0.14.22
+    eslint: ^9.0.0
+    eslint-config-prettier: ^9.0.0
+    eslint-plugin-prettier: ^5.0.0
+    globals: ^15.0.0
+    jsdom: ^26
+    mkdirp: ^1.0.3
+    npm-run-all2: ^7.0.1
+    prettier: ^3.0.0
+    rimraf: ^5.0.1
+    stylelint: ^15.10.1
+    stylelint-config-recommended: ^13.0.0
+    stylelint-config-standard: ^34.0.0
+    stylelint-csstree-validator: ^3.0.0
+    stylelint-prettier: ^4.0.0
+    typescript: ~5.5.4
+    typescript-eslint: ^8.0.0
+    vanilla-calendar-pro: ^3.4.0
+    vite: ^7.3.1
+    vitest: ^3.1.0
+    yjs: ^13.5.0
+  languageName: unknown
+  linkType: soft
+
 "keyv@npm:^4.5.3, keyv@npm:^4.5.4":
   version: 4.5.4
   resolution: "keyv@npm:4.5.4"
@@ -6246,6 +6248,13 @@ __metadata:
   version: 1.0.3
   resolution: "validate.io-number@npm:1.0.3"
   checksum: 42418aeb6c969efa745475154fe576809b02eccd0961aad0421b090d6e7a12d23a3e28b0d5dddd2c6347c1a6bdccb82bba5048c716131cd20207244d50e07282
+  languageName: node
+  linkType: hard
+
+"vanilla-calendar-pro@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "vanilla-calendar-pro@npm:3.4.0"
+  checksum: 5737088206e2b404a429eb593372239fae7f3cdee6f2c9ac2a108c5f2d8cfa1d2edb31cb1f03a40108a86437a21d2c603642d04388a0472e8431bf82f97f9b7e
   languageName: node
   linkType: hard
 

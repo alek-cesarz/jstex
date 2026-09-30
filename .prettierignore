@@ -7,3 +7,6 @@ jstex
 eslint.config.mjs
 .venv
 .worktrees
+.superpowers
+ui-tests/design-review
+tests/fixtures

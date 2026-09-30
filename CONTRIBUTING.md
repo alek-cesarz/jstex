@@ -52,12 +52,12 @@ jupyter lab build --minimize=False
 ```bash
 # Server extension must be manually disabled in develop mode
 jupyter server extension disable jstex
-pip uninstall jstex
+pip uninstall jupyterlab-jstex
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter-builder develop`
 command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `@jstex/labextension` within that folder.
+folder is located. Then you can remove the symlink named `jupyterlab-jstex` within that folder.
 
 ## Endpoint authentication
 
@@ -110,4 +110,17 @@ More information is provided within the [ui-tests](./ui-tests/README.md) README.
 
 ## Packaging the extension
 
-See [RELEASE](RELEASE.md)
+jupyterlab-jstex is published to PyPI (not npm). The version comes from
+`package.json`. To release:
+
+1. Bump the version, move the `[Unreleased]` entries in
+   [CHANGELOG.md](CHANGELOG.md) under it, and merge to `main`.
+2. Push a `vX.Y.Z` tag: `.github/workflows/release.yml` builds the wheel and
+   attaches it to a GitHub Release.
+3. From a clean checkout of the tag, build and upload with a PyPI API token:
+
+   ```bash
+   python -m build          # sdist + wheel in dist/
+   twine check dist/*
+   TWINE_USERNAME=__token__ twine upload dist/*   # asks for the token
+   ```
