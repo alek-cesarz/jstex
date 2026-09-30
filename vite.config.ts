@@ -10,13 +10,18 @@ export default defineConfig({
       // blob-loaded widget, so don't ship it; browsers use the CDN entry.
       name: 'jstex-drop-eox-fonts',
       generateBundle(_options, bundle) {
-        for (const name of Object.keys(bundle)) if (name.endsWith('.woff2')) delete bundle[name];
-      },
-    },
+        for (const name of Object.keys(bundle))
+          if (name.endsWith('.woff2')) delete bundle[name];
+      }
+    }
   ],
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },
   build: {
-    lib: { entry: 'js/widget.ts', formats: ['es'], fileName: () => 'widget.js' },
+    lib: {
+      entry: 'js/widget.ts',
+      formats: ['es'],
+      fileName: () => 'widget.js'
+    },
     outDir: 'jstex/static',
     emptyOutDir: true,
     cssCodeSplit: false,
@@ -24,12 +29,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         inlineDynamicImports: true,
-        assetFileNames: (info) => (info.name?.endsWith('.css') ? 'widget.css' : '[name][extname]'),
-      },
-    },
+        assetFileNames: info =>
+          info.name?.endsWith('.css') ? 'widget.css' : '[name][extname]'
+      }
+    }
   },
   test: {
     include: ['js/__tests__/**/*.test.ts', 'src/__tests__/**/*.test.ts'],
-    environment: 'jsdom',
-  },
+    environment: 'jsdom'
+  }
 });

@@ -1,5 +1,112 @@
 # Developing jstex
 
+## Setup
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev,test]"
+jupyter labextension develop . --overwrite
+jlpm build:widget          # after every change under js/
+```
+
+## Commands
+
+| Command                                             | What                                                      |
+| --------------------------------------------------- | --------------------------------------------------------- |
+| `pytest -q tests`                                   | Python unit tests (backend, auth, codec, widget protocol) |
+| `jlpm vitest run`                                   | Front-end unit tests (jsdom)                              |
+| `npx tsc -p js/tsconfig.json`                       | Typecheck the widget                                      |
+| `ruff check jstex tests && ruff format jstex tests` | Python lint/format                                        |
+| `jlpm lint`                                         | Template lint for the labextension + prettier             |
+| `cd ui-tests && jlpm playwright test`               | Galata e2e (starts `fake_stac.py` + JupyterLab)           |
+| `python -m build`                                   | Wheel with the prebuilt labextension and widget bundle    |
+
+## Architecture
+
+- **Python owns all traffic and secrets.** `jstex/stac.py` (pystac-client
+  `StacApiIO`) talks to STAC; `jstex/auth.py` reads the token from the hub.
+  The browser never sees a token.
+- **The widget is a view.** `js/widget.ts` mounts the search panel
+  (`js/ui/panel.ts` + one module per section), map, results and details on a
+  per-render store (`js/store.ts`); views only call `Actions` (`js/actions.ts`).
+  Python pushes results as `{"type":"page"}` messages; small state
+  (query, selection, status) is synced traitlets (`js/model-sync.ts`).
+- **Protocol** (see `jstex/widget.py`): JS → Py `collections` / `search` /
+  `cancel` / `sync` / `queryables` / `aoi_upload`; Py → JS `reply` / `page`.
+- **Copied from STEX:** `js/antimeridian.ts` (+ tests) — provenance header
+  names the STEX commit. The `?q=` codec in `jstex/query.py` is tested against
+  golden strings produced by STEX's own encoder (`tests/fixtures/`).
+
+## Gotchas
+
+- The bundle must be one file (anywidget loads it from a blob URL):
+  `inlineDynamicImports`, and @eox/ui icon fonts are dropped (their
+  `@font-face` falls back to jsdelivr).
+- `js/define-guard.ts` must stay the first import of `js/widget.ts` (each new
+  `Explorer()` re-evaluates the bundle; @eox modules define custom elements at
+  load).
+- After rebuilding the bundle, restart kernels that hold old explorers,
+  otherwise reopening the notebook logs `[anywidget] Failed to initialize model`.
+- The default basemaps (Carto / Stadia, as in STEX) need an API key or a
+  registered domain; without one they serve watermark tiles. Set
+  `JSTEX_BASEMAP_{LIGHT,DARK}_KEY` on the hub.
+- Open-ended dates are sent closed (1900-01-01 / 2099-12-31): the CDSE
+  firewall rejects `../end` intervals.
+- ESLint (template config) ignores `js/`; the widget is checked by
+  `tsc -p js/tsconfig.json` and prettier. Keep new widget code in `js/`.
+- Token expiry: jstex retries a 401 once after re-reading the hub; the hub
+  refreshes the upstream token at most every `auth_refresh_age` seconds.
+- `js/define-guard.ts` must also stay listed in `package.json` `sideEffects`
+  (see Decisions below): the template's list covers styles only and Rollup
+  drops side-effect-only imports that are not listed.
+- `jlpm i18n:extract` runs `scripts/i18n_extract.py`: jupyterlab-translate
+  scans every `**/*.ts` and ignores only the top-level `node_modules/`, so it
+  is run on a staging copy of our sources (otherwise `ui-tests/node_modules`
+  floods the template). `.gitignore` un-ignores `jstex/locale/` (the
+  template ignores `*.pot`/`*.mo`).
+- Changing `eox-drawtools`' `type` rebuilds its draw interaction
+  asynchronously; `js/ui/map.ts` starts drawing after `updateComplete`.
+- Galata's default viewport (1024 px) puts the widget in the narrow, stacked
+  layout; `explorer.spec.ts` sets 1600 × 1200. Running a cell leaves an empty
+  cell below it — address cells by index/count, not `last()`.
+
+## Translations (i18n)
+
+jstex follows the JupyterLab guide for extension authors: gettext domain
+`jstex`, strings extracted with `jupyterlab-translate`, translations shipped
+in the wheel under `jstex/locale/<ll_CC>/LC_MESSAGES/jstex.{po,json,mo}` and
+registered with the `jupyterlab.locale` entry point (`pyproject.toml`).
+
+- **Writing strings:** only in `js/strings.ts`, as literal
+  `trans.__('Text %1', value)` / `trans._n(…)` calls — the extractor finds
+  nothing else. Kernel-side messages (errors) are English for now.
+- **How the widget gets them:** the labextension plugin (`src/index.ts`)
+  publishes `translator.load('jstex')` under `Symbol.for('jstex.i18n')`;
+  `js/i18n.ts` reads it or falls back to English (VS Code, Colab, Voilà).
+- **Refresh the template:** `jlpm i18n:extract` → `jstex/locale/jstex.pot`
+  (run before each release; commit it).
+- **Add a language** (needs the `gettext` system package for `update`):
+  ```bash
+  jupyterlab-translate update . jstex -l de_DE   # or: pybabel init -i jstex/locale/jstex.pot -d jstex/locale -l de_DE -D jstex
+  # translate jstex/locale/de_DE/LC_MESSAGES/jstex.po
+  jupyterlab-translate compile . jstex -l de_DE  # -l is required
+  git add jstex/locale/de_DE
+  ```
+- **Gotchas:** JupyterLab serves a package's translations only for locales
+  whose official language pack is installed; keep `jstex/__init__.py`
+  import-light (the server imports it via the entry point, and a failing
+  import disables all third-party translations). If jstex ever becomes
+  public, it can instead be added to jupyterlab/language-packs
+  (`repository-map.yml`) for Crowdin translation.
+
+## Manual smoke test on the real hub
+
+1. As a user with access to a restricted collection: `jstex.Explorer()` — the
+   collection is listed and no Anonymous badge shows.
+2. Search it, open an item, run `jstex.item(<copied self link>)` in a new cell.
+3. Leave the notebook idle longer than the access-token lifetime, search again —
+   it succeeds (possibly after one Retry within `auth_refresh_age`).
+
 ## Decisions (stage 1 spikes)
 
 - **eox-map in a cell output:** works with a single-file Vite ESM bundle

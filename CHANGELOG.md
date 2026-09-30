@@ -1,5 +1,14 @@
 # Changelog
 
-<!-- <START NEW CHANGELOG ENTRY> -->
+All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-<!-- <END NEW CHANGELOG ENTRY> -->
+## [0.1.0] - 2026-09-30
+
+### Added
+
+- **Explorer widget** (`jstex.Explorer()`): STEX-like search panel — collection search with info, UTC date range (open-ended allowed), one area of interest (polygon, box or GeoJSON upload), queryables-driven attribute filters (CQL2-JSON), collapsible to a rail; STAC search, results table synchronised with map footprints (a click on overlapping footprints lists them in a popup, as in STEX), item details with Prev/Next and copy buttons for self link, id, property values, asset hrefs (incl. alternates) and links.
+- **Python access to results**: `results`, `selected_items`, `selected_item` as `pystac` objects; `search(wait=True)`; `query_url()` producing STEX-compatible `?q=` links; `jstex.item(href)`.
+- **JupyterHub token support**: the user's OIDC access token (hub `auth_state`) is sent with every STAC request, so restricted collections work; anonymous fallback with a visible badge.
+- **Light and dark mode** following the JupyterLab (VS Code, Colab) theme, with light/dark basemaps.
+- **Translation-ready UI** using the JupyterLab i18n standard (gettext domain `jstex`, `jupyterlab.locale` entry point); English only in this release.
+- **Deployment config** via `JSTEX_*` environment variables (STAC URL, STEX URL, basemaps as in STEX) and a z2jh example.
