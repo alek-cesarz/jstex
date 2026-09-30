@@ -33,7 +33,7 @@ describe('details', () => {
     const sections = el.querySelectorAll<HTMLDetailsElement>(
       'details[data-section]'
     );
-    expect([...sections].map(d => d.open)).toEqual([false, true, true]);
+    expect([...sections].map(d => d.open)).toEqual([false, false, false]);
     (el.querySelector('button[data-nav="1"]') as HTMLButtonElement).click();
     expect(actions.activate).toHaveBeenCalledWith('b');
     expect(

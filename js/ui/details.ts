@@ -123,10 +123,11 @@ export function mountDetails(
   actions: DetailsActions
 ): () => void {
   // Open/closed state of the sections lives here, not in the DOM: render() rebuilds it.
+  // All start folded; a section the user opens stays open across items.
   const open: Record<Section, boolean> = {
     properties: false,
-    assets: true,
-    links: true
+    assets: false,
+    links: false
   };
   el.innerHTML =
     '<section class="jstex-details jstex-card" data-ref="root"></section>';
