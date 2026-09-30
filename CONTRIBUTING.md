@@ -110,4 +110,9 @@ More information is provided within the [ui-tests](./ui-tests/README.md) README.
 
 ## Packaging the extension
 
-See [RELEASE](RELEASE.md)
+jstex is a private package and is never published to PyPI or npm. The version
+comes from `package.json`. To release, bump it, move the `[Unreleased]` entries
+in [CHANGELOG.md](CHANGELOG.md) under the new version, merge to `main`, then
+push a `vX.Y.Z` tag: `.github/workflows/release.yml` builds the wheel and
+attaches it to a GitHub Release. See [Installation (hub image)](README.md#installation-hub-image)
+for installing that wheel.
