@@ -178,6 +178,34 @@ test.describe('jstex Explorer', () => {
     await expect(w.locator('.jstex-panel')).toBeVisible();
   });
 
+  test('the date picker opens on every click, not just the first', async ({
+    page
+  }) => {
+    const w = await explorerCell(page);
+    const popup = page.locator(
+      'body > .vc.jstex-vc:not([data-vc-calendar-hidden])'
+    );
+    const to = w.locator('[data-ref="to"]');
+    for (let round = 0; round < 3; round++) {
+      await to.click();
+      await expect(popup).toBeVisible();
+      await page.mouse.click(5, 5); // click elsewhere closes it
+      await expect(popup).toBeHidden();
+    }
+    // After picking a day it opens again too.
+    await to.click();
+    await popup.locator('[data-vc-date-btn]').nth(10).click();
+    await expect(to).not.toHaveValue('');
+    const first = await to.inputValue();
+    await w.locator('.jstex-panel').click({ position: { x: 5, y: 5 } });
+    await to.click();
+    await expect(popup).toBeVisible();
+    // ...and a second pick still works.
+    await popup.locator('[data-vc-date-btn]').nth(12).click();
+    await expect(to).not.toHaveValue(first);
+    await expect(to).not.toHaveValue('');
+  });
+
   test('the divider resizes the panel and the map can be hidden', async ({
     page
   }) => {

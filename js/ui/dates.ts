@@ -100,23 +100,45 @@ export function mountDates(
       datesInverted(datetime) ? [from, to] : []
     );
     actions.setQuery({ datetime });
-    closeCalendars(); // re-created with the new selection on next open
   };
 
   // ── calendar popups (created on first use; jsdom tests never open them) ──
-  const calendars = new Map<HTMLInputElement, () => void>();
+  // One calendar per field for the life of the view. Destroying it from its own
+  // click handler (as an earlier version did after each pick) reset the field
+  // and left the next calendar on that input unable to open.
+  const calendars = new Map<
+    HTMLInputElement,
+    { cal: Calendar; destroy: () => void }
+  >();
   const closeCalendars = () => {
-    calendars.forEach(destroy => destroy());
+    calendars.forEach(c => c.destroy());
     calendars.clear();
   };
-  const openCalendar = (input: HTMLInputElement, endOfDay: boolean) => {
-    if (calendars.has(input)) return;
+  /** Selection, month shown and time for a field's calendar, from its text. */
+  const pickerState = (input: HTMLInputElement, endOfDay: boolean) => {
     const iso = dateInputToIso(input.value, endOfDay);
     // An empty field opens on the other end's month (else the current month).
     const other = endOfDay ? from : to;
     const shown = iso || dateInputToIso(other.value, !endOfDay);
-    const time = iso ? iso.slice(11, 16) : '';
     const noTime = !iso || isoToDateInput(iso, endOfDay).length === 10;
+    const now = new Date();
+    return {
+      selectedDates: iso ? [iso.slice(0, 10)] : [],
+      selectedMonth: (shown
+        ? Number(shown.slice(5, 7)) - 1
+        : now.getUTCMonth()) as Range<12>,
+      selectedYear: shown ? Number(shown.slice(0, 4)) : now.getUTCFullYear(),
+      selectedTime: noTime ? '00:00' : iso!.slice(11, 16)
+    };
+  };
+  const openCalendar = (input: HTMLInputElement, endOfDay: boolean) => {
+    const existing = calendars.get(input);
+    if (existing) {
+      // Re-sync with the field (typed text, Python, the other end) and open.
+      existing.cal.set(pickerState(input, endOfDay));
+      existing.cal.show();
+      return;
+    }
     let onScroll: (() => void) | null = null;
     const pick = (date: string | undefined, hhmm: string) => {
       if (!date) return;
@@ -133,14 +155,7 @@ export function mountDates(
       selectionDatesMode: 'single',
       selectionTimeMode: 24,
       timeStepMinute: 1,
-      selectedDates: iso ? [iso.slice(0, 10)] : [],
-      ...(shown
-        ? {
-            selectedMonth: (Number(shown.slice(5, 7)) - 1) as Range<12>,
-            selectedYear: Number(shown.slice(0, 4))
-          }
-        : {}),
-      selectedTime: noTime ? '00:00' : time,
+      ...pickerState(input, endOfDay),
       onClickDate(self) {
         pick(self.context.selectedDates[0], self.context.selectedTime);
       },
@@ -179,10 +194,13 @@ export function mountDates(
       }
     });
     const cleanup = cal.init();
-    calendars.set(input, () => {
-      if (onScroll) window.removeEventListener('scroll', onScroll, true);
-      cleanup?.();
-      cal.destroy();
+    calendars.set(input, {
+      cal,
+      destroy: () => {
+        if (onScroll) window.removeEventListener('scroll', onScroll, true);
+        cleanup?.();
+        cal.destroy();
+      }
     });
     cal.show();
   };
