@@ -96,28 +96,20 @@ for item in ex.results:
     print(item.id, item.datetime, item.properties.get("eo:cloud_cover"))
 ```
 
-## Installation (hub image)
+## Installation
 
-jupyterlab-jstex is a private package: it is not on PyPI. CI attaches the wheel to each
-GitHub Release. Install it in the single-user image, passing a read-only
-token as a build secret:
-
-```dockerfile
-# syntax=docker/dockerfile:1
-FROM quay.io/jupyter/scipy-notebook:latest
-ARG JSTEX_VERSION=0.1.0
-RUN --mount=type=secret,id=gh_token,uid=1000 \
-    TOKEN="$(cat /run/secrets/gh_token)" && \
-    ASSET_URL="$(curl -fsSL -H "Authorization: Bearer $TOKEN" \
-      https://api.github.com/repos/alek-cesarz/jstex/releases/tags/v${JSTEX_VERSION} \
-      | python -c 'import json,sys; print(next(a["url"] for a in json.load(sys.stdin)["assets"] if a["name"].endswith(".whl")))')" && \
-    curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/octet-stream" \
-      -o /tmp/jupyterlab_jstex-${JSTEX_VERSION}-py3-none-any.whl "$ASSET_URL" && \
-    pip install --no-cache-dir /tmp/jupyterlab_jstex-${JSTEX_VERSION}-py3-none-any.whl && \
-    rm /tmp/jupyterlab_jstex-*.whl
+```bash
+pip install jupyterlab-jstex
 ```
 
-Build with `docker build --secret id=gh_token,env=GH_TOKEN .`
+In a JupyterHub single-user image:
+
+```dockerfile
+FROM quay.io/jupyter/scipy-notebook:latest
+RUN pip install --no-cache-dir jupyterlab-jstex
+```
+
+Wheels are also attached to each [GitHub Release](https://github.com/alek-cesarz/jstex/releases).
 
 Requirements: JupyterLab 4, Python ≥ 3.10 with `anywidget` 0.11 (installed
 as a dependency).
@@ -183,4 +175,5 @@ and selected. To add a language, see
 
 ## License
 
-Private; no license is granted.
+[GPL-3.0-or-later](LICENSE). The extension bundles third-party open-source
+libraries (e.g. OpenLayers, EOX Elements) under their own licenses.

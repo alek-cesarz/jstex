@@ -110,9 +110,17 @@ More information is provided within the [ui-tests](./ui-tests/README.md) README.
 
 ## Packaging the extension
 
-jstex is a private package and is never published to PyPI or npm. The version
-comes from `package.json`. To release, bump it, move the `[Unreleased]` entries
-in [CHANGELOG.md](CHANGELOG.md) under the new version, merge to `main`, then
-push a `vX.Y.Z` tag: `.github/workflows/release.yml` builds the wheel and
-attaches it to a GitHub Release. See [Installation (hub image)](README.md#installation-hub-image)
-for installing that wheel.
+jupyterlab-jstex is published to PyPI (not npm). The version comes from
+`package.json`. To release:
+
+1. Bump the version, move the `[Unreleased]` entries in
+   [CHANGELOG.md](CHANGELOG.md) under it, and merge to `main`.
+2. Push a `vX.Y.Z` tag: `.github/workflows/release.yml` builds the wheel and
+   attaches it to a GitHub Release.
+3. From a clean checkout of the tag, build and upload with a PyPI API token:
+
+   ```bash
+   python -m build          # sdist + wheel in dist/
+   twine check dist/*
+   TWINE_USERNAME=__token__ twine upload dist/*   # asks for the token
+   ```

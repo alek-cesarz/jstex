@@ -437,8 +437,9 @@ language pack is installed. Kernel-side error messages are English.
   authenticated" check, wheel/sdist, an isolated install test, the Galata
   suite, and a link check of the Markdown files.
 - `release.yml` (push of a `v*` tag): builds the wheel and attaches it to a
-  GitHub Release. jstex is private: no PyPI or npm. Hub images install the
-  wheel from the release (README → Installation).
+  GitHub Release. The maintainer uploads the sdist and wheel to PyPI
+  (`jupyterlab-jstex`) with twine (CONTRIBUTING → Packaging). Licensed
+  GPL-3.0-or-later.
 - The version comes from `package.json` (`hatch-nodejs-version`).
 
 ## 17. Extension points
