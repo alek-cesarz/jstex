@@ -45,6 +45,11 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
 
 ## Gotchas
 
+- JupyterLab's Extension Manager cannot show an extension's own icon: it shows
+  `https://github.com/<owner>.png`, with `<owner>` taken from the package's
+  GitHub homepage/repository URL (i.e. the repo owner's avatar). The STEX logo
+  is the extension's LabIcon (`jupyterlab-jstex:logo`) for our own UI instead.
+
 - `vite.config.ts` pins `resolve.conditions` to production: with
   `NODE_ENV=development` in the shell (as on the dev host), Vite otherwise
   bundles Lit's development build (slower, "Lit is in dev mode" warnings).
