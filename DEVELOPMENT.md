@@ -23,19 +23,25 @@ jlpm build:widget          # after every change under js/
 
 ## Architecture
 
+The full description (diagrams, widget protocol, search/auth flows, state
+model) is in [docs/architecture.md](docs/architecture.md). In short:
+
 - **Python owns all traffic and secrets.** `jstex/stac.py` (pystac-client
   `StacApiIO`) talks to STAC; `jstex/auth.py` reads the token from the hub.
   The browser never sees a token.
-- **The widget is a view.** `js/widget.ts` mounts the search panel
-  (`js/ui/panel.ts` + one module per section), map, results and details on a
-  per-render store (`js/store.ts`); views only call `Actions` (`js/actions.ts`).
-  Python pushes results as `{"type":"page"}` messages; small state
-  (query, selection, status) is synced traitlets (`js/model-sync.ts`).
-- **Protocol** (see `jstex/widget.py`): JS → Py `collections` / `search` /
-  `cancel` / `sync` / `queryables` / `aoi_upload`; Py → JS `reply` / `page`.
-- **Copied from STEX:** `js/antimeridian.ts` (+ tests) — provenance header
+- **The widget is a view.** `js/widget.ts` mounts the search panel, map,
+  results and details on a per-render store (`js/store.ts`); views change
+  state only through `Actions` (`js/actions.ts`). Results arrive as
+  `{"type":"page"}` messages; small state (query, selection, status) is synced
+  traitlets (`js/model-sync.ts`).
+- **The labextension** (`src/index.ts`) only publishes the `jstex`
+  translation bundle for the widget.
+- **Copied from STEX:** `js/antimeridian.ts` (+ tests) — the provenance header
   names the STEX commit. The `?q=` codec in `jstex/query.py` is tested against
   golden strings produced by STEX's own encoder (`tests/fixtures/`).
+- **Docs screenshot:** `docs/images/explorer-dark.png` comes from
+  `JSTEX_DESIGN_SHOTS=1 jlpm playwright test tests/design.spec.ts`
+  (`ui-tests/design-review/1400-dark-3-results.png`).
 
 ## Gotchas
 
