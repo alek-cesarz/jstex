@@ -36,7 +36,8 @@ restricted collections just work.
   anonymous fallback and a visible "Not signed in" hint.
 - **Light and dark mode** follow JupyterLab (also VS Code and Colab),
   including the basemap.
-- **Share links**: `ex.query_url()` produces a STEX-compatible `?q=` link.
+- **Links to the search**: `ex.query_url()` gives a clickable STAC
+  `GET /search` URL; `ex.stex_url()` opens the same query in STEX.
 - **Translatable** following the JupyterLab i18n standard; English ships
   today.
 
@@ -58,17 +59,18 @@ item.assets["B04"].href            # use it in your code
 
 ## Using results in Python
 
-| Member                                      | What it gives                                                                              |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `jstex.Explorer(stac_url=None, height=600)` | The widget. `stac_url` overrides `JSTEX_STAC_URL`; `height` is the panel/map height in px. |
-| `ex.results`                                | All loaded items as a `pystac.ItemCollection`                                              |
-| `ex.selected_items`                         | The checked result rows, as `pystac.Item`s                                                 |
-| `ex.selected_item`                          | The item shown in Item details (`None` if none)                                            |
-| `ex.query`                                  | The current query as a dict. Assign to it to change the panel from Python.                 |
-| `ex.search(wait=False)`                     | Run the current query. `wait=True` blocks until `ex.results` is filled.                    |
-| `ex.cancel()`                               | Drop the running search; previous results stay                                             |
-| `ex.query_url()`                            | STEX share link for the query (just the `q` value when `JSTEX_STEX_URL` is unset)          |
-| `jstex.item(href)`                          | Open any STAC item URL with the user's token (what "Copy Python" pastes)                   |
+| Member                                      | What it gives                                                                                                                                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jstex.Explorer(stac_url=None, height=600)` | The widget. `stac_url` overrides `JSTEX_STAC_URL`; `height` is the panel/map height in px.                                                                                                  |
+| `ex.results`                                | All loaded items as a `pystac.ItemCollection`                                                                                                                                               |
+| `ex.selected_items`                         | The checked result rows, as `pystac.Item`s                                                                                                                                                  |
+| `ex.selected_item`                          | The item shown in Item details (`None` if none)                                                                                                                                             |
+| `ex.query`                                  | The current query as a dict. Assign to it to change the panel from Python.                                                                                                                  |
+| `ex.search(wait=False)`                     | Run the current query. `wait=True` blocks until `ex.results` is filled.                                                                                                                     |
+| `ex.cancel()`                               | Drop the running search; previous results stay                                                                                                                                              |
+| `ex.query_url()`                            | Clickable STAC `GET /search` URL for the query (returns the results as JSON; carries no token). A complex area is sent as its bbox, with a warning, to keep the URL under 2,000 characters. |
+| `ex.stex_url()`                             | Clickable STEX link that opens the query (needs `JSTEX_STEX_URL`)                                                                                                                           |
+| `jstex.item(href)`                          | Open any STAC item URL with the user's token (what "Copy Python" pastes)                                                                                                                    |
 
 Search from code, and the widget shows the same results:
 
@@ -116,13 +118,13 @@ as a dependency).
 Set these environment variables on the single-user server (e.g.
 `singleuser.extraEnv` in Zero to JupyterHub):
 
-| Env var                                                            | Default                                               | Meaning                                     |
-| ------------------------------------------------------------------ | ----------------------------------------------------- | ------------------------------------------- |
-| `JSTEX_STAC_URL`                                                   | `https://stac.opensearch.dataspace.copernicus.eu/v1/` | STAC API                                    |
-| `JSTEX_STEX_URL`                                                   | unset                                                 | STEX base URL for `query_url()` share links |
-| `JSTEX_BASEMAP_LIGHT_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION` | Carto Voyager (key param `key`)                       | Light-theme basemap (same as STEX)          |
-| `JSTEX_BASEMAP_DARK_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION`  | Stadia Alidade Smooth Dark (key param `api_key`)      | Dark-theme basemap (same as STEX)           |
-| `JSTEX_ACCESS_TOKEN`                                               | unset                                                 | Token for local development outside a hub   |
+| Env var                                                            | Default                                               | Meaning                                   |
+| ------------------------------------------------------------------ | ----------------------------------------------------- | ----------------------------------------- |
+| `JSTEX_STAC_URL`                                                   | `https://stac.opensearch.dataspace.copernicus.eu/v1/` | STAC API                                  |
+| `JSTEX_STEX_URL`                                                   | unset                                                 | STEX base URL for `stex_url()` links      |
+| `JSTEX_BASEMAP_LIGHT_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION` | Carto Voyager (key param `key`)                       | Light-theme basemap (same as STEX)        |
+| `JSTEX_BASEMAP_DARK_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION`  | Stadia Alidade Smooth Dark (key param `api_key`)      | Dark-theme basemap (same as STEX)         |
+| `JSTEX_ACCESS_TOKEN`                                               | unset                                                 | Token for local development outside a hub |
 
 Both default basemaps need an API key or a registered domain; without one
 they serve watermarked tiles.

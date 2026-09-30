@@ -1,6 +1,6 @@
 import pytest
 
-from jstex.errors import JstexQueryError, JstexStacError
+from jstex.errors import JstexError, JstexQueryError, JstexStacError
 from jstex.stac import Page
 from jstex.widget import Explorer, sync_runner
 
@@ -180,10 +180,32 @@ def test_sync_runner_disables_cancel():
     assert make(FakeBackend(), runner=lambda fn, *a: None)[0].can_cancel is True
 
 
-def test_query_url(monkeypatch):
+def test_query_url_is_a_clickable_get_search_url(monkeypatch):
+    monkeypatch.setenv("JSTEX_STAC_URL", URL)
+    ex, _ = make(FakeBackend())
+    ex.query = {**ex.query, "collections": ["c1"]}
+    url = ex.query_url()
+    assert url == f"{URL}search?collections=c1&limit=50"
+    assert isinstance(url, str)
+    assert url._repr_html_() == (
+        f'<a href="{URL}search?collections=c1&amp;limit=50" target="_blank" '
+        f'rel="noopener">{URL}search?collections=c1&amp;limit=50</a>'
+    )
+
+
+def test_stex_url(monkeypatch):
     monkeypatch.setenv("JSTEX_STEX_URL", "https://stex.example.org/")
     ex, _ = make(FakeBackend())
-    assert ex.query_url() == "https://stex.example.org/?q=e30"
+    url = ex.stex_url()
+    assert url == "https://stex.example.org/?q=e30"
+    assert url._repr_html_().startswith('<a href="https://stex.example.org/?q=e30"')
+
+
+def test_stex_url_needs_jstex_stex_url(monkeypatch):
+    monkeypatch.delenv("JSTEX_STEX_URL", raising=False)
+    ex, _ = make(FakeBackend())
+    with pytest.raises(JstexError, match="JSTEX_STEX_URL"):
+        ex.stex_url()
 
 
 def test_sync_resends_current_page_without_clearing_selection():

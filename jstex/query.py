@@ -11,10 +11,11 @@ import base64
 import binascii
 import json
 import math
+import warnings
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 from shapely.geometry import mapping, shape
 from shapely.ops import unary_union
@@ -28,6 +29,10 @@ DEFAULT_SORT = {"field": "properties.datetime", "direction": "desc"}
 OPEN_START = "1900-01-01T00:00:00Z"
 OPEN_END = "2099-12-31T23:59:59Z"
 DEFAULT_PAGE_SIZE = 50
+# GET search links: 2,000 characters is a common safe URL length, and the CDSE
+# firewall answers longer GET /search URLs with an HTML "Request Rejected" page
+# (measured 2026-09-30: 1,900 accepted, 2,244 rejected).
+MAX_GET_URL_LENGTH = 2000
 FILTER_OPS = {"=", "!=", "<", "<=", ">", ">=", "IN"}
 # UI operators -> standard CQL2-JSON. CDSE answers HTTP 400 to "!=" and "IN"
 # (verified 2026-09-30); "<>" and "in" work.
@@ -262,3 +267,54 @@ def to_search_body(state: QueryState) -> dict[str, Any]:
         body["filter"] = cql
         body["filter-lang"] = "cql2-json"
     return body
+
+
+# ── GET search link ─────────────────────────────────────────────────
+
+
+def _compact_json(value: Any) -> str:
+    return json.dumps(value, separators=(",", ":"), ensure_ascii=False)
+
+
+def _get_url(stac_url: str, body: dict[str, Any]) -> str:
+    params = {"collections": ",".join(body["collections"]), "limit": str(body["limit"])}
+    if "datetime" in body:
+        params["datetime"] = body["datetime"]
+    if "intersects" in body:
+        params["intersects"] = _compact_json(_round_geometry(body["intersects"]))
+    if "bbox" in body:
+        params["bbox"] = ",".join(str(_num(_js_round(v))) for v in body["bbox"])
+    if "filter" in body:
+        params["filter"] = _compact_json(body["filter"])
+        params["filter-lang"] = body["filter-lang"]
+    return f"{stac_url}search?{urlencode(params, safe=',:/', quote_via=quote)}"
+
+
+def search_get_url(
+    state: QueryState, stac_url: str, max_length: int = MAX_GET_URL_LENGTH
+) -> str:
+    """The search as a STAC ``GET /search`` URL (same parameters as the POST body).
+
+    Coordinates are rounded to 6 decimals. When the area makes the URL longer
+    than ``max_length``, the area's bbox is sent instead (a superset of the
+    results) and a warning says so.
+    """
+    body = to_search_body(state)
+    url = _get_url(stac_url, body)
+    if len(url) > max_length and "intersects" in body:
+        body["bbox"] = list(shape(body.pop("intersects")).bounds)
+        url = _get_url(stac_url, body)
+        warnings.warn(
+            f"The area makes the search URL longer than {max_length} characters; "
+            "the link searches the area's bbox instead and may return extra items.",
+            UserWarning,
+            stacklevel=2,
+        )
+    if len(url) > max_length:
+        warnings.warn(
+            f"The search URL is {len(url)} characters long; some servers (e.g. CDSE) "
+            f"reject GET URLs over {max_length} characters.",
+            UserWarning,
+            stacklevel=2,
+        )
+    return url

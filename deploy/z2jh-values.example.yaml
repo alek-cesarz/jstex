@@ -38,7 +38,7 @@ singleuser:
   extraEnv:
     JSTEX_STAC_URL: https://stac.example.org/v1/
     # Optional:
-    # JSTEX_STEX_URL: https://stex.example.org/           # enables Explorer.query_url() share links
+    # JSTEX_STEX_URL: https://stex.example.org/           # enables Explorer.stex_url() links
     # Basemaps default to the STEX providers (Carto Voyager / Stadia Alidade Smooth Dark).
     # Both need an API key or a registered domain, otherwise they serve watermark tiles:
     JSTEX_BASEMAP_LIGHT_KEY: "<carto key, or leave empty if the hub domain is registered>"

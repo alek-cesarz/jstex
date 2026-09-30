@@ -10,6 +10,7 @@ from jstex.query import (
     build_cql2,
     decode,
     encode,
+    search_get_url,
     share_url,
     to_search_body,
 )
@@ -187,6 +188,82 @@ def test_share_url():
         == f"https://stex.example.org/?q={encode(s)}"
     )
     assert share_url(s, None) == encode(s)
+
+
+def _get_params(url: str) -> dict[str, str]:
+    from urllib.parse import parse_qsl, urlsplit
+
+    return dict(parse_qsl(urlsplit(url).query))
+
+
+def test_search_get_url_mirrors_the_post_body():
+    s = QueryState(
+        collections=["c1", "c2"],
+        datetime={"from": "2024-07-01T00:00:00Z"},
+        aois=[Aoi(POLY)],
+        filters=[{"field": "eo:cloud_cover", "op": "<=", "value": 20}],
+    )
+    url = search_get_url(s, "https://stac.test/v1/")
+    assert url.startswith("https://stac.test/v1/search?")
+    body = to_search_body(s)
+    p = _get_params(url)
+    assert p["collections"] == "c1,c2"
+    assert p["limit"] == "50"
+    assert p["datetime"] == body["datetime"]  # open end closed, as in POST
+    assert json.loads(p["intersects"]) == body["intersects"]
+    assert json.loads(p["filter"]) == body["filter"]
+    assert p["filter-lang"] == "cql2-json"
+    assert "bbox" not in p
+
+
+def test_search_get_url_minimal_query_has_only_collections_and_limit():
+    url = search_get_url(QueryState(collections=["c1"]), "https://stac.test/v1/")
+    assert _get_params(url) == {"collections": "c1", "limit": "50"}
+
+
+def test_search_get_url_rounds_coordinates_to_6_decimals():
+    poly = {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [10.1234567891, 45.5],
+                [11, 45.5],
+                [11, 46.9876543219],
+                [10.1234567891, 45.5],
+            ]
+        ],
+    }
+    url = search_get_url(QueryState(collections=["c1"], aois=[Aoi(poly)]), "https://s/")
+    ring = json.loads(_get_params(url)["intersects"])["coordinates"][0]
+    assert ring[0] == [10.123457, 45.5] and ring[2] == [11, 46.987654]
+
+
+def test_search_get_url_falls_back_to_bbox_when_too_long():
+    import math
+
+    n = 300
+    ring = [
+        [
+            10.5 + 0.4 * math.cos(2 * math.pi * i / n),
+            45.5 + 0.4 * math.sin(2 * math.pi * i / n),
+        ]
+        for i in range(n)
+    ]
+    ring.append(ring[0])
+    s = QueryState(
+        collections=["c1"], aois=[Aoi({"type": "Polygon", "coordinates": [ring]})]
+    )
+    with pytest.warns(UserWarning, match="bbox"):
+        url = search_get_url(s, "https://stac.test/v1/")
+    assert len(url) <= 2000
+    p = _get_params(url)
+    assert "intersects" not in p
+    assert [float(v) for v in p["bbox"].split(",")] == [10.1, 45.1, 10.9, 45.9]
+
+
+def test_search_get_url_requires_collection():
+    with pytest.raises(JstexQueryError, match="collection"):
+        search_get_url(QueryState(), "https://stac.test/v1/")
 
 
 def test_decode_rejects_json_that_is_not_an_object():

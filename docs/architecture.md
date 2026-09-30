@@ -246,11 +246,26 @@ Views subscribe to the store and re-render the parts they own. They change
 state only through `Actions`; an action updates the store and, where Python
 cares, sets the trait and calls `save_changes()`.
 
-### 8.1 QueryState and share links
+### 8.1 Links: GET search URL and STEX link
+
+`ex.query_url()` (`search_get_url()` in `jstex/query.py`) turns the same
+`to_search_body()` result into a STAC `GET /search` URL:
+
+- `collections` comma-joined, `limit` and `datetime` as-is;
+- `intersects` and `filter` as compact JSON, with `filter-lang=cql2-json`;
+- coordinates rounded to 6 decimals.
+
+CDSE answers the GET form exactly like the POST (verified 2026-09-30), but its
+firewall rejects URLs over about 2,000 characters with an HTML "Request
+Rejected" page. When the area pushes the URL over `MAX_GET_URL_LENGTH` (2,000),
+the link sends the area's `bbox` instead and warns that it may return extra
+items. The URL carries no token, so restricted collections need a signed-in
+client. Both methods return a `Url` (a `str` with `_repr_html_`), which
+notebooks show as a clickable link.
 
 `QueryState` is the same shape as STEX's (`collections`, `datetime`, `aois`,
-`filters`, `sort`, `pageSize`). `ex.query_url()` encodes it with the STEX
-`?q=` codec: base64url JSON, compact AOIs `[{g, s}]`, defaults omitted,
+`filters`, `sort`, `pageSize`). `ex.stex_url()` (needs `JSTEX_STEX_URL`)
+encodes it with the STEX `?q=` codec: base64url JSON, compact AOIs `[{g, s}]`, defaults omitted,
 coordinates rounded to 6 decimals with JavaScript `Math.round` semantics. The
 codec is tested against golden strings produced by STEX's own encoder
 (`tests/fixtures/stex_codec_golden.json`), so a link opens the same search in

@@ -9,6 +9,7 @@ MB — too big to live in a synced traitlet).
 
 from __future__ import annotations
 
+import html
 import pathlib
 import threading
 from collections.abc import Callable
@@ -22,7 +23,7 @@ from . import auth
 from .aoi import parse_aoi_upload
 from .config import load_config
 from .errors import JstexError
-from .query import QueryState, share_url, to_search_body
+from .query import QueryState, search_get_url, share_url, to_search_body
 from .stac import Page, StacBackend
 
 STATIC = pathlib.Path(__file__).parent / "static"
@@ -41,6 +42,14 @@ def sync_runner(fn: Callable[..., None], *args: Any) -> None:
 # Set from the Task 2 spike (DEVELOPMENT.md "THREAD_SEND_OK"):
 # thread_runner if worker-thread sends are reliable, else sync_runner.
 DEFAULT_RUNNER: Runner = thread_runner
+
+
+class Url(str):
+    """A URL string that notebooks show as a clickable link."""
+
+    def _repr_html_(self) -> str:
+        href = html.escape(self, quote=True)
+        return f'<a href="{href}" target="_blank" rel="noopener">{href}</a>'
 
 
 class Explorer(anywidget.AnyWidget):
@@ -234,6 +243,21 @@ class Explorer(anywidget.AnyWidget):
         d = self._items.get(self.active_id or "")
         return pystac.Item.from_dict(d) if d else None
 
-    def query_url(self) -> str:
-        """STEX share URL for the current query (just ``q`` when JSTEX_STEX_URL is unset)."""
-        return share_url(QueryState.from_dict(self.query), self._config.stex_url)
+    def query_url(self) -> Url:
+        """The current query as a STAC ``GET /search`` URL (opens the results as JSON).
+
+        The link carries no token: restricted collections need a signed-in
+        client. A complex area is replaced by its bbox (with a warning) to keep
+        the URL short enough for the server.
+        """
+        return Url(
+            search_get_url(QueryState.from_dict(self.query), self._config.stac_url)
+        )
+
+    def stex_url(self) -> Url:
+        """A STEX link that opens the current query (needs ``JSTEX_STEX_URL``)."""
+        if not self._config.stex_url:
+            raise JstexError(
+                "Set JSTEX_STEX_URL to the STEX address to get STEX links."
+            )
+        return Url(share_url(QueryState.from_dict(self.query), self._config.stex_url))
