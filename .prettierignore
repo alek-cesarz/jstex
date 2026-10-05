@@ -10,3 +10,4 @@ eslint.config.mjs
 .superpowers
 ui-tests/design-review
 tests/fixtures
+docs/superpowers
