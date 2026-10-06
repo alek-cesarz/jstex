@@ -166,6 +166,7 @@ export function createStrings(trans: TranslationBundle) {
     copySelf: trans.__('Copy self link'),
     copyId: trans.__('Copy id'),
     copyPython: trans.__('Copy Python'),
+    copyBoto3: trans.__('Copy boto3 snippet'),
     copy: trans.__('Copy'),
     copied: trans.__('Copied'),
     copyFailed: trans.__('Copy failed'),

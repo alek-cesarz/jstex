@@ -16,7 +16,7 @@ import {
 } from '../format';
 import { applyPage, bindModel, stateFromModel } from '../model-sync';
 import { neighbour, scrollWithin, toggleId } from '../selection';
-import { pythonItemSnippet } from '../snippets';
+import { hasS3, pythonAssetSnippet, pythonItemSnippet } from '../snippets';
 import { createStore } from '../store';
 import { basemapLayer, DEFAULT_BASEMAP, isDark, watchTheme } from '../theme';
 import { BOX, FakeModel, FIELDS, item, setupView } from './helpers';
@@ -538,5 +538,33 @@ describe('ex.query set from Python', () => {
     actions.addFilterRow();
     const ids = store.get().filterRows.map(r => r.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('asset snippet', () => {
+  it('downloads the asset over S3 with jstex', () => {
+    expect(pythonAssetSnippet('https://stac.test/items/a', 'B04')).toBe(
+      [
+        '# needs: pip install "jupyterlab-jstex[s3]"',
+        'import jstex',
+        '',
+        'item = jstex.item("https://stac.test/items/a")',
+        'asset = item.assets["B04"]',
+        'loc = jstex.s3.location(asset)',
+        'jstex.s3.client(asset).download_file(**loc, Filename=loc["Key"].rsplit("/", 1)[-1])'
+      ].join('\n')
+    );
+  });
+
+  it('knows which assets are on S3', () => {
+    expect(hasS3({ href: 's3://eodata/a' })).toBe(true);
+    expect(hasS3({ href: '/eodata/a' })).toBe(true);
+    expect(
+      hasS3({
+        href: 'https://x/a',
+        alternate: { s3: { href: 's3://eodata/a' } }
+      })
+    ).toBe(true);
+    expect(hasS3({ href: 'https://x/a' })).toBe(false);
   });
 });

@@ -10,7 +10,7 @@ import {
 } from '../format';
 import { ICON } from '../icons';
 import { neighbour } from '../selection';
-import { pythonItemSnippet } from '../snippets';
+import { hasS3, pythonAssetSnippet, pythonItemSnippet } from '../snippets';
 import type { Store } from '../store';
 import { S } from '../strings';
 import type { ExplorerState, StacAsset, StacItem } from '../types';
@@ -27,7 +27,7 @@ const actionBtn = (text: string, label: string, icon: string) =>
 const hrefLine = (href: string, scheme = '') =>
   `<div class="jstex-href">${scheme ? `<span class="jstex-tag">${escapeHtml(scheme)}</span>` : ''}<span class="jstex-mono jstex-href__url">${escapeHtml(href)}</span>${copyBtn(href)}</div>`;
 
-function assetBlock(key: string, a: StacAsset): string {
+function assetBlock(key: string, a: StacAsset, self?: string): string {
   const tags = [a.type, ...(a.roles ?? [])]
     .filter(Boolean)
     .map(x => `<span class="jstex-tag">${escapeHtml(x)}</span>`)
@@ -36,13 +36,17 @@ function assetBlock(key: string, a: StacAsset): string {
     .filter(([, alt]) => alt?.href)
     .map(([name, alt]) => hrefLine(alt.href!, name))
     .join('');
+  const snippet =
+    self && hasS3(a)
+      ? `<div class="jstex-asset__actions"><button type="button" class="jstex-control jstex-btn-sm" data-snippet="${escapeHtml(key)}" data-copy="${escapeHtml(pythonAssetSnippet(self, key))}">${ICON.code}<span>${escapeHtml(S.copyBoto3)}</span></button></div>`
+      : '';
   return `<div class="jstex-asset">
     <div class="jstex-asset__head"><span class="jstex-tag jstex-tag--key jstex-mono">${escapeHtml(key)}</span>${
       a.title
         ? `<span class="jstex-asset__title">${escapeHtml(a.title)}</span>`
         : ''
     }${tags}</div>
-    ${hrefLine(a.href)}${alternates}
+    ${hrefLine(a.href)}${alternates}${snippet}
   </div>`;
 }
 
@@ -100,7 +104,7 @@ function renderItem(
         })
         .join('')}</dl>`
     )}
-    ${sec('assets', S.assets, assets.length, assets.map(([k, a]) => assetBlock(k, a)).join(''))}
+    ${sec('assets', S.assets, assets.length, assets.map(([k, a]) => assetBlock(k, a, self)).join(''))}
     ${sec(
       'links',
       S.links,

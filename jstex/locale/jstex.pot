@@ -94,20 +94,12 @@ msgstr ""
 msgid "Ask your platform operator for it; it is remembered after a successful sign-in."
 msgstr ""
 
-#: js/strings.ts:126
+#: js/strings.ts:128
 msgid "Continue"
 msgstr ""
 
-#: js/strings.ts:127
-msgid "Use password instead"
-msgstr ""
-
-#: js/strings.ts:128
-msgid "Enter a client id"
-msgstr ""
-
 #: js/strings.ts:129
-msgid "Username"
+msgid "Use password instead"
 msgstr ""
 
 #: js/strings.ts:13
@@ -115,133 +107,133 @@ msgid "Resize the search panel (drag, or use the arrow keys)"
 msgstr ""
 
 #: js/strings.ts:130
-msgid "Password"
+msgid "Enter a client id"
 msgstr ""
 
 #: js/strings.ts:131
+msgid "Username"
+msgstr ""
+
+#: js/strings.ts:132
+msgid "Password"
+msgstr ""
+
+#: js/strings.ts:133
 msgid "This page is not served over HTTPS: your password would cross the network unencrypted."
 msgstr ""
 
-#: js/strings.ts:134
+#: js/strings.ts:136
 msgid "Try again"
 msgstr ""
 
-#: js/strings.ts:135
+#: js/strings.ts:137
 msgid "Not signed in — restricted collections are hidden."
 msgstr ""
 
-#: js/strings.ts:138
+#: js/strings.ts:140
 msgid "No access token — restricted collections are hidden. Ask your hub admin to enable auth_state (see jstex README)."
 msgstr ""
 
-#: js/strings.ts:141
+#: js/strings.ts:143
 msgid "Retry"
 msgstr ""
 
-#: js/strings.ts:142
+#: js/strings.ts:144
 msgid "Dismiss"
 msgstr ""
 
-#: js/strings.ts:144
+#: js/strings.ts:146
 msgid "Select"
 msgstr ""
 
-#: js/strings.ts:145
+#: js/strings.ts:147
 msgid "Results"
 msgstr ""
 
-#: js/strings.ts:146
+#: js/strings.ts:148
 msgid "Run a search to see items."
 msgstr ""
 
-#: js/strings.ts:147
+#: js/strings.ts:149
 msgid "Searching…"
 msgstr ""
 
-#: js/strings.ts:148
+#: js/strings.ts:150
 msgid "No items match this query."
 msgstr ""
 
-#: js/strings.ts:149
+#: js/strings.ts:151
 msgid "%1 loaded"
 msgid_plural "%1 loaded"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:150
+#: js/strings.ts:152
 msgid "%1 selected"
 msgid_plural "%1 selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:152
+#: js/strings.ts:154
 msgid "%1 matched"
 msgid_plural "%1 matched"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:153
+#: js/strings.ts:155
 msgid "ID"
 msgstr ""
 
-#: js/strings.ts:154
+#: js/strings.ts:156
 msgid "Datetime"
 msgstr ""
 
-#: js/strings.ts:155
+#: js/strings.ts:157
 msgid "Collection"
 msgstr ""
 
-#: js/strings.ts:156
+#: js/strings.ts:158
 msgid "Cloud %"
 msgstr ""
 
-#: js/strings.ts:158
+#: js/strings.ts:160
 msgid "Item details"
 msgstr ""
 
-#: js/strings.ts:159
+#: js/strings.ts:161
 msgid "Click a result or a footprint to see its details."
 msgstr ""
 
-#: js/strings.ts:160
+#: js/strings.ts:162
 msgid "Prev"
 msgstr ""
 
-#: js/strings.ts:161
+#: js/strings.ts:163
 msgid "Next"
 msgstr ""
 
-#: js/strings.ts:162
+#: js/strings.ts:164
 msgid "Previous item"
 msgstr ""
 
-#: js/strings.ts:163
+#: js/strings.ts:165
 msgid "Next item"
 msgstr ""
 
-#: js/strings.ts:164
+#: js/strings.ts:166
 msgid "Copy self link"
 msgstr ""
 
-#: js/strings.ts:165
+#: js/strings.ts:167
 msgid "Copy id"
 msgstr ""
 
-#: js/strings.ts:166
+#: js/strings.ts:168
 msgid "Copy Python"
 msgstr ""
 
-#: js/strings.ts:167
-msgid "Copy"
-msgstr ""
-
-#: js/strings.ts:168
-msgid "Copied"
-msgstr ""
-
 #: js/strings.ts:169
-msgid "Copy failed"
+msgid "Copy boto3 snippet"
 msgstr ""
 
 #: js/strings.ts:17
@@ -249,33 +241,45 @@ msgid "Map"
 msgstr ""
 
 #: js/strings.ts:170
-msgid "Properties"
+msgid "Copy"
 msgstr ""
 
 #: js/strings.ts:171
-msgid "Assets"
+msgid "Copied"
 msgstr ""
 
 #: js/strings.ts:172
-msgid "Links"
+msgid "Copy failed"
 msgstr ""
 
 #: js/strings.ts:173
+msgid "Properties"
+msgstr ""
+
+#: js/strings.ts:174
+msgid "Assets"
+msgstr ""
+
+#: js/strings.ts:175
+msgid "Links"
+msgstr ""
+
+#: js/strings.ts:176
 msgid "In Python, .selected_item on your Explorer returns this item as a pystac.Item."
 msgstr ""
 
-#: js/strings.ts:178
+#: js/strings.ts:18
+msgid "Hide map"
+msgstr ""
+
+#: js/strings.ts:181
 msgid "%1 overlapping item"
 msgid_plural "%1 overlapping items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:179
+#: js/strings.ts:182
 msgid "Close"
-msgstr ""
-
-#: js/strings.ts:18
-msgid "Hide map"
 msgstr ""
 
 #: js/strings.ts:19

@@ -1263,3 +1263,9 @@ body > .vc.jstex-vc .jstex-vc__actions button:hover {
 .jstex a.jstex-control {
   text-decoration: none;
 }
+
+.jstex .jstex-asset__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}

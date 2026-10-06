@@ -70,6 +70,15 @@ describe('details', () => {
     expect(el.textContent).not.toContain('Copy self link');
     expect(el.textContent).toContain('Copy id');
   });
+
+  it('offers a boto3 snippet for S3 assets', () => {
+    const { el, store, actions } = setup();
+    mountDetails(el, store, actions);
+    store.set({ items: [item('a')], activeId: 'a' });
+    const btn = el.querySelector<HTMLButtonElement>('[data-snippet="B04"]')!;
+    expect(btn.textContent).toContain('Copy boto3 snippet');
+    expect(btn.dataset.copy).toContain('item.assets["B04"]');
+  });
 });
 
 describe('details header and copy buttons', () => {
