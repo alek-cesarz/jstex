@@ -306,3 +306,14 @@ def test_unexpected_errors_never_leave_the_widget_stuck():
     assert sent[-1]["ok"] is False and "unexpected" in sent[-1]["error"]
     ex._on_msg(ex, search_msg(), [])
     assert ex.status == "error" and "unexpected" in ex.error
+
+
+def test_explorer_uses_the_selected_profile():
+    ex = Explorer(profile="codede", backend=FakeBackend(), runner=sync_runner)
+    assert ex.profile_name == "codede"
+    assert ex.config.stac_url == "https://stac.code-de.org/v1/"
+
+
+def test_explorer_default_profile_name():
+    ex, _ = make(FakeBackend())
+    assert ex.profile_name == "cdse-opensearch"

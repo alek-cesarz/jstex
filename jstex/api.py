@@ -9,9 +9,12 @@ from .profiles import load_registry
 from .stac import StacBackend
 
 
-def item(href: str, *, stac_url: str | None = None) -> pystac.Item:
-    """Open a STAC item by URL, sending the user's token (restricted collections work)."""
-    return StacBackend(load_config(stac_url=stac_url).stac_url).read_item(href)
+def item(
+    href: str, *, profile: str | None = None, stac_url: str | None = None
+) -> pystac.Item:
+    """Open a STAC item by URL with the user's token (restricted collections work)."""
+    cfg = load_config(profile=profile, stac_url=stac_url)
+    return StacBackend(cfg.stac_url, auth_config=cfg).read_item(href)
 
 
 def show_config(profile: str | None = None, **overrides) -> ConfigView:

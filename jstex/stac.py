@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
 import pystac
@@ -23,6 +23,9 @@ from urllib3.util.retry import Retry
 from . import auth
 from .errors import JstexStacError
 from .query import QueryState, to_search_body
+
+if TYPE_CHECKING:
+    from .config import Config
 
 MAX_COLLECTION_PAGES = 50
 # Queryables that the widget does not offer as attribute filters: space and time
@@ -88,8 +91,20 @@ def _origin(url: str) -> tuple[str, str, int | None]:
 
 
 class StacBackend:
-    def __init__(self, url: str, *, retry: Retry | None = None, timeout: float = 30):
+    def __init__(
+        self,
+        url: str,
+        *,
+        retry: Retry | None = None,
+        timeout: float = 30,
+        auth_config: Config | None = None,
+    ):
         self.url = url
+        self._auth_config = auth_config
+        candidates = [url]
+        if auth_config is not None:
+            candidates += [auth_config.issuer, auth_config.s3_keys_url]
+        self._origins = {_origin(u) for u in candidates if u}
         self.io = StacApiIO(
             request_modifier=self._add_auth,
             timeout=timeout,
@@ -98,11 +113,11 @@ class StacBackend:
         self._queryables: dict[str, dict] = {}
 
     def _add_auth(self, request: Request) -> Request:
-        # Only the configured STAC host gets the user's token: item self links
+        # Only the profile's own services get the user's token: item self links
         # and rel=next hrefs are server data and may point anywhere.
-        if _origin(request.url) != _origin(self.url):
+        if _origin(request.url) not in self._origins:
             return request
-        token = auth.get_token()
+        token = auth.get_token(self._auth_config)
         if token:
             request.headers["Authorization"] = f"Bearer {token}"
         return request
@@ -129,7 +144,7 @@ class StacBackend:
             except APIError as err:
                 status = getattr(err, "status_code", None)
                 if status == 401 and attempt == 0:
-                    auth.current(force_refresh=True)
+                    auth.current(self._auth_config, force_refresh=True)
                     continue
                 raise JstexStacError(_message(err, status), status) from err
         raise AssertionError("unreachable")

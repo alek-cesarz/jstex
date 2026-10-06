@@ -98,7 +98,8 @@ export interface BasemapConfig {
   light: BasemapSource;
   dark: BasemapSource;
 }
-export type AuthSource = 'hub' | 'env' | 'anonymous';
+export type AuthSource =
+  'hub' | 'token' | 'session' | 'device' | 'password' | 'anonymous';
 
 export interface ExplorerState {
   collections: CollectionSummary[];

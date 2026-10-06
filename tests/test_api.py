@@ -50,3 +50,25 @@ def test_public_config_helpers():
     assert jstex.show_config().config.profile == "cdse-opensearch"
     names = {p["name"] for p in jstex.list_profiles()}
     assert {"cdse-opensearch", "cdse", "creodias", "codede"} <= names
+
+
+@responses.activate
+def test_item_uses_the_profile_stac_host_for_the_token(monkeypatch):
+    import jstex
+
+    monkeypatch.setenv("JSTEX_ACCESS_TOKEN", "T")
+    href = "https://stac.code-de.org/v1/collections/c/items/a"
+    responses.get(
+        href,
+        json={
+            "type": "Feature",
+            "stac_version": "1.0.0",
+            "id": "a",
+            "geometry": None,
+            "properties": {"datetime": "2024-01-01T00:00:00Z"},
+            "links": [],
+            "assets": {},
+        },
+    )
+    jstex.item(href, profile="codede")
+    assert responses.calls[0].request.headers["Authorization"] == "Bearer T"

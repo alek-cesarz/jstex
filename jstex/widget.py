@@ -21,7 +21,7 @@ import traitlets
 
 from . import auth
 from .aoi import parse_aoi_upload
-from .config import load_config
+from .config import Config, load_config
 from .errors import JstexError
 from .query import QueryState, search_get_url, share_url, to_search_body
 from .stac import Page, StacBackend
@@ -74,6 +74,7 @@ class Explorer(anywidget.AnyWidget):
     basemap = traitlets.Dict().tag(
         sync=True
     )  # {"light": {url, attribution, kind: "style"|"xyz"}, "dark": {...}}
+    profile_name = traitlets.Unicode("").tag(sync=True)  # active profile
     panel_collapsed = traitlets.Bool(False).tag(
         sync=True
     )  # search panel folded to a rail
@@ -83,6 +84,7 @@ class Explorer(anywidget.AnyWidget):
     def __init__(
         self,
         *,
+        profile: str | None = None,
         stac_url: str | None = None,
         height: int = 600,
         backend: StacBackend | None = None,
@@ -90,11 +92,12 @@ class Explorer(anywidget.AnyWidget):
         **kwargs: Any,
     ):
         run = runner or DEFAULT_RUNNER
-        config = load_config(stac_url=stac_url)
+        config = load_config(profile=profile, stac_url=stac_url)
         super().__init__(
             query=QueryState().to_dict(),
             map_height=height,
             can_cancel=run is not sync_runner,
+            profile_name=config.profile,
             basemap={
                 theme: {
                     "url": b.tile_url(),
@@ -109,7 +112,7 @@ class Explorer(anywidget.AnyWidget):
             **kwargs,
         )
         self._config = config
-        self._backend = backend or StacBackend(self._config.stac_url)
+        self._backend = backend or StacBackend(config.stac_url, auth_config=config)
         self._run = run
         self._items: dict[str, dict] = {}
         self._page: Page | None = None
@@ -146,7 +149,7 @@ class Explorer(anywidget.AnyWidget):
             self._send_page()  # a (re-)rendered view asks for the current results
 
     def _reply_collections(self, req_id: Any) -> None:
-        self.auth_source = auth.current().source
+        self.auth_source = auth.current(self._config).source
         self._reply(req_id, self._backend.list_collections)
 
     def _reply(self, req_id: Any, fn: Callable[[], Any]) -> None:
@@ -224,6 +227,11 @@ class Explorer(anywidget.AnyWidget):
                     "matched": self._page.matched,
                 }
             )
+
+    @property
+    def config(self) -> Config:
+        """The effective settings of this explorer (see jstex.show_config())."""
+        return self._config
 
     # ── Python accessors ────────────────────────────────────────────
 
