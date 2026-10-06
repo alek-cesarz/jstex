@@ -13,7 +13,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ### Changed
 
-- The JupyterHub token is used only for the profile's own identity service; the user's token is sent only to the profile's STAC, identity and keys-manager hosts.
+- The JupyterHub token is used only for the profile's own identity service; the user's token is sent only to the profile's STAC, identity and keys-manager hosts. A `JSTEX_STAC_URL`/`stac_url` on another host than the profile's catalogue is searched anonymously unless `JSTEX_OIDC_ISSUER`/`issuer` is set too (a v0.1 hub deployment with its own catalogue must add `JSTEX_OIDC_ISSUER`). `JSTEX_ACCESS_TOKEN` is not sent to an identity service other than the one that issued it.
 - The status line shows how you are signed in (`hub`, `token`, `session`, `device login`, `password`); the source previously called `env` is now `token`.
 
 ### Fixed

@@ -195,6 +195,11 @@ stex_url = "https://stex.example.org/"
 `profile = "none"` loads no ready-made profile; set at least `stac_url`
 yourself (in `[profiles.none]`, `JSTEX_STAC_URL` or `stac_url=`).
 
+If you point `stac_url` at a catalogue on another host than the profile's,
+jstex does not sign in to it with the profile's identity service (your token
+would otherwise go to that host): searches there are anonymous unless you also
+set `issuer` (`JSTEX_OIDC_ISSUER` or `issuer=`).
+
 ## Configuration
 
 Every setting can also come from an environment variable, e.g. on a server
@@ -236,8 +241,10 @@ API key. Each theme can use another provider:
 jstex uses the first of these that gives a token for the profile's identity
 service:
 
-1. a token you provide: `JSTEX_ACCESS_TOKEN` or `jstex.login(token=…)`;
-2. JupyterHub — when the hub signs you in with the same identity service;
+1. a token you provide: `JSTEX_ACCESS_TOKEN` (skipped if it was issued by
+   another identity service) or `jstex.login(token=…)`;
+2. JupyterHub — only when the hub signs you in with the profile's identity
+   service (a profile without one never gets the hub token);
 3. a stored session from an earlier sign-in (also in other kernels);
 4. **device login** — open a link, confirm a code, sign in in your browser
    (any login method, including two-factor);

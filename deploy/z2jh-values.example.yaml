@@ -42,8 +42,11 @@ singleuser:
     # On a hub, users need no device or password login: jstex uses the hub's token
     # when its issuer matches the profile's identity service. Point the hub's
     # OAuthenticator at the same realm as the profile (or set JSTEX_OIDC_ISSUER).
-    # Any field can be overridden, e.g. the STAC API:
+    # Any field can be overridden, e.g. the STAC API. A catalogue on another host
+    # than the profile's needs its identity service too, or jstex searches it
+    # anonymously (the token never follows a STAC override on its own):
     JSTEX_STAC_URL: https://stac.example.org/v1/
+    JSTEX_OIDC_ISSUER: https://idp.example.org/realms/REALM
     # Optional:
     # JSTEX_STEX_URL: https://stex.example.org/           # enables Explorer.stex_url() links
     # Basemaps default to OpenFreeMap Positron (vector style, no key) in both themes.

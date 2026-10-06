@@ -324,6 +324,10 @@ flowchart LR
   REG --> DISC --> FILES --> ENV --> ARGS --> CFG
 ```
 
+- **Catalogue and identity stay together.** When the final `stac_url` is on
+  another host than the ready-made profile's and `issuer` still comes from the
+  profile, `load_config()` drops `issuer` with one warning: the override's
+  catalogue is searched anonymously unless the user sets `issuer` too.
 - **Selection.** `profile=` argument → `JSTEX_PROFILE` → `profile =` in the
   user file, then the system file → `cdse-opensearch`. `none` loads no
   ready-made profile.
@@ -342,7 +346,8 @@ flowchart LR
   block holds jstex-only fields such as `login_client_id`, `password_login`
   and `s3_bucket`). Discovery's `client_id` is never used for device login.
 - **Fetching.** The registry and each discovery document are fetched at most
-  once per kernel (3 s timeout), cached on disk for 24 h in `~/.cache/jstex/`,
+  once per kernel (3 s timeout; the result, a failure included, is
+  remembered), cached on disk for 24 h in `~/.cache/jstex/`,
   and the cache is the fallback when a fetch fails; the registry's last
   fallback is the packaged copy. Invalid entries (schema
   `jstex/data/profiles.schema.json`; every URL `https`) are skipped with one
@@ -389,13 +394,19 @@ sequenceDiagram
   needs the RBAC scope `admin:auth_state!user`, from `/hub/api/users/{name}`
   (`/hub/api/user` returns `auth_state: null`, jupyterhub#5103). Its `iss` is
   read from the JWT payload without verifying the signature: it only decides
-  routing; the services verify the token.
+  routing; the services verify the token. A profile without an `issuer` never
+  gets the hub token; nor does `JSTEX_ACCESS_TOKEN` reach an issuer other than
+  its own `iss` (an opaque token is used as given). `auth.current(None)` is
+  the unscoped low-level lookup and is not used by jstex itself.
 - **Sessions** (`jstex/sessions.py`): `~/.local/share/jstex/sessions.json`
   (0600, directory 0700, atomic writes), one entry per issuer: client id,
   refresh token, its expiry and the login method. Access tokens stay in
   memory. A refresh that rotates the refresh token stores the new one;
   `invalid_grant` drops the session, unless another kernel has meanwhile
-  replaced it, in which case jstex retries with the new one.
+  replaced it, in which case jstex retries with the new one. Refresh and write
+  run under an `flock` on `sessions.json.lock` (POSIX), so kernels refresh one
+  at a time and the next one reads the rotated token; a drop only removes the
+  token that failed.
 - **Device login** (`jstex/interactive.py`): RFC 8628 with PKCE S256 against
   the issuer's `device_authorization_endpoint` (from
   `.well-known/openid-configuration`, `jstex/oidc.py`), scope `openid` (plus
