@@ -84,7 +84,7 @@ def test_collections_reply_and_auth_source(monkeypatch):
             "data": [{"id": "c1", "title": "C1"}],
         }
     ]
-    assert ex.auth_source == "env"
+    assert ex.auth_source == "token"
 
 
 def test_collections_error_reply():

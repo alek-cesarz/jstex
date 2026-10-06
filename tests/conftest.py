@@ -36,13 +36,17 @@ def _clean_env(monkeypatch, tmp_path):
         monkeypatch.setenv(xdg, str(tmp_path / xdg.lower()))
     # Tests never touch the network for profiles unless they opt in.
     monkeypatch.setenv("JSTEX_PROFILES_URL", "builtin")
-    from jstex import profiles
+    from jstex import oidc, profiles
 
     profiles.reset()
+    oidc.reset()
     auth.reset_cache()
+    auth._store = None  # bind the session store to this test's XDG_DATA_HOME
     yield
     profiles.reset()
+    oidc.reset()
     auth.reset_cache()
+    auth._store = None
 
 
 def make_jwt(exp: float) -> str:

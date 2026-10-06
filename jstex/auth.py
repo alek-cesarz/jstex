@@ -1,9 +1,7 @@
-"""Access-token provider chain: JupyterHub auth_state -> JSTEX_ACCESS_TOKEN -> anonymous.
-
-The hub's OAuthenticator keeps the user's OIDC tokens in the encrypted
-``auth_state``. The single-user server may read it live when the hub grants
-the ``admin:auth_state!user`` scope (see deploy/z2jh-values.example.yaml).
-Only the access token leaves this module; the refresh token is never kept.
+"""Access-token chain per identity service (spec 2026-10-02 §4):
+manual token -> JupyterHub auth_state (same issuer only) -> stored session
+-> (device / password: jstex.login) -> anonymous.
+Only access tokens leave this module; refresh tokens stay in the session store.
 """
 
 from __future__ import annotations
@@ -15,29 +13,22 @@ import threading
 import time
 import warnings
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from urllib.parse import quote
 
 import requests
+
+from . import oidc
+from .sessions import Session, SessionStore
+
+if TYPE_CHECKING:
+    from .config import Config
 
 REFRESH_MARGIN_S = 60  # re-fetch when the token has less than this left
 MIN_CACHE_S = 15  # never ask the hub more often than this
 ANON_CACHE_S = 60  # how long an anonymous result is reused
 HUB_TIMEOUT_S = 10
 
-Source = Literal["hub", "env", "anonymous"]
-
-
-@dataclass(frozen=True)
-class TokenInfo:
-    token: str | None = field(repr=False)
-    source: Source
-    expires_at: float
-
-
-_lock = threading.Lock()
-_cached: TokenInfo | None = None
-_cache_until: float = 0.0
 _warned: set[str] = set()
 
 
@@ -109,51 +100,213 @@ def _from_hub() -> str | None:
     return token
 
 
-def _resolve(now: float) -> tuple[TokenInfo, float]:
-    token = _from_hub()
-    if token:
-        exp = _jwt_exp(token) or now + 300
-        return TokenInfo(token, "hub", exp), max(
-            exp - REFRESH_MARGIN_S, now + MIN_CACHE_S
-        )
-    env_token = os.environ.get("JSTEX_ACCESS_TOKEN")
-    if env_token:
-        exp = _jwt_exp(env_token) or now + 3600
-        return TokenInfo(env_token, "env", exp), max(
-            exp - REFRESH_MARGIN_S, now + MIN_CACHE_S
-        )
+Source = Literal["token", "hub", "session", "device", "password", "anonymous"]
+
+
+@dataclass(frozen=True)
+class TokenInfo:
+    token: str | None = field(repr=False)
+    source: Source
+    expires_at: float
+    user: str = ""
+
+
+_lock = threading.Lock()
+_cached: dict[str | None, tuple[TokenInfo, float]] = {}
+_manual: dict[str | None, str] = {}
+_store: SessionStore | None = None
+
+
+def sessions() -> SessionStore:
+    global _store
+    if _store is None:
+        _store = SessionStore()
+    return _store
+
+
+def _issuer(cfg: Config | None) -> str | None:
+    return cfg.issuer.rstrip("/") if cfg is not None and cfg.issuer else None
+
+
+def _user(token: str | None) -> str:
+    c = oidc.claims(token or "")
+    return str(c.get("preferred_username") or c.get("email") or c.get("sub") or "")
+
+
+def _info(
+    token: str, source: Source, now: float, expires_in: float | None = None
+) -> tuple[TokenInfo, float]:
+    exp = now + float(expires_in) if expires_in else (_jwt_exp(token) or now + 300)
+    return TokenInfo(token, source, exp, _user(token)), max(
+        exp - REFRESH_MARGIN_S, now + MIN_CACHE_S
+    )
+
+
+def _from_session(issuer: str, now: float) -> tuple[TokenInfo, float] | None:
+    store = sessions()
+    session = store.get(issuer)
+    if session is None:
+        return None
+    for _ in range(2):  # second round: another kernel may have rotated the token
+        try:
+            body = oidc.token_request(
+                issuer,
+                {
+                    "grant_type": "refresh_token",
+                    "refresh_token": session.refresh_token,
+                    "client_id": session.client_id,
+                },
+            )
+        except oidc.OidcError as err:
+            if err.error != "invalid_grant":
+                _warn_once(
+                    f"refresh:{issuer}",
+                    f"jstex: session refresh failed ({err.error}); searching anonymously.",
+                )
+                return None
+            newer = store.get(issuer)
+            if newer is not None and newer.refresh_token != session.refresh_token:
+                session = newer
+                continue
+            store.drop(issuer)
+            _warn_once(
+                f"expired:{issuer}", "jstex: stored login expired; sign in again."
+            )
+            return None
+        if body.get("refresh_token"):
+            store.put(
+                issuer,
+                Session(
+                    session.client_id,
+                    body["refresh_token"],
+                    now + float(body["refresh_expires_in"])
+                    if body.get("refresh_expires_in")
+                    else None,
+                    session.method,
+                ),
+            )
+        return _info(body["access_token"], "session", now, body.get("expires_in"))
+    return None
+
+
+def _resolve(cfg: Config | None, now: float) -> tuple[TokenInfo, float]:
+    issuer = _issuer(cfg)
+    manual = _manual.get(issuer) or os.environ.get("JSTEX_ACCESS_TOKEN")
+    if manual:
+        return _info(manual, "token", now)
+    hub = _from_hub()
+    if hub and (
+        issuer is None or str(oidc.claims(hub).get("iss", "")).rstrip("/") == issuer
+    ):
+        return _info(hub, "hub", now)
+    if issuer:
+        found = _from_session(issuer, now)
+        if found:
+            return found
     return TokenInfo(None, "anonymous", now + ANON_CACHE_S), now + ANON_CACHE_S
 
 
-def current(force_refresh: bool = False) -> TokenInfo:
-    """Return the best available token, cached until shortly before it expires."""
-    global _cached, _cache_until
+def current(cfg: Config | None = None, force_refresh: bool = False) -> TokenInfo:
+    key = _issuer(cfg)
     with _lock:
         now = time.time()
-        if not force_refresh and _cached is not None and now < _cache_until:
-            return _cached
-        _cached, _cache_until = _resolve(now)
-        return _cached
+        hit = _cached.get(key)
+        if not force_refresh and hit is not None and now < hit[1]:
+            return hit[0]
+        _cached[key] = _resolve(cfg, now)
+        return _cached[key][0]
 
 
-def get_token(force_refresh: bool = False) -> str | None:
-    return current(force_refresh).token
+def get_token(cfg: Config | None = None, force_refresh: bool = False) -> str | None:
+    return current(cfg, force_refresh).token
 
 
-def headers() -> dict[str, str]:
-    token = get_token()
+def headers(cfg: Config | None = None) -> dict[str, str]:
+    token = get_token(cfg)
     return {"Authorization": f"Bearer {token}"} if token else {}
 
 
-def reset_cache() -> None:
-    global _cached, _cache_until
+def set_manual_token(cfg: Config | None, token: str) -> TokenInfo:
     with _lock:
-        _cached, _cache_until = None, 0.0
+        _manual[_issuer(cfg)] = token
+        _cached.pop(_issuer(cfg), None)
+    return current(cfg)
+
+
+def complete_login(
+    cfg: Config,
+    *,
+    access_token: str,
+    expires_in: float | None,
+    refresh_token: str | None,
+    refresh_expires_in: float | None,
+    client_id: str,
+    method: Source,
+) -> TokenInfo:
+    issuer = _issuer(cfg)
+    now = time.time()
+    if issuer and refresh_token:
+        sessions().put(
+            issuer,
+            Session(
+                client_id,
+                refresh_token,
+                now + float(refresh_expires_in) if refresh_expires_in else None,
+                method,
+            ),
+        )
+    with _lock:
+        _cached[issuer] = _info(access_token, method, now, expires_in)
+        return _cached[issuer][0]
+
+
+def logout(cfg: Config) -> None:
+    issuer = _issuer(cfg)
+    if issuer:
+        session = sessions().get(issuer)
+        if session is not None:
+            endpoint = None
+            try:
+                endpoint = oidc.metadata(issuer).get("revocation_endpoint")
+            except oidc.OidcError:
+                pass
+            if endpoint:
+                try:
+                    requests.post(
+                        endpoint,
+                        data={
+                            "token": session.refresh_token,
+                            "client_id": session.client_id,
+                            "token_type_hint": "refresh_token",
+                        },
+                        timeout=HUB_TIMEOUT_S,
+                    )
+                except requests.RequestException:
+                    pass  # best effort; the local session is dropped anyway
+            sessions().drop(issuer)
+    with _lock:
+        _manual.pop(issuer, None)
+        _cached[issuer] = (
+            TokenInfo(None, "anonymous", time.time() + ANON_CACHE_S),
+            time.time() + ANON_CACHE_S,
+        )
+
+
+def whoami(cfg: Config | None = None) -> dict:
+    info = current(cfg)
+    return {"source": info.source, "user": info.user, "expires_at": info.expires_at}
+
+
+def reset_cache() -> None:
+    with _lock:
+        _cached.clear()
+        _manual.clear()
         _warned.clear()
 
 
-def _cache_until_override(value: float) -> None:
-    """Test hook: pretend the cache window ended at ``value``."""
-    global _cache_until
+def _cache_until_override(value: float, cfg: Config | None = None) -> None:
+    """Test hook: pretend the cache window for `cfg`'s issuer ended at `value`."""
     with _lock:
-        _cache_until = value
+        key = _issuer(cfg)
+        if key in _cached:
+            _cached[key] = (_cached[key][0], value)
