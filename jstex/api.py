@@ -4,7 +4,16 @@ from __future__ import annotations
 
 import pystac
 
-from .config import ConfigView, _files, load_config
+from . import auth
+from .config import ConfigView, _files, load_config, save_login_client_id
+from .interactive import (
+    LoginError,
+    _CellDisplay,
+    device_login,
+    exclusive,
+    login_client_id,
+    status_text,
+)
 from .profiles import load_registry
 from .stac import StacBackend
 
@@ -38,3 +47,59 @@ def list_profiles() -> list[dict[str, str]]:
             if n not in reg.profiles:
                 out.append({"name": n, "description": "", "source": label})
     return out
+
+
+def login(
+    profile: str | None = None,
+    *,
+    token: str | None = None,
+    method: str | None = None,
+    username: str | None = None,
+    client_id: str | None = None,
+    save: bool = False,
+) -> str:
+    """Sign in for `profile` (default: the active one) and return a status line.
+
+    token=...        use this access token (manual)
+    method="device"  device code: open a link, confirm a code (default when possible)
+    method="password" username and password (Task 7)
+    client_id=...    device-login client id; asked for when none is configured
+    save=True        also write that client id to ~/.config/jstex/config.toml
+    """
+    cfg = load_config(profile=profile)
+    if token:
+        return status_text(auth.set_manual_token(cfg, token))
+    if method is None and auth.current(cfg).source != "anonymous":
+        return status_text(auth.current(cfg))
+    with exclusive():
+        if method in (None, "device"):
+            cid = client_id or login_client_id(cfg)
+            if cid is None and (
+                method == "device"
+                or not (cfg.password_login and cfg.password_client_id)
+            ):
+                cid = input("Device-login client id: ").strip() or None
+            if cid is not None:
+                display = _CellDisplay()
+                try:
+                    info = device_login(cfg, client_id=cid, show=display.show)
+                except LoginError as err:
+                    if (
+                        err.reason != "client_refused"
+                        or method == "device"
+                        or not cfg.password_login
+                    ):
+                        raise
+                else:
+                    if save:
+                        save_login_client_id(cfg.profile, cid)
+                    display.done(status_text(info))
+                    return status_text(info)
+        return _password(cfg, username)  # Task 7
+
+
+def _password(cfg, username):  # replaced in Task 7
+    raise LoginError(
+        "No device-login client id; set login_client_id or pass client_id=.",
+        "need_client_id",
+    )
