@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Profiles**: ready-made settings for CDSE (`cdse-opensearch` default, `cdse`), CREODIAS and CODE-DE, merged from the jstex profile registry on GitHub, the platform's `eo-services.json` discovery document, `/etc/jstex/config.toml` and `~/.config/jstex/config.toml`, `JSTEX_*` variables and arguments; own profiles for private catalogues; `jstex.show_config()` and `jstex.list_profiles()`; `Explorer(profile=…)`.
+- **Sign in without JupyterHub**: device-code login (PKCE) and, where the platform allows it, password login — from the widget's **Sign in** button or `jstex.login()`; stored sessions are reused by later kernels; `jstex.logout()`, `jstex.whoami()`, `jstex.access_token()`.
+- **S3 access** (`pip install "jupyterlab-jstex[s3]"`): S3 keys created and renewed automatically and shared by your kernels; `jstex.s3.client()`, `location()`, `session()`, `storage_options()`, `gdal_env()`, `write_aws_profile()`; "Copy boto3 snippet" per S3 asset in Item details.
+- **Example notebooks**: downloading data (S3, HTTPS, complete product), Sentinel-2 NDVI with GDAL, xarray NDVI time series.
+
+### Changed
+
+- The JupyterHub token is used only for the profile's own identity service; the user's token is sent only to the profile's STAC, identity and keys-manager hosts.
+- The status line shows how you are signed in (`hub`, `token`, `session`, `device login`, `password`); the source previously called `env` is now `token`.
+
+### Fixed
+
+- **Map controls**: zoom and credits buttons are styled even when the map is created after the widget (they could appear unstyled).
+
 ## [0.1.0] - 2026-09-30
 
 ### Added

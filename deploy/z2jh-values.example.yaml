@@ -36,6 +36,13 @@ hub:
 
 singleuser:
   extraEnv:
+    # A ready-made profile sets the STAC API, identity service and S3 settings
+    # (see README "Profiles"); the default is cdse-opensearch.
+    # JSTEX_PROFILE: cdse-opensearch
+    # On a hub, users need no device or password login: jstex uses the hub's token
+    # when its issuer matches the profile's identity service. Point the hub's
+    # OAuthenticator at the same realm as the profile (or set JSTEX_OIDC_ISSUER).
+    # Any field can be overridden, e.g. the STAC API:
     JSTEX_STAC_URL: https://stac.example.org/v1/
     # Optional:
     # JSTEX_STEX_URL: https://stex.example.org/           # enables Explorer.stex_url() links

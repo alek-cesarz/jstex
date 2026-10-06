@@ -14,6 +14,15 @@
 
 **Out of scope here (other v0.2 base items, separate plans):** Load more, popup thumbnails, geocoding, bundle size, deferred minors.
 
+
+> **Execution notes (implemented on `feat/v0.2-profiles`).** Two names in the
+> code below changed during implementation, because a submodule shadows a
+> function of the same name on the package: the public helper `jstex.config()`
+> is `jstex.show_config()`, and the module `jstex/login.py` is
+> `jstex/interactive.py` (imports `from .login …` read `from .interactive …`).
+> Other deviations are recorded as rulings in the execution ledger and the
+> merge summary.
+
 ## Global Constraints
 
 - Python `>=3.10`; new core dependency `tomli>=2; python_version < "3.11"`; new extra `s3 = ["boto3>=1.34", "filelock>=3.12"]`; test extra gains `jsonschema>=4.20`, `moto[s3]>=5`. No eosdk dependency.

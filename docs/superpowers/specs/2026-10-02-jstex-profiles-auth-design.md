@@ -159,11 +159,11 @@ TOML is read with `tomllib` (`tomli` on Python 3.10, new dependency
 - `JSTEX_PROFILES_URL`: other registry URL, or `builtin` for no network
   (packaged registry only, no discovery).
 
-### 3.5 `jstex.config()` and `jstex.list_profiles()`
+### 3.5 `jstex.show_config()` and `jstex.list_profiles()`
 
 - `jstex.list_profiles()` (not `jstex.profiles()`: that name is the `jstex.profiles` submodule) lists available profile names with their description and
   source (registry, cache, packaged, config file).
-- `jstex.config(profile=None)` returns the effective configuration; its
+- `jstex.show_config(profile=None)` (not `jstex.config()`: that name is the `jstex.config` submodule) returns the effective configuration; its
   notebook repr is a table of field, value, source (`github`, `cache`,
   `packaged`, `discovery`, `/etc/…`, `~/.config/…`, `env`, `argument`) and
   where the registry and discovery were loaded from. Secrets are never shown.
@@ -305,7 +305,7 @@ Main spec §6 applies, with these changes:
   files + env + kwargs; keeps today's `Config`/`Basemap` and adds the §3.2
   fields.
 - `jstex/auth.py` — the token chain (steps 1–3, refresh, session store,
-  issuer match); `jstex/login.py` — device and password flows (steps 4–5) and
+  issuer match); `jstex/interactive.py` (not `login.py`: `jstex.login` is the function) — device and password flows (steps 4–5) and
   their notebook display.
 - `jstex/s3.py` — §5.
 - `jstex/stac.py` — token scoping by origin set (§3.6).
@@ -354,7 +354,7 @@ upstream.
   air-gapped or strict setups.
 - Hub tokens are never sent to another issuer's services (§4 step 2).
 - Session and key files are 0600 in 0700 directories; nothing secret in
-  traits, logs or `jstex.config()`.
+  traits, logs or `jstex.show_config()`.
 - The password grant is a fallback (deprecated by OAuth 2.0 security best
   practice); the UI prefers device login and warns on plain HTTP.
 

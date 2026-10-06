@@ -11,15 +11,16 @@ jlpm build:widget          # after every change under js/
 
 ## Commands
 
-| Command                                             | What                                                            |
-| --------------------------------------------------- | --------------------------------------------------------------- |
-| `pytest -q tests`                                   | Python unit tests (backend, auth, codec, widget protocol)       |
-| `jlpm vitest run`                                   | Front-end unit tests (jsdom)                                    |
-| `npx tsc -p js/tsconfig.json`                       | Typecheck the widget                                            |
-| `ruff check jstex tests && ruff format jstex tests` | Python lint/format                                              |
-| `jlpm lint`                                         | Template lint for the labextension + prettier                   |
-| `cd ui-tests && jlpm playwright test`               | Galata e2e (starts `fake_stac.py` + JupyterLab)                 |
-| `jlpm build:prod && python -m build --wheel`        | Wheel with a fresh labextension and widget bundle (see Gotchas) |
+| Command                                                    | What                                                                                  |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `pytest -q tests jstex/tests`                              | Python unit tests (profiles, config, auth, S3, codec, widget protocol, server routes) |
+| `jlpm vitest run`                                          | Front-end unit tests (jsdom)                                                          |
+| `npx tsc -p js/tsconfig.json`                              | Typecheck the widget                                                                  |
+| `ruff check jstex tests && ruff format jstex tests`        | Python lint/format                                                                    |
+| `jlpm lint`                                                | Template lint for the labextension + prettier                                         |
+| `cd ui-tests && jlpm playwright test`                      | Galata e2e (starts `fake_stac.py` — fake STAC and identity service — + JupyterLab)    |
+| `python scripts/check_notebooks.py && ruff check examples` | Example notebooks are valid, output-free and lint-clean                               |
+| `jlpm build:prod && python -m build --wheel`               | Wheel with a fresh labextension and widget bundle (see Gotchas)                       |
 
 ## Architecture
 
@@ -27,8 +28,22 @@ The full description (diagrams, widget protocol, search/auth flows, state
 model) is in [docs/architecture.md](docs/architecture.md). In short:
 
 - **Python owns all traffic and secrets.** `jstex/stac.py` (pystac-client
-  `StacApiIO`) talks to STAC; `jstex/auth.py` reads the token from the hub.
-  The browser never sees a token.
+  `StacApiIO`) talks to STAC and attaches the token only for the profile's
+  own hosts. The browser never sees a token or a password beyond the
+  sign-in form.
+- **Settings:** `jstex/profiles.py` loads the profile registry
+  (`jstex/data/profiles.json`: GitHub → disk cache → packaged copy) and the
+  platform's `eo-services.json` discovery document; `jstex/config.py` merges
+  them with the config files, `JSTEX_*` variables and arguments into one
+  `Config`, recording each field's source (`jstex.show_config()`).
+- **Tokens:** `jstex/auth.py` runs the token chain (manual token → hub, if its
+  issuer matches → stored session → anonymous) and refreshes tokens;
+  `jstex/oidc.py` does the OpenID Connect discovery and token requests;
+  `jstex/sessions.py` stores refresh tokens; `jstex/interactive.py` runs device
+  and password login (from `jstex.login()` or the widget's Sign in).
+- **S3:** `jstex/s3.py` creates, renews and caches S3 keys through the
+  platform's keys manager (a port of STEX's policy) and builds boto3 clients,
+  fsspec options, GDAL settings and AWS profiles from them.
 - **The widget is a view.** `js/widget.ts` mounts the search panel, map,
   results and details on a per-render store (`js/store.ts`); views change
   state only through `Actions` (`js/actions.ts`). Results arrive as
@@ -90,8 +105,28 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
   firewall rejects `../end` intervals.
 - ESLint (template config) ignores `js/`; the widget is checked by
   `tsc -p js/tsconfig.json` and prettier. Keep new widget code in `js/`.
-- Token expiry: jstex retries a 401 once after re-reading the hub; the hub
-  refreshes the upstream token at most every `auth_refresh_age` seconds.
+- Token expiry: jstex refreshes a session's access token 60 s before it
+  expires and retries a 401 once after re-reading the token source; the hub
+  refreshes its upstream token at most every `auth_refresh_age` seconds.
+- Tests run offline: `tests/conftest.py` sets `JSTEX_PROFILES_URL=builtin`,
+  private `XDG_*` directories and clears `JSTEX_*` variables, and resets the
+  module caches (`profiles`, `oidc`, `auth`). Tests that need the network
+  registry or discovery set `JSTEX_PROFILES_URL` themselves and mock it with
+  `responses`.
+- Submodule names shadow functions on the package: `jstex.profiles` and
+  `jstex.config` are modules, so the public helpers are
+  `jstex.list_profiles()` and `jstex.show_config()`; the login module is
+  `jstex.interactive`, because `jstex.login` is the function.
+- Registry data lives in `jstex/data/` (a `jstex/profiles/` folder would clash
+  with `profiles.py`); `jstex/data/profiles.schema.json` validates it in tests.
+- `jstex/s3.py` uses botocore's private `_protected_refresh` and
+  `Session._credentials` (there is no public API to force a refresh or to set
+  refreshable credentials on a boto3 session); `tests/test_s3.py` pins both.
+- `filelock` also locks between threads (each lock opens its own file
+  handle); the "concurrent kernels create one key" test relies on that.
+- Example notebooks are committed without outputs
+  (`scripts/check_notebooks.py`, also in CI). Clear them before committing:
+  `jupyter nbconvert --clear-output --inplace examples/*.ipynb`.
 - `js/define-guard.ts` must also stay listed in `package.json` `sideEffects`
   (see Decisions below): the template's list covers styles only and Rollup
   drops side-effect-only imports that are not listed.
@@ -152,6 +187,16 @@ registered with the `jupyterlab.locale` entry point (`pyproject.toml`).
 2. Search it, open an item, run `jstex.item(<copied self link>)` in a new cell.
 3. Leave the notebook idle longer than the access-token lifetime, search again —
    it succeeds (possibly after one Retry within `auth_refresh_age`).
+
+## Manual smoke test without a hub
+
+1. In a local JupyterLab: `jstex.Explorer()` shows "Not signed in" and a
+   **Sign in** button. Sign in (device login, or password where the profile
+   allows it); restricted collections appear.
+2. Restart the kernel: `jstex.whoami()` reports `session` without signing in
+   again.
+3. With `jupyterlab-jstex[s3]`: run `examples/01-download.ipynb`; a second
+   kernel reuses the same S3 key (`~/.config/jstex/s3-credentials.json`).
 
 ## Decisions (stage 1 spikes)
 
