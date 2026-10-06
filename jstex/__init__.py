@@ -42,6 +42,10 @@ def __getattr__(name: str) -> Any:
         from . import api
 
         return getattr(api, name)
+    if name == "s3":
+        import importlib
+
+        return importlib.import_module(".s3", __name__)
     raise AttributeError(f"module 'jstex' has no attribute {name!r}")
 
 
