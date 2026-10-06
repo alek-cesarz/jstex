@@ -12,7 +12,7 @@ from typing import Any
 
 from .routes import setup_route_handlers
 
-__all__ = ["Explorer", "__version__", "item"]
+__all__ = ["Explorer", "__version__", "item", "list_profiles", "show_config"]
 
 
 def __getattr__(name: str) -> Any:
@@ -20,10 +20,10 @@ def __getattr__(name: str) -> Any:
         from .widget import Explorer
 
         return Explorer
-    if name == "item":
-        from .api import item
+    if name in ("item", "list_profiles", "show_config"):
+        from . import api
 
-        return item
+        return getattr(api, name)
     raise AttributeError(f"module 'jstex' has no attribute {name!r}")
 
 

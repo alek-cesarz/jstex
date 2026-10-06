@@ -42,3 +42,11 @@ def test_import_is_light():
         [sys.executable, "-c", code], capture_output=True, text=True, check=True
     )
     assert out.stdout.strip() == "False"
+
+
+def test_public_config_helpers():
+    import jstex
+
+    assert jstex.show_config().config.profile == "cdse-opensearch"
+    names = {p["name"] for p in jstex.list_profiles()}
+    assert {"cdse-opensearch", "cdse", "creodias", "codede"} <= names

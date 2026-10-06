@@ -30,6 +30,7 @@ dependencies = [
     "requests>=2.31",
     "shapely>=2.0",
     "traitlets>=5.9",
+    "tomli>=2; python_version < '3.11'",
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 
