@@ -269,3 +269,18 @@ def test_write_aws_profile_keeps_other_profiles(fake, tmp_path, monkeypatch):
         == "https://eodata.dataspace.copernicus.eu"
     )
     assert stat.S_IMODE(os.stat(creds_file).st_mode) == 0o600
+
+
+def test_successful_requests_do_not_touch_the_key_manager():
+    # Review I-2: an expired login must not fail S3 requests that succeeded.
+    class Boom(FakeManager):
+        def credentials(self):
+            raise JstexS3Error("Sign in first")
+
+    m = FakeManager()
+    handler = s3._retry_unknown_key(m, s3._credentials(m))
+    m.__class__ = Boom
+    assert handler(response=(None, {}), attempts=1) is None
+    assert (
+        handler(response=(None, {"Error": {"Code": "NoSuchKey"}}), attempts=1) is None
+    )

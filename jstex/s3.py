@@ -321,8 +321,10 @@ def _retry_unknown_key(mgr, creds):
         if response is None or attempts != 1:
             return None
         code = (response[1] or {}).get("Error", {}).get("Code")
+        if code != "InvalidAccessKeyId":
+            return None  # successes and other errors never touch the key manager
         key = mgr.credentials()
-        if code != "InvalidAccessKeyId" or time.time() - key.created_at < FRESH_KEY_S:
+        if time.time() - key.created_at < FRESH_KEY_S:
             return None
         mgr.invalidate(key)
         _force_refresh(creds)
