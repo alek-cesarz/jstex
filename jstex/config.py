@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -159,6 +160,44 @@ def _selected_profile(argument: str | None, files: list[tuple[str, dict]]) -> st
     return DEFAULT_PROFILE
 
 
+# Sources that mean "came with the ready-made profile" (registry or discovery).
+_PROFILE_SOURCES = {"github", "cache", "packaged", "discovery", "discovery-cache"}
+
+
+def _origin(url: str) -> tuple[str, str, int | None]:
+    parts = urlsplit(str(url))
+    return parts.scheme, (parts.hostname or "").lower(), parts.port
+
+
+def _keep_identity_with_its_catalogue(
+    name: str,
+    values: dict[str, Any],
+    sources: dict[str, str],
+    baseline_stac: str | None,
+) -> None:
+    """A STAC override on another host does not inherit the profile's identity
+    service, so the user's token never follows it there (spec §3.6). Setting
+    `issuer` at the same time (config file, env or argument) keeps it."""
+    stac = values.get("stac_url")
+    if not (baseline_stac and stac and values.get("issuer")):
+        return
+    if _origin(stac) == _origin(baseline_stac):
+        return
+    if sources.get("issuer") in _PROFILE_SOURCES:
+        values.pop("issuer", None)
+        sources.pop("issuer", None)
+        if f"identity:{name}:{stac}" in _warned:
+            return
+        _warned.add(f"identity:{name}:{stac}")
+        warnings.warn(
+            f"jstex: stac_url {stac} is not profile {name!r}'s catalogue, so its "
+            "identity service is not used and searches are anonymous. Set issuer "
+            "(JSTEX_OIDC_ISSUER or issuer=) to sign in there.",
+            UserWarning,
+            stacklevel=4,
+        )
+
+
 def load_config(
     *,
     profile: str | None = None,
@@ -182,11 +221,13 @@ def load_config(
             sources[key] = source if isinstance(source, str) else source.get(key, "?")
 
     own = {label: (data.get("profiles") or {}).get(name) for label, data in files}
+    baseline_stac: str | None = None  # the ready-made profile's own STAC API
     if name != "none":
         registry = profiles.load_registry()
         if name in registry.profiles:
             resolved = profiles.resolve(name)
             put(resolved.values, resolved.sources)
+            baseline_stac = resolved.values.get("stac_url")
         elif not any(isinstance(p, dict) for p in own.values()):
             profiles.resolve(name)  # raises JstexProfileError listing the profiles
         else:
@@ -204,6 +245,7 @@ def load_config(
     put({f: os.environ.get(var) or None for f, var in ENV_VARS.items()}, "env")
     put({"stac_url": stac_url, "stex_url": stex_url, **overrides}, "argument")
 
+    _keep_identity_with_its_catalogue(name, values, sources, baseline_stac)
     if not values.get("stac_url"):
         raise JstexError(
             f"Profile {name!r} has no STAC URL; set stac_url (config.toml, JSTEX_STAC_URL or stac_url=)."

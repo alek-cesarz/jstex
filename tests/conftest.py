@@ -36,8 +36,9 @@ def _clean_env(monkeypatch, tmp_path):
         monkeypatch.setenv(xdg, str(tmp_path / xdg.lower()))
     # Tests never touch the network for profiles unless they opt in.
     monkeypatch.setenv("JSTEX_PROFILES_URL", "builtin")
-    from jstex import oidc, profiles
+    from jstex import config, oidc, profiles
 
+    config._warned.clear()
     profiles.reset()
     oidc.reset()
     auth.reset_cache()

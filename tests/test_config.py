@@ -200,3 +200,21 @@ def test_config_view_shows_values_and_sources():
     assert rows["s3_bucket"] == ("x", "argument")
     assert rows["stac_url"][1] == "packaged"
     assert "s3_bucket" in repr(view) and "<table" in view._repr_html_()
+
+
+def test_stac_override_on_another_host_drops_the_profile_identity(monkeypatch):
+    # Review I-3: the CDSE token must not follow a STAC override to another host.
+    with pytest.warns(UserWarning, match="identity service"):
+        cfg = load_config(stac_url="https://earth-search.aws.element84.com/v1")
+    assert cfg.issuer is None
+    same_host = load_config(
+        stac_url="https://stac.opensearch.dataspace.copernicus.eu/v1/other"
+    )
+    assert same_host.issuer is not None
+    explicit = load_config(
+        stac_url="https://stac.example.org/v1", issuer="https://id.example.org/r"
+    )
+    assert explicit.issuer == "https://id.example.org/r"
+    monkeypatch.setenv("JSTEX_STAC_URL", "https://stac.example.org/v1")
+    monkeypatch.setenv("JSTEX_OIDC_ISSUER", "https://id.example.org/r")
+    assert load_config().issuer == "https://id.example.org/r"
