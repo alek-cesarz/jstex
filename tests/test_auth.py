@@ -235,16 +235,64 @@ def test_complete_login_logout_and_whoami(store):
     assert auth.current(cfg).source == "anonymous"
 
 
-def test_profiles_without_issuer_keep_the_v01_hub_behaviour(hub_env, monkeypatch):
-    # profile 'none' has no issuer: the hub token is used as in v0.1
+def test_profile_without_issuer_never_gets_the_hub_token(hub_env, monkeypatch):
+    # Review I-4 / spec §4 step 2: the hub token only for a matching issuer.
     monkeypatch.setenv("JSTEX_STAC_URL", "https://stac.example.org/v1")
-    with responses.RequestsMock() as rsps:
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.get(
             hub_env,
-            json={
-                "auth_state": {
-                    "access_token": jwt_for("https://any", time.time() + 600)
-                }
-            },
+            json={"auth_state": {"access_token": jwt_for(CDSE, time.time() + 600)}},
         )
-        assert auth.current(load_config(profile="none")).source == "hub"
+        assert auth.current(load_config(profile="none")).source == "anonymous"
+
+
+def test_env_token_of_another_issuer_is_not_used(monkeypatch):
+    # Review I-4: a CDSE token in JSTEX_ACCESS_TOKEN must not go to CODE-DE.
+    monkeypatch.setenv("JSTEX_ACCESS_TOKEN", jwt_for(CDSE, time.time() + 600))
+    with pytest.warns(UserWarning, match="JSTEX_ACCESS_TOKEN"):
+        assert auth.current(load_config(profile="codede")).source == "anonymous"
+    assert auth.current(load_config()).source == "token"  # the CDSE profile
+
+
+@responses.activate
+def test_invalid_grant_never_drops_a_session_another_kernel_stored(store, monkeypatch):
+    # Review I-5: the other kernel's put lands between our re-read and our drop.
+    mock_meta()
+    store.put(CDSE, Session("dev", "R1", None, "device"))
+    real_get = store.get
+    reads = []
+
+    def racing_get(issuer):
+        reads.append(issuer)
+        found = real_get(issuer)
+        if len(reads) == 2:  # the re-read after invalid_grant
+            store.put(CDSE, Session("dev", "R2", None, "device"))
+        return found
+
+    monkeypatch.setattr(store, "get", racing_get)
+    responses.post(CDSE_TOKEN, status=400, json={"error": "invalid_grant"})
+    with pytest.warns(UserWarning):
+        auth.current(load_config())
+    assert real_get(CDSE).refresh_token == "R2"
+
+
+def test_session_store_lock_serialises_kernels(tmp_path):
+    # Review I-5: one kernel's refresh-and-write excludes another's (POSIX).
+    import threading
+
+    a, b = SessionStore(tmp_path / "s.json"), SessionStore(tmp_path / "s.json")
+    entered = threading.Event()
+    order = []
+
+    def other():
+        with b.locked():
+            order.append("b")
+
+    with a.locked():
+        t = threading.Thread(target=lambda: (entered.set(), other()))
+        t.start()
+        entered.wait()
+        time.sleep(0.2)
+        order.append("a")
+    t.join(5)
+    assert order == ["a", "b"]

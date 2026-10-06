@@ -144,6 +144,13 @@ def _info(
 
 def _from_session(issuer: str, now: float) -> tuple[TokenInfo, float] | None:
     store = sessions()
+    with store.locked():  # one kernel refreshes at a time; the next reads its result
+        return _refresh_session(store, issuer, now)
+
+
+def _refresh_session(
+    store: SessionStore, issuer: str, now: float
+) -> tuple[TokenInfo, float] | None:
     session = store.get(issuer)
     if session is None:
         return None
@@ -168,7 +175,7 @@ def _from_session(issuer: str, now: float) -> tuple[TokenInfo, float] | None:
             if newer is not None and newer.refresh_token != session.refresh_token:
                 session = newer
                 continue
-            store.drop(issuer)
+            store.drop(issuer, refresh_token=session.refresh_token)
             _warn_once(
                 f"expired:{issuer}", "jstex: stored login expired; sign in again."
             )
@@ -189,16 +196,35 @@ def _from_session(issuer: str, now: float) -> tuple[TokenInfo, float] | None:
     return None
 
 
+def _iss(token: str) -> str:
+    return str(oidc.claims(token).get("iss", "")).rstrip("/")
+
+
+def _env_token(issuer: str | None) -> str | None:
+    """JSTEX_ACCESS_TOKEN, unless it is a JWT issued by another identity service."""
+    token = os.environ.get("JSTEX_ACCESS_TOKEN")
+    iss = _iss(token) if token else ""
+    if token and issuer and iss and iss != issuer:
+        _warn_once(
+            f"env-iss:{issuer}",
+            f"jstex: JSTEX_ACCESS_TOKEN was issued by {iss}, not by this profile's "
+            f"identity service {issuer}; it is not used here.",
+        )
+        return None
+    return token
+
+
 def _resolve(cfg: Config | None, now: float) -> tuple[TokenInfo, float]:
+    """The token chain (spec §4). `cfg=None` is the unscoped v0.1 lookup used only
+    by low-level callers; with a profile, the hub token needs a matching issuer."""
     issuer = _issuer(cfg)
-    manual = _manual.get(issuer) or os.environ.get("JSTEX_ACCESS_TOKEN")
+    manual = _manual.get(issuer) or _env_token(issuer)
     if manual:
         return _info(manual, "token", now)
-    hub = _from_hub()
-    if hub and (
-        issuer is None or str(oidc.claims(hub).get("iss", "")).rstrip("/") == issuer
-    ):
-        return _info(hub, "hub", now)
+    if cfg is None or issuer:
+        hub = _from_hub()
+        if hub and (cfg is None or _iss(hub) == issuer):
+            return _info(hub, "hub", now)
     if issuer:
         found = _from_session(issuer, now)
         if found:

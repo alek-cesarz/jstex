@@ -5,8 +5,16 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
+try:
+    import fcntl
+except ImportError:  # Windows: kernels are serialised within a process only
+    fcntl = None  # type: ignore[assignment]
 
 
 def data_dir() -> Path:
@@ -25,6 +33,32 @@ class Session:
 class SessionStore:
     def __init__(self, path: Path | None = None):
         self.path = path or data_dir() / "sessions.json"
+        self._rlock = threading.RLock()
+        self._depth = 0
+        self._fh = None
+
+    @contextmanager
+    def locked(self) -> Iterator[None]:
+        """Exclusive access across kernels (an flock on `sessions.json.lock`);
+        re-entrant within this store, so put/drop work inside it."""
+        with self._rlock:
+            if self._depth == 0:
+                self.path.parent.mkdir(parents=True, exist_ok=True)
+                os.chmod(self.path.parent, 0o700)
+                fh = open(str(self.path) + ".lock", "a")  # noqa: SIM115 - held until unlock
+                if fcntl is not None:
+                    fcntl.flock(fh, fcntl.LOCK_EX)
+                self._fh = fh
+            self._depth += 1
+            try:
+                yield
+            finally:
+                self._depth -= 1
+                if self._depth == 0 and self._fh is not None:
+                    if fcntl is not None:
+                        fcntl.flock(self._fh, fcntl.LOCK_UN)
+                    self._fh.close()
+                    self._fh = None
 
     def _load(self) -> dict:
         try:
@@ -53,11 +87,23 @@ class SessionStore:
             return None
 
     def put(self, issuer: str, session: Session) -> None:
-        data = self._load()
-        data[issuer.rstrip("/")] = asdict(session)
-        self._save(data)
+        with self.locked():
+            data = self._load()
+            data[issuer.rstrip("/")] = asdict(session)
+            self._save(data)
 
-    def drop(self, issuer: str) -> None:
-        data = self._load()
-        if data.pop(issuer.rstrip("/"), None) is not None:
+    def drop(self, issuer: str, *, refresh_token: str | None = None) -> None:
+        """Forget the session; with `refresh_token`, only if it is still that one
+        (another kernel may have stored a newer one meanwhile)."""
+        with self.locked():
+            data = self._load()
+            entry = data.get(issuer.rstrip("/"))
+            if entry is None:
+                return
+            if refresh_token is not None and (
+                not isinstance(entry, dict)
+                or entry.get("refresh_token") != refresh_token
+            ):
+                return
+            del data[issuer.rstrip("/")]
             self._save(data)
