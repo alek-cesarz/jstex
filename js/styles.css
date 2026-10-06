@@ -1217,3 +1217,49 @@ body > .vc.jstex-vc .jstex-vc__actions button:hover {
   border-color: var(--jstex-accent, #ff8225);
   color: #fff;
 }
+
+/* sign-in (panel footer) */
+.jstex .jstex-signin__status {
+  flex-wrap: wrap;
+}
+.jstex .jstex-signin__box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px;
+  border: 1px solid var(--jstex-border);
+  border-radius: 4px;
+  background: var(--jstex-bg);
+}
+.jstex .jstex-signin__box[hidden] {
+  display: none;
+}
+.jstex .jstex-signin__box p {
+  margin: 0;
+}
+.jstex .jstex-signin__code {
+  font-size: 1.5em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
+  padding: 4px 0;
+}
+.jstex .jstex-signin__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.92em;
+  color: var(--jstex-muted);
+}
+.jstex .jstex-signin__label .jstex-control {
+  width: 100%;
+}
+.jstex .jstex-signin__form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.jstex a.jstex-control {
+  text-decoration: none;
+}

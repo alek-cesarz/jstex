@@ -114,6 +114,10 @@ export interface ExplorerState {
   status: Status;
   error: string;
   authSource: AuthSource;
+  authUser: string;
+  loginMethods: string[];
+  profileName: string;
+  login: LoginState;
   canCancel: boolean;
   mapHeight: number;
   basemap: BasemapConfig;
@@ -149,4 +153,24 @@ export interface MinimalModel {
   on(event: string, cb: (...args: any[]) => void): void;
   off(event?: string | null, cb?: ((...args: any[]) => void) | null): void;
   send(content: unknown): void;
+}
+
+/** Sign-in flow in the panel footer (protocol: jstex/widget.py _login_*). */
+export type LoginState =
+  | { state: 'idle' }
+  | { state: 'starting' }
+  | { state: 'need_client_id' }
+  | { state: 'device'; uri: string; code: string; expiresAt: number }
+  | { state: 'password' }
+  | { state: 'error'; message: string; next?: 'client_id' | 'password' };
+
+export interface LoginMessage {
+  type: 'login';
+  state:
+    'need_client_id' | 'device' | 'password' | 'done' | 'signed_out' | 'error';
+  uri?: string;
+  code?: string;
+  expires_in?: number;
+  message?: string;
+  next?: 'client_id' | 'password';
 }

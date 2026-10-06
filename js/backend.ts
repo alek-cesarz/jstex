@@ -9,6 +9,7 @@ import type {
   CollectionSummary,
   FilterField,
   MinimalModel,
+  LoginMessage,
   PageMessage,
   QueryStateDict
 } from './types';
@@ -22,11 +23,16 @@ export interface Backend {
   search(query: QueryStateDict): void;
   cancel(): void;
   sync(): void;
+  startLogin(method: 'device' | 'password', clientId?: string): void;
+  submitPassword(username: string, password: string): void;
+  cancelLogin(): void;
+  logout(): void;
   dispose(): void;
 }
 
 export interface BackendEvents {
   onPage(msg: PageMessage): void;
+  onLogin(msg: LoginMessage): void;
 }
 
 interface Pending {
@@ -81,6 +87,27 @@ export class CommBackend implements Backend {
     this.model.send({ type: 'sync' });
   }
 
+  startLogin(method: 'device' | 'password', clientId?: string): void {
+    this.model.send({
+      type: 'login_start',
+      method,
+      ...(clientId ? { client_id: clientId } : {})
+    });
+  }
+
+  submitPassword(username: string, password: string): void {
+    // Sent straight to the kernel; never kept in the store or a trait.
+    this.model.send({ type: 'login_password', username, password });
+  }
+
+  cancelLogin(): void {
+    this.model.send({ type: 'login_cancel' });
+  }
+
+  logout(): void {
+    this.model.send({ type: 'logout' });
+  }
+
   dispose(): void {
     this.model.off('msg:custom', this.handler);
     this.pending.forEach(p => p.reject(new Error('disposed')));
@@ -103,6 +130,8 @@ export class CommBackend implements Backend {
       else p.reject(new Error(msg.error || 'Request failed'));
     } else if (msg.type === 'page') {
       this.events.onPage(raw as PageMessage);
+    } else if (msg.type === 'login') {
+      this.events.onLogin(raw as LoginMessage);
     }
   }
 }

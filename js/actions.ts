@@ -40,6 +40,11 @@ export interface Actions {
   dismissError(): void;
   activate(id: string | null): void;
   toggleSelected(id: string): void;
+  loadCollections(): Promise<void>;
+  startLogin(method: 'device' | 'password', clientId?: string): void;
+  submitPassword(username: string, password: string): void;
+  cancelLogin(): void;
+  logout(): void;
 }
 
 /** File contents as text (FileReader fallback where Blob.text() is missing). */
@@ -186,6 +191,37 @@ export function createActions(
       const selectedIds = toggleId(store.get().selectedIds, id);
       store.set({ selectedIds });
       push('selected_ids', selectedIds);
+    },
+    async loadCollections() {
+      try {
+        const collections = await backend.listCollections();
+        store.set({
+          collections,
+          collectionsLoading: false,
+          collectionsError: ''
+        });
+      } catch (err) {
+        if ((err as Error).message !== 'disposed')
+          store.set({
+            collectionsLoading: false,
+            collectionsError: (err as Error).message
+          });
+      }
+    },
+    startLogin(method, clientId) {
+      store.set({ login: { state: 'starting' } });
+      backend.startLogin(method, clientId);
+    },
+    submitPassword(username, password) {
+      store.set({ login: { state: 'starting' } });
+      backend.submitPassword(username, password);
+    },
+    cancelLogin() {
+      backend.cancelLogin();
+      store.set({ login: { state: 'idle' } });
+    },
+    logout() {
+      backend.logout();
     }
   };
   return actions;

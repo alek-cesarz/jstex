@@ -37,7 +37,7 @@ describe('store', () => {
 describe('CommBackend', () => {
   it('correlates replies by req_id', async () => {
     const m = new FakeModel();
-    const b = new CommBackend(m, { onPage: vi.fn() });
+    const b = new CommBackend(m, { onPage: vi.fn(), onLogin: vi.fn() });
     const p1 = b.listCollections();
     const p2 = b.listCollections();
     expect(m.sent).toEqual([
@@ -63,7 +63,7 @@ describe('CommBackend', () => {
   it('routes pages and sends search/cancel/sync', () => {
     const m = new FakeModel();
     const onPage = vi.fn();
-    const b = new CommBackend(m, { onPage });
+    const b = new CommBackend(m, { onPage, onLogin: vi.fn() });
     m.emit('msg:custom', { type: 'page', items: [], matched: 0 });
     expect(onPage).toHaveBeenCalledOnce();
     b.search({ collections: ['c'] } as never);
@@ -79,7 +79,7 @@ describe('CommBackend', () => {
   it('dispose rejects pending requests and stops listening', async () => {
     const m = new FakeModel();
     const onPage = vi.fn();
-    const b = new CommBackend(m, { onPage });
+    const b = new CommBackend(m, { onPage, onLogin: vi.fn() });
     const p = b.listCollections();
     b.dispose();
     await expect(p).rejects.toThrow('disposed');

@@ -102,7 +102,38 @@ export function createStrings(trans: TranslationBundle) {
     fixFilters: trans.__('Fix the filters above to search.'),
     noConstraint: (n: number) =>
       trans.__('No area or dates set — showing the first %1 matches.', n),
-    signedIn: trans.__('Signed in — restricted collections included.'),
+    signIn: trans.__('Sign in'),
+    signOut: trans.__('Sign out'),
+    signedInVia: (how: string) => trans.__('Signed in (%1)', how),
+    signedInAs: (how: string, user: string) =>
+      trans.__('Signed in (%1) as %2', how, user),
+    authLabels: {
+      hub: trans.__('hub'),
+      token: trans.__('token'),
+      session: trans.__('session'),
+      device: trans.__('device login'),
+      password: trans.__('password'),
+      anonymous: ''
+    } as Record<string, string>,
+    profileTitle: (name: string) => trans.__('Profile: %1', name),
+    signingIn: trans.__('Signing in…'),
+    deviceStep: trans.__('Open the sign-in page and confirm this code:'),
+    openSignIn: trans.__('Open sign-in page'),
+    expiresIn: (min: number, sec: number) =>
+      trans.__('Code valid for %1:%2', min, String(sec).padStart(2, '0')),
+    clientIdLabel: trans.__('Device-login client id'),
+    clientIdHint: trans.__(
+      'Ask your platform operator for it; it is remembered after a successful sign-in.'
+    ),
+    continueBtn: trans.__('Continue'),
+    usePassword: trans.__('Use password instead'),
+    enterClientId: trans.__('Enter a client id'),
+    username: trans.__('Username'),
+    password: trans.__('Password'),
+    insecurePassword: trans.__(
+      'This page is not served over HTTPS: your password would cross the network unencrypted.'
+    ),
+    tryAgain: trans.__('Try again'),
     anonymousNote: trans.__(
       'Not signed in — restricted collections are hidden.'
     ),
