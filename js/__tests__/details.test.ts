@@ -71,6 +71,16 @@ describe('details', () => {
     expect(el.textContent).toContain('Copy id');
   });
 
+  it('copied snippets use the explorer profile', () => {
+    const { el, store, actions } = setup();
+    mountDetails(el, store, actions);
+    store.set({ items: [item('a')], activeId: 'a', profileName: 'cdse' });
+    const copies = [
+      ...el.querySelectorAll<HTMLButtonElement>('[data-copy]')
+    ].map(b => b.dataset.copy ?? '');
+    expect(copies.filter(c => c.includes('profile="cdse"'))).toHaveLength(2);
+  });
+
   it('offers a boto3 snippet for S3 assets', () => {
     const { el, store, actions } = setup();
     mountDetails(el, store, actions);

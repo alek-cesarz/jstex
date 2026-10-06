@@ -568,3 +568,18 @@ describe('asset snippet', () => {
     expect(hasS3({ href: 'https://x/a' })).toBe(false);
   });
 });
+
+describe('snippets carry the explorer profile', () => {
+  it('passes profile= so the snippet uses the same profile as the widget', () => {
+    expect(pythonItemSnippet('https://x/items/a', 'cdse')).toBe(
+      'import jstex\n\nitem = jstex.item("https://x/items/a", profile="cdse")'
+    );
+    const s = pythonAssetSnippet('https://x/items/a', 'B04', 'cdse');
+    expect(s).toContain(
+      'item = jstex.item("https://x/items/a", profile="cdse")'
+    );
+    expect(s).toContain(
+      'jstex.s3.client(asset, profile="cdse").download_file(**loc, Filename=loc["Key"].rsplit("/", 1)[-1])'
+    );
+  });
+});
