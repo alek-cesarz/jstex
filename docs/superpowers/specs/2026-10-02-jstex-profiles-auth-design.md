@@ -222,6 +222,10 @@ For the active profile's `issuer`:
     issuer's revocation endpoint when it advertises one.
   - `jstex.whoami(profile=None)` — source (`token`, `hub`, `session`, `device`,
     `password`, `anonymous`), user name from the token, expiry.
+  - `jstex.access_token(profile=None)` — the user's current access token (or
+    `None`) for their own HTTP requests, e.g. downloading an HTTPS asset. jstex
+    itself still sends the token only to the profile's services (§3.6); where
+    else it goes is the user's decision.
 - **Thread safety:** one lock per issuer around refresh and session-file
   writes; a second login while one is running is refused with a message.
 
@@ -378,7 +382,8 @@ selects data with `jstex.Explorer()` (and a code-only path with
 1. **`01-download.ipynb` — downloading data**
    - selected assets: from `ex.selected_item`, choose asset keys and download
      them over S3 (`jstex.s3.client(asset)` + `jstex.s3.location(asset)`) and,
-     for assets with HTTPS hrefs, over HTTPS with the user's token;
+     for assets with HTTPS hrefs, over HTTPS with the user's token
+     (`jstex.access_token()`);
    - complete product: list every object under the product's S3 prefix and
      download them, keeping the product's directory layout, with progress and
      skipping files already present with the same size.

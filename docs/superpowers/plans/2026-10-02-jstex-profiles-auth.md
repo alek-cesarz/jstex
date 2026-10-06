@@ -2401,6 +2401,7 @@ git commit -m "feat(login): device-code login with PKCE and jstex.login()"
 - Produces:
   - `password_login(cfg: Config, *, username: str, password: str, client_id: str | None = None) -> auth.TokenInfo`
   - `jstex.login(..., method="password")` path; `jstex.logout(profile=None) -> str`; `jstex.whoami(profile=None) -> dict` (`source`, `user`, `expires_at`)
+  - `jstex.access_token(profile=None) -> str | None` — the current access token for the user's own requests
 
 - [ ] **Step 1: Write the failing tests** (append to `tests/test_login.py`):
 
@@ -2462,6 +2463,16 @@ def test_jstex_login_password_logout_whoami(cfg, monkeypatch):
     assert jstex.whoami(profile="none")["source"] == "password"
     assert jstex.logout(profile="none") == "Signed out."
     assert jstex.whoami(profile="none")["source"] == "anonymous"
+
+
+def test_access_token_for_the_users_own_requests(monkeypatch):
+    import jstex
+
+    monkeypatch.setenv("JSTEX_ACCESS_TOKEN", "T")
+    assert jstex.access_token() == "T"
+    monkeypatch.delenv("JSTEX_ACCESS_TOKEN")
+    auth.reset_cache()
+    assert jstex.access_token() is None
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -2528,11 +2539,18 @@ def logout(profile: str | None = None) -> str:
 def whoami(profile: str | None = None) -> dict:
     """How jstex is signed in for `profile`: source, user name and expiry."""
     return auth.whoami(load_config(profile=profile))
+
+
+def access_token(profile: str | None = None) -> str | None:
+    """The current access token for `profile` (None when anonymous), for your
+    own HTTP requests. jstex sends it only to the profile's own services; where
+    else you send it is your decision."""
+    return auth.get_token(load_config(profile=profile))
 ```
 
 In `login()`, the final `return _password(cfg, username)` now reaches this function; also send `method == "password"` straight to it (change the device branch condition to `if method in (None, "device"):` — already so — and make the function end with `return _password(cfg, username)`).
 
-`jstex/__init__.py`: add `"logout"` and `"whoami"` to `__all__` and the `api` names in `__getattr__`.
+`jstex/__init__.py`: add `"logout"`, `"whoami"` and `"access_token"` to `__all__` and the `api` names in `__getattr__`.
 
 - [ ] **Step 5: Probe which public clients allow password login** (dummy credentials; the grant's error tells whether it is enabled — `invalid_grant` = allowed, `unauthorized_client` = not):
 
@@ -2556,7 +2574,7 @@ Expected: all pass (`test_packaged_registry_matches_schema` still passes after t
 ```bash
 ruff format jstex tests && ruff check jstex tests
 git add jstex/login.py jstex/api.py jstex/__init__.py jstex/data/profiles.json tests/test_login.py
-git commit -m "feat(login): password login, jstex.logout() and whoami(); password_login flags from probes"
+git commit -m "feat(login): password login, jstex.logout(), whoami(), access_token(); password_login flags from probes"
 ```
 
 ---
@@ -4491,6 +4509,32 @@ for name in ("red", "nir"):
     print(f"{key}: {target} ({target.stat().st_size / 1e6:.1f} MB)")
 ```
 
+Markdown: "Assets with an `https://` link download over HTTPS with your access token (`jstex.access_token()`). Send the token only to hosts you trust — here, the platform's own download service."
+
+```python
+import requests
+from urllib.parse import urlsplit
+
+
+def download_https(href, target):
+    token = jstex.access_token()
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    with requests.get(href, headers=headers, stream=True, timeout=60) as resp:
+        resp.raise_for_status()
+        with open(target, "wb") as fh:
+            for chunk in resp.iter_content(1 << 20):
+                fh.write(chunk)
+
+
+trusted = {"download.dataspace.copernicus.eu", "zipper.dataspace.copernicus.eu"}
+for key, asset in item.assets.items():
+    if asset.href.startswith("https://") and urlsplit(asset.href).hostname in trusted:
+        target = out / f"{key}{Path(urlsplit(asset.href).path).suffix}"
+        download_https(asset.href, target)
+        print(f"{key}: {target} ({target.stat().st_size / 1e6:.1f} MB)")
+        break  # one example; a full product zip can be several GB
+```
+
 Markdown: "## Complete product — every file under the product's S3 folder, keeping its layout; files already present with the same size are skipped."
 
 ```python
@@ -4713,7 +4757,7 @@ git commit -m "docs(examples): download, NDVI with GDAL and xarray notebooks; CI
 ### Task 15: Documentation, packaging check and milestone
 
 **Files:**
-- Modify: `README.md`, `DEVELOPMENT.md`, `docs/architecture.md`, `CHANGELOG.md`, `deploy/z2jh-values.example.yaml`, `jstex/locale/jstex.pot`
+- Modify: `README.md`, `DEVELOPMENT.md`, `CONTRIBUTING.md`, `docs/architecture.md`, `CHANGELOG.md`, `deploy/z2jh-values.example.yaml`, `jstex/locale/jstex.pot`
 
 **Interfaces:**
 - Consumes: everything above. Produces documentation only, plus the `MILESTONE:` commit.
@@ -4748,6 +4792,16 @@ git commit -m "docs(examples): download, NDVI with GDAL and xarray notebooks; CI
 ```
 
 - [ ] **Step 5: deploy example** — `deploy/z2jh-values.example.yaml` `singleuser.extraEnv`: add commented `JSTEX_PROFILE: cdse-opensearch` and a note that device/password login is not needed on a hub (the hub token is used when its issuer matches the profile).
+- [ ] **Step 5b: Release checklist** — `CONTRIBUTING.md`, "Packaging the extension": insert before the tag step:
+
+```markdown
+2. Run the three notebooks in `examples/` top to bottom against CDSE (signed
+   in, `pip install -r examples/requirements.txt`); check their results, then
+   clear the outputs (`jupyter nbconvert --clear-output --inplace examples/*.ipynb`)
+   and run `python scripts/check_notebooks.py`.
+```
+
+and renumber the following steps.
 - [ ] **Step 6: Translations** — `jlpm i18n:extract`; commit the updated `jstex/locale/jstex.pot`.
 - [ ] **Step 7: Full verification**
 
@@ -4769,8 +4823,8 @@ Expected: every suite green; the wheel lists `jstex/data/profiles.json`, `jstex/
 - [ ] **Step 8: Commit**
 
 ```bash
-npx prettier --write README.md DEVELOPMENT.md CHANGELOG.md docs/architecture.md
-git add README.md DEVELOPMENT.md CHANGELOG.md docs/architecture.md deploy/z2jh-values.example.yaml jstex/locale/jstex.pot
+npx prettier --write README.md DEVELOPMENT.md CONTRIBUTING.md CHANGELOG.md docs/architecture.md
+git add README.md DEVELOPMENT.md CONTRIBUTING.md CHANGELOG.md docs/architecture.md deploy/z2jh-values.example.yaml jstex/locale/jstex.pot
 git commit -m "MILESTONE: v0.2 base — profiles, sign-in and S3 keys (docs, changelog)"
 ```
 
