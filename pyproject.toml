@@ -41,6 +41,7 @@ dev = [
 ]
 test = [
     "coverage",
+    "jsonschema>=4.20",
     "pytest",
     "pytest-asyncio",
     "pytest-cov",

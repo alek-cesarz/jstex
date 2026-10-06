@@ -2,25 +2,46 @@ import pytest
 
 from jstex import auth
 
+JSTEX_ENV = (
+    "JUPYTERHUB_API_URL",
+    "JUPYTERHUB_API_TOKEN",
+    "JUPYTERHUB_USER",
+    "JSTEX_ACCESS_TOKEN",
+    "JSTEX_STAC_URL",
+    "JSTEX_STEX_URL",
+    "JSTEX_PROFILE",
+    "JSTEX_PROFILES_URL",
+    "JSTEX_OIDC_ISSUER",
+    "JSTEX_LOGIN_CLIENT_ID",
+    "JSTEX_PASSWORD_CLIENT_ID",
+    "JSTEX_PASSWORD_LOGIN",
+    "JSTEX_OFFLINE_ACCESS",
+    "JSTEX_S3_ENDPOINT",
+    "JSTEX_S3_REGION",
+    "JSTEX_S3_KEYS_URL",
+    "JSTEX_S3_BUCKET",
+    *(
+        f"JSTEX_BASEMAP_{t}_{k}"
+        for t in ("LIGHT", "DARK")
+        for k in ("URL", "KEY", "KEY_PARAM", "ATTRIBUTION")
+    ),
+)
+
 
 @pytest.fixture(autouse=True)
-def _clean_env(monkeypatch):
-    for var in (
-        "JUPYTERHUB_API_URL",
-        "JUPYTERHUB_API_TOKEN",
-        "JUPYTERHUB_USER",
-        "JSTEX_ACCESS_TOKEN",
-        "JSTEX_STAC_URL",
-        "JSTEX_STEX_URL",
-        *(
-            f"JSTEX_BASEMAP_{t}_{k}"
-            for t in ("LIGHT", "DARK")
-            for k in ("URL", "KEY", "KEY_PARAM", "ATTRIBUTION")
-        ),
-    ):
+def _clean_env(monkeypatch, tmp_path):
+    for var in JSTEX_ENV:
         monkeypatch.delenv(var, raising=False)
+    for xdg in ("XDG_CACHE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME"):
+        monkeypatch.setenv(xdg, str(tmp_path / xdg.lower()))
+    # Tests never touch the network for profiles unless they opt in.
+    monkeypatch.setenv("JSTEX_PROFILES_URL", "builtin")
+    from jstex import profiles
+
+    profiles.reset()
     auth.reset_cache()
     yield
+    profiles.reset()
     auth.reset_cache()
 
 

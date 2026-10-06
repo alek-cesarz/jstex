@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "profiles": {
+    "cdse-opensearch": {
+      "discovery": "https://discover.dataspace.copernicus.eu",
+      "pinned": ["services.catalogue.stac.url"],
+      "platform": { "name": "cdse", "description": "Copernicus Data Space Ecosystem (OpenSearch STAC catalogue)" },
+      "services": {
+        "catalogue": { "stac": { "url": "https://stac.opensearch.dataspace.copernicus.eu/v1" } },
+        "data_access": {
+          "s3": {
+            "endpoint": "https://eodata.dataspace.copernicus.eu",
+            "region": "default",
+            "credentials": { "url": "https://s3-keys-manager.cloudferro.com/api/user" }
+          }
+        },
+        "auth": {
+          "issuer": "https://identity.dataspace.copernicus.eu/auth/realms/CDSE",
+          "client_id": "cdse-public"
+        }
+      },
+      "jstex": { "password_login": true, "s3_bucket": "eodata" }
+    },
+    "cdse": {
+      "discovery": "https://discover.dataspace.copernicus.eu",
+      "platform": { "name": "cdse", "description": "Copernicus Data Space Ecosystem (asset-level STAC catalogue)" },
+      "services": {
+        "catalogue": { "stac": { "url": "https://stac.dataspace.copernicus.eu/v1" } },
+        "data_access": {
+          "s3": {
+            "endpoint": "https://eodata.dataspace.copernicus.eu",
+            "region": "default",
+            "credentials": { "url": "https://s3-keys-manager.cloudferro.com/api/user" }
+          }
+        },
+        "auth": {
+          "issuer": "https://identity.dataspace.copernicus.eu/auth/realms/CDSE",
+          "client_id": "cdse-public"
+        }
+      },
+      "jstex": { "password_login": true, "s3_bucket": "eodata" }
+    },
+    "creodias": {
+      "platform": { "name": "creodias", "description": "CREODIAS" },
+      "services": {
+        "catalogue": { "stac": { "url": "https://stac.creodias.eu/v1" } },
+        "auth": { "issuer": "https://identity.cloudferro.com/auth/realms/Creodias-new" }
+      },
+      "jstex": { "password_login": false }
+    },
+    "codede": {
+      "platform": { "name": "codede", "description": "CODE-DE" },
+      "services": {
+        "catalogue": { "stac": { "url": "https://stac.code-de.org/v1" } },
+        "auth": {
+          "issuer": "https://identity.cloudferro.com/auth/realms/CODE-DE3",
+          "client_id": "code-de3-public"
+        }
+      },
+      "jstex": { "password_login": false }
+    }
+  }
+}
