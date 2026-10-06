@@ -5,10 +5,12 @@ discovery document. See spec 2026-10-02 §3.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import time
 import warnings
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -157,3 +159,123 @@ def load_registry() -> Registry:
         )
         _registry = Registry(valid_profiles(packaged, "packaged"), "packaged")
     return _registry
+
+
+# Flat field -> dotted path. Discovery never supplies jstex-only fields, and
+# its `services.auth.client_id` is the password client, never the device one.
+DISCOVERY_PATHS: dict[str, str] = {
+    "stac_url": "services.catalogue.stac.url",
+    "issuer": "services.auth.issuer",
+    "password_client_id": "services.auth.client_id",
+    "login_client_id": "services.auth.device_client_id",
+    "s3_endpoint": "services.data_access.s3.endpoint",
+    "s3_region": "services.data_access.s3.region",
+    "s3_keys_url": "services.data_access.s3.credentials.url",
+}
+PROFILE_PATHS: dict[str, str] = {
+    **DISCOVERY_PATHS,
+    "login_client_id": "jstex.login_client_id",
+    "password_login": "jstex.password_login",
+    "offline_access": "jstex.offline_access",
+    "s3_bucket": "jstex.s3_bucket",
+    "stex_url": "jstex.stex_url",
+    "basemap": "jstex.basemap",
+}
+
+
+@dataclass(frozen=True)
+class ResolvedProfile:
+    name: str
+    description: str
+    values: dict[str, Any]
+    sources: dict[str, str]
+    discovery: str | None  # "discovery" | "discovery-cache" | None
+
+
+def _get(doc: Any, dotted: str) -> Any:
+    node = doc
+    for part in dotted.split("."):
+        if not isinstance(node, dict) or part not in node:
+            return None
+        node = node[part]
+    return node
+
+
+def flatten(
+    doc: dict, paths: dict[str, str], skip: Iterable[str] = ()
+) -> dict[str, Any]:
+    skipped = set(skip)
+    out: dict[str, Any] = {}
+    for field_name, dotted in paths.items():
+        if dotted in skipped:
+            continue
+        value = _get(doc, dotted)
+        if value is not None:
+            out[field_name] = value
+    return out
+
+
+def _discovery_ok(doc: dict | None, root: str) -> bool:
+    if not doc or not isinstance(doc.get("services"), dict):
+        return False
+    if any(not u.startswith("https://") for u in _urls(doc)):
+        _warn_once(
+            f"discovery-http:{root}",
+            f"jstex: discovery document of {root} ignored (non-https URLs).",
+        )
+        return False
+    return True
+
+
+def fetch_discovery(root: str) -> tuple[dict | None, str | None]:
+    if offline():
+        return None, None
+    url = f"{root.rstrip('/')}/.well-known/eo-services.json"
+    path = (
+        cache_dir()
+        / "discovery"
+        / f"{hashlib.sha256(url.encode()).hexdigest()[:16]}.json"
+    )
+    cached = _read_cache(path)
+    if (
+        cached
+        and time.time() - cached.get("fetched_at", 0) < CACHE_TTL_S
+        and _discovery_ok(cached["doc"], root)
+    ):
+        return cached["doc"], "discovery-cache"
+    doc = fetch_json(url)
+    if _discovery_ok(doc, root):
+        _write_cache(path, url, doc)
+        return doc, "discovery"
+    if cached and _discovery_ok(cached["doc"], root):
+        _warn_once(
+            f"discovery-stale:{root}",
+            f"jstex: discovery {url} unreachable; using the cached copy.",
+        )
+        return cached["doc"], "discovery-cache"
+    return None, None
+
+
+def _registry_label(source: str) -> str:
+    return source  # "github" | "cache" | "packaged"
+
+
+def resolve(name: str) -> ResolvedProfile:
+    reg = load_registry()
+    profile = reg.profiles.get(name)
+    if profile is None:
+        raise JstexProfileError(
+            f"Unknown profile {name!r}. Available: {', '.join(sorted(reg.profiles))}, or 'none'."
+        )
+    values = flatten(profile, PROFILE_PATHS)
+    sources = {k: _registry_label(reg.source) for k in values}
+    discovery_source = None
+    root = profile.get("discovery")
+    if root:
+        doc, discovery_source = fetch_discovery(root)
+        if doc:
+            found = flatten(doc, DISCOVERY_PATHS, skip=profile.get("pinned") or ())
+            values.update(found)
+            sources.update({k: discovery_source for k in found})
+    description = (profile.get("platform") or {}).get("description", "")
+    return ResolvedProfile(name, description, values, sources, discovery_source)
