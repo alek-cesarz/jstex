@@ -1,7 +1,11 @@
+import threading
+
 import pytest
 
+from jstex import auth
 from jstex.config import DEFAULT_BASEMAP_ATTRIBUTION
 from jstex.errors import JstexError, JstexQueryError, JstexStacError
+from jstex.interactive import DeviceCode, LoginError
 from jstex.stac import Page
 from jstex.widget import Explorer, sync_runner
 
@@ -317,3 +321,94 @@ def test_explorer_uses_the_selected_profile():
 def test_explorer_default_profile_name():
     ex, _ = make(FakeBackend())
     assert ex.profile_name == "cdse-opensearch"
+
+
+def signed_in(source="device"):
+    return auth.TokenInfo("T", source, 9e9, "alice")
+
+
+def test_login_methods_follow_the_profile():
+    ex, _ = make(FakeBackend())
+    assert ex.login_methods == ["device", "password"]  # cdse-opensearch
+    ex2 = Explorer(
+        profile="none",
+        stac_url="https://s/v1",
+        backend=FakeBackend(),
+        runner=sync_runner,
+    )
+    assert ex2.login_methods == []
+
+
+def test_device_sign_in_without_client_id_asks_for_one():
+    ex, sent = make(FakeBackend())
+    ex._on_msg(ex, {"type": "login_start", "method": "device"}, [])
+    assert sent[-1] == {"type": "login", "state": "need_client_id"}
+
+
+def test_device_sign_in_shows_the_code_then_finishes(monkeypatch):
+    ex, sent = make(FakeBackend())
+
+    def fake_device(cfg, *, client_id, show, cancel):
+        assert client_id == "dev"
+        show(DeviceCode("https://id/device", "ABCD", 600))
+        return signed_in()
+
+    monkeypatch.setattr("jstex.widget.device_login", fake_device)
+    ex._on_msg(ex, {"type": "login_start", "method": "device", "client_id": "dev"}, [])
+    assert sent[-2:] == [
+        {
+            "type": "login",
+            "state": "device",
+            "uri": "https://id/device",
+            "code": "ABCD",
+            "expires_in": 600,
+        },
+        {"type": "login", "state": "done"},
+    ]
+    assert (ex.auth_source, ex.auth_user) == ("device", "alice")
+
+
+def test_refused_device_client_points_to_password(monkeypatch):
+    ex, sent = make(FakeBackend())
+
+    def refused(cfg, **kw):
+        raise LoginError(
+            "Client 'x' is not allowed to use device login.", "client_refused"
+        )
+
+    monkeypatch.setattr("jstex.widget.device_login", refused)
+    ex._on_msg(ex, {"type": "login_start", "method": "device", "client_id": "x"}, [])
+    assert sent[-1]["state"] == "error" and sent[-1]["next"] == "password"
+
+
+def test_password_is_never_echoed(monkeypatch):
+    ex, sent = make(FakeBackend())
+
+    def bad(cfg, *, username, password):
+        raise LoginError("Wrong username or password.", "bad_credentials")
+
+    monkeypatch.setattr("jstex.widget.password_login", bad)
+    ex._on_msg(
+        ex, {"type": "login_password", "username": "alice", "password": "s3cret"}, []
+    )
+    assert sent[-1] == {
+        "type": "login",
+        "state": "error",
+        "message": "Wrong username or password.",
+    }
+    assert "s3cret" not in repr(sent) and "s3cret" not in repr(ex.get_state())
+
+
+def test_cancel_and_logout(monkeypatch):
+    ex, sent = make(FakeBackend())
+    ex._login_cancel = threading.Event()
+    ex._on_msg(ex, {"type": "login_cancel"}, [])
+    assert ex._login_cancel.is_set()
+    monkeypatch.setattr("jstex.widget.auth.logout", lambda cfg: None)
+    monkeypatch.setattr(
+        "jstex.widget.auth.current",
+        lambda cfg=None, force_refresh=False: auth.TokenInfo(None, "anonymous", 0),
+    )
+    ex._on_msg(ex, {"type": "logout"}, [])
+    assert sent[-1] == {"type": "login", "state": "signed_out"}
+    assert ex.auth_source == "anonymous" and ex.auth_user == ""

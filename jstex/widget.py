@@ -23,6 +23,13 @@ from . import auth
 from .aoi import parse_aoi_upload
 from .config import Config, load_config
 from .errors import JstexError
+from .interactive import (
+    LoginError,
+    device_login,
+    exclusive,
+    login_client_id,
+    password_login,
+)
 from .query import QueryState, search_get_url, share_url, to_search_body
 from .stac import Page, StacBackend
 
@@ -75,6 +82,8 @@ class Explorer(anywidget.AnyWidget):
         sync=True
     )  # {"light": {url, attribution, kind: "style"|"xyz"}, "dark": {...}}
     profile_name = traitlets.Unicode("").tag(sync=True)  # active profile
+    auth_user = traitlets.Unicode("").tag(sync=True)
+    login_methods = traitlets.List(traitlets.Unicode()).tag(sync=True)
     panel_collapsed = traitlets.Bool(False).tag(
         sync=True
     )  # search panel folded to a rail
@@ -118,6 +127,11 @@ class Explorer(anywidget.AnyWidget):
         self._page: Page | None = None
         self._gen = 0
         self._lock = threading.Lock()
+        methods = ["device"] if config.issuer else []
+        if config.password_login and config.password_client_id and config.issuer:
+            methods.append("password")
+        self.login_methods = methods
+        self._login_cancel = threading.Event()
         self.on_msg(self._on_msg)
 
     # ── messages from JS ────────────────────────────────────────────
@@ -145,12 +159,95 @@ class Explorer(anywidget.AnyWidget):
                 self.error, self.status = str(err), "error"
         elif kind == "cancel":
             self.cancel()
+        elif kind == "login_start":
+            self._login_cancel = threading.Event()
+            self._run(
+                self._login_device
+                if content.get("method") == "device"
+                else self._login_ask_password,
+                str(content.get("client_id") or "") or None,
+            )
+        elif kind == "login_password":
+            # Local variables only: never stored, logged or echoed.
+            self._run(
+                self._login_password,
+                str(content.get("username") or ""),
+                str(content.get("password") or ""),
+            )
+        elif kind == "login_cancel":
+            self._login_cancel.set()
+        elif kind == "logout":
+            self._run(self._logout)
         elif kind == "sync":
             self._send_page()  # a (re-)rendered view asks for the current results
 
     def _reply_collections(self, req_id: Any) -> None:
-        self.auth_source = auth.current(self._config).source
+        info = auth.current(self._config)
+        self.auth_source, self.auth_user = info.source, info.user
         self._reply(req_id, self._backend.list_collections)
+
+    # ── sign-in (spec 2026-10-02 §4.1) ──────────────────────────────
+
+    def _login_send(self, state: str, **extra: Any) -> None:
+        self.send({"type": "login", "state": state, **extra})
+
+    def _signed_in(self, info: auth.TokenInfo) -> None:
+        self.auth_source, self.auth_user = info.source, info.user
+        self._login_send("done")
+
+    def _login_failed(self, err: LoginError) -> None:
+        extra: dict[str, str] = {}
+        if err.reason == "client_refused":
+            extra["next"] = (
+                "password" if "password" in self.login_methods else "client_id"
+            )
+        self._login_send("error", message=str(err), **extra)
+
+    def _login_device(self, client_id: str | None) -> None:
+        cid = client_id or login_client_id(self._config)
+        if cid is None:
+            self._login_send("need_client_id")
+            return
+        try:
+            with exclusive():
+                info = device_login(
+                    self._config,
+                    client_id=cid,
+                    show=lambda c: self._login_send(
+                        "device", uri=c.uri, code=c.code, expires_in=c.expires_in
+                    ),
+                    cancel=self._login_cancel,
+                )
+        except LoginError as err:
+            self._login_failed(err)
+            return
+        except Exception as err:  # noqa: BLE001 - the UI must leave the busy state
+            self._login_send("error", message=str(err) or type(err).__name__)
+            return
+        self._signed_in(info)
+
+    def _login_ask_password(self, _client_id: str | None) -> None:
+        self._login_send("password")
+
+    def _login_password(self, username: str, password: str) -> None:
+        try:
+            with exclusive():
+                info = password_login(
+                    self._config, username=username, password=password
+                )
+        except LoginError as err:
+            self._login_failed(err)
+            return
+        except Exception:  # noqa: BLE001 - never include anything that could hold the password
+            self._login_send("error", message="Password login failed.")
+            return
+        self._signed_in(info)
+
+    def _logout(self) -> None:
+        auth.logout(self._config)
+        info = auth.current(self._config)
+        self.auth_source, self.auth_user = info.source, info.user
+        self._login_send("signed_out")
 
     def _reply(self, req_id: Any, fn: Callable[[], Any]) -> None:
         try:
