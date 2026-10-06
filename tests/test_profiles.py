@@ -2,6 +2,7 @@ import json
 import time
 
 import pytest
+import requests
 import responses
 
 from jstex import profiles
@@ -142,8 +143,9 @@ def test_discovery_overrides_profile_except_pinned(monkeypatch):
     assert pinned.values["password_client_id"] == "cdse-public"
     free = resolve("cdse")
     assert free.values["stac_url"] == "https://stac.dataspace.copernicus.eu/v1"
-    # Same discovery root as above: served from the fresh disk cache this time.
-    assert free.sources["stac_url"] == "discovery-cache"
+    # Same discovery root as above: remembered for the kernel, not fetched again.
+    assert free.sources["stac_url"] == "discovery"
+    assert len([c for c in responses.calls if c.request.url == DISCOVERY]) == 1
 
 
 @responses.activate
@@ -188,3 +190,26 @@ def test_http_urls_in_discovery_are_rejected(monkeypatch):
 def test_unknown_profile_lists_the_available_ones():
     with pytest.raises(JstexProfileError, match="cdse-opensearch"):
         resolve("nope")
+
+
+@responses.activate
+def test_failed_discovery_is_remembered_for_the_kernel(monkeypatch):
+    # Review I-1: a hanging/down discovery host must cost one timeout per kernel,
+    # not one per load_config() call.
+    monkeypatch.setenv("JSTEX_PROFILES_URL", REGISTRY_URL)
+    responses.get(REGISTRY_URL, status=503)
+    responses.get(DISCOVERY, body=requests.ConnectionError("down"))
+    for _ in range(3):
+        resolve("cdse")
+    assert len([c for c in responses.calls if c.request.url == DISCOVERY]) == 1
+
+
+@responses.activate
+def test_successful_discovery_is_fetched_once_per_kernel(monkeypatch):
+    monkeypatch.setenv("JSTEX_PROFILES_URL", REGISTRY_URL)
+    monkeypatch.setattr(profiles, "CACHE_TTL_S", 0)  # no disk-cache shortcut
+    responses.get(REGISTRY_URL, status=503)
+    responses.get(DISCOVERY, json=CDSE_DOC)
+    resolve("cdse")
+    assert resolve("cdse").values["s3_endpoint"] == "https://eodata.example.eu"
+    assert len([c for c in responses.calls if c.request.url == DISCOVERY]) == 1

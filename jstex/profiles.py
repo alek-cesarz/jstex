@@ -38,6 +38,7 @@ class Registry:
 
 
 _registry: Registry | None = None
+_discovery: dict[str, tuple[dict | None, str | None]] = {}
 _warned: set[str] = set()
 
 
@@ -45,6 +46,7 @@ def reset() -> None:
     """Forget the per-process registry and discovery state (tests)."""
     global _registry
     _registry = None
+    _discovery.clear()
     _warned.clear()
 
 
@@ -228,8 +230,16 @@ def _discovery_ok(doc: dict | None, root: str) -> bool:
 
 
 def fetch_discovery(root: str) -> tuple[dict | None, str | None]:
+    """The discovery document under `root`, fetched at most once per kernel:
+    the result, a failure included, is remembered (spec §3.4)."""
     if offline():
         return None, None
+    if root not in _discovery:
+        _discovery[root] = _fetch_discovery(root)
+    return _discovery[root]
+
+
+def _fetch_discovery(root: str) -> tuple[dict | None, str | None]:
     url = f"{root.rstrip('/')}/.well-known/eo-services.json"
     path = (
         cache_dir()
@@ -253,6 +263,10 @@ def fetch_discovery(root: str) -> tuple[dict | None, str | None]:
             f"jstex: discovery {url} unreachable; using the cached copy.",
         )
         return cached["doc"], "discovery-cache"
+    _warn_once(
+        f"discovery-down:{root}",
+        f"jstex: discovery {url} unreachable; using the jstex profile settings.",
+    )
     return None, None
 
 
