@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import logging
 import threading
 import time
 from urllib.parse import parse_qs
@@ -9,7 +10,13 @@ import responses
 
 from jstex import auth, oidc
 from jstex.config import load_config
-from jstex.interactive import DeviceCode, LoginError, device_login, login_client_id
+from jstex.interactive import (
+    DeviceCode,
+    LoginError,
+    device_login,
+    login_client_id,
+    password_login,
+)
 from jstex.sessions import Session, SessionStore
 
 ISSUER = "https://id.example.org/realms/r"
@@ -183,3 +190,98 @@ def test_jstex_login_with_a_token(cfg):
     assert jstex.login(profile="cdse-opensearch", token="MANUAL").startswith(
         "Signed in (token)"
     )
+
+
+@responses.activate
+def test_password_login_stores_a_password_session(cfg):
+    mock_meta()
+    cfg2 = load_config(
+        profile="none", stac_url="https://s/v1", issuer=ISSUER, password_client_id="pub"
+    )
+    responses.post(
+        TOKEN,
+        json={"access_token": "A", "expires_in": 300, "refresh_token": "R"},
+        match=[
+            responses.matchers.urlencoded_params_matcher(
+                {
+                    "grant_type": "password",
+                    "username": "alice",
+                    "password": "s3cret",
+                    "client_id": "pub",
+                    "scope": "openid",
+                }
+            )
+        ],
+    )
+    info = password_login(cfg2, username="alice", password="s3cret")
+    assert info.source == "password"
+    assert auth._store.get(ISSUER).method == "password"
+
+
+@responses.activate
+@pytest.mark.parametrize(
+    ("body", "reason"),
+    [
+        (
+            {"error": "invalid_grant", "error_description": "Invalid user credentials"},
+            "bad_credentials",
+        ),
+        (
+            {
+                "error": "invalid_grant",
+                "error_description": "Account is not fully set up",
+            },
+            "needs_browser",
+        ),
+        (
+            {
+                "error": "unauthorized_client",
+                "error_description": "Client not allowed for direct access grants",
+            },
+            "unsupported",
+        ),
+    ],
+)
+def test_password_errors_never_leak_the_password(cfg, caplog, body, reason):
+    mock_meta()
+    cfg2 = load_config(
+        profile="none", stac_url="https://s/v1", issuer=ISSUER, password_client_id="pub"
+    )
+    responses.post(TOKEN, status=401, json=body)
+    caplog.set_level(logging.DEBUG)
+    with pytest.raises(LoginError) as err:
+        password_login(cfg2, username="alice", password="s3cret")
+    assert err.value.reason == reason
+    assert "s3cret" not in str(err.value) and "s3cret" not in repr(err.value.__cause__)
+    assert "s3cret" not in caplog.text
+
+
+@responses.activate
+def test_jstex_login_password_logout_whoami(cfg, monkeypatch):
+    import jstex
+
+    mock_meta()
+    responses.post(
+        TOKEN, json={"access_token": "A", "expires_in": 300, "refresh_token": "R"}
+    )
+    monkeypatch.setenv("JSTEX_STAC_URL", "https://stac.example.org/v1")
+    monkeypatch.setenv("JSTEX_OIDC_ISSUER", ISSUER)
+    monkeypatch.setenv("JSTEX_PASSWORD_CLIENT_ID", "pub")
+    monkeypatch.setenv("JSTEX_PASSWORD_LOGIN", "1")
+    monkeypatch.setattr("getpass.getpass", lambda prompt="": "s3cret")
+    assert jstex.login(profile="none", method="password", username="alice").startswith(
+        "Signed in (password)"
+    )
+    assert jstex.whoami(profile="none")["source"] == "password"
+    assert jstex.logout(profile="none") == "Signed out."
+    assert jstex.whoami(profile="none")["source"] == "anonymous"
+
+
+def test_access_token_for_the_users_own_requests(monkeypatch):
+    import jstex
+
+    monkeypatch.setenv("JSTEX_ACCESS_TOKEN", "T")
+    assert jstex.access_token() == "T"
+    monkeypatch.delenv("JSTEX_ACCESS_TOKEN")
+    auth.reset_cache()
+    assert jstex.access_token() is None

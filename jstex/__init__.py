@@ -12,7 +12,17 @@ from typing import Any
 
 from .routes import setup_route_handlers
 
-__all__ = ["Explorer", "__version__", "item", "list_profiles", "login", "show_config"]
+__all__ = [
+    "Explorer",
+    "__version__",
+    "access_token",
+    "item",
+    "list_profiles",
+    "login",
+    "logout",
+    "show_config",
+    "whoami",
+]
 
 
 def __getattr__(name: str) -> Any:
@@ -20,7 +30,15 @@ def __getattr__(name: str) -> Any:
         from .widget import Explorer
 
         return Explorer
-    if name in ("item", "list_profiles", "login", "show_config"):
+    if name in (
+        "access_token",
+        "item",
+        "list_profiles",
+        "login",
+        "logout",
+        "show_config",
+        "whoami",
+    ):
         from . import api
 
         return getattr(api, name)

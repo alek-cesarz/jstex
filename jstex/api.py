@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import getpass
+
 import pystac
 
 from . import auth
@@ -12,6 +14,7 @@ from .interactive import (
     device_login,
     exclusive,
     login_client_id,
+    password_login,
     status_text,
 )
 from .profiles import load_registry
@@ -95,11 +98,33 @@ def login(
                         save_login_client_id(cfg.profile, cid)
                     display.done(status_text(info))
                     return status_text(info)
-        return _password(cfg, username)  # Task 7
+        return _password(cfg, username)
 
 
-def _password(cfg, username):  # replaced in Task 7
-    raise LoginError(
-        "No device-login client id; set login_client_id or pass client_id=.",
-        "need_client_id",
-    )
+def _password(cfg, username: str | None) -> str:
+    if not (cfg.password_login and cfg.password_client_id):
+        raise LoginError(
+            "No sign-in method available: set login_client_id (device login) or pass client_id=.",
+            "need_client_id",
+        )
+    user = username or input("Username: ").strip()
+    info = password_login(cfg, username=user, password=getpass.getpass("Password: "))
+    return status_text(info)
+
+
+def logout(profile: str | None = None) -> str:
+    """Forget the stored login for `profile`'s identity service."""
+    auth.logout(load_config(profile=profile))
+    return "Signed out."
+
+
+def whoami(profile: str | None = None) -> dict:
+    """How jstex is signed in for `profile`: source, user name and expiry."""
+    return auth.whoami(load_config(profile=profile))
+
+
+def access_token(profile: str | None = None) -> str | None:
+    """The current access token for `profile` (None when anonymous), for your
+    own HTTP requests. jstex sends it only to the profile's own services; where
+    else you send it is your decision."""
+    return auth.get_token(load_config(profile=profile))

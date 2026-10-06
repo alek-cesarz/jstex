@@ -3,15 +3,26 @@
   "profiles": {
     "cdse-opensearch": {
       "discovery": "https://discover.dataspace.copernicus.eu",
-      "pinned": ["services.catalogue.stac.url"],
-      "platform": { "name": "cdse", "description": "Copernicus Data Space Ecosystem (OpenSearch STAC catalogue)" },
+      "pinned": [
+        "services.catalogue.stac.url"
+      ],
+      "platform": {
+        "name": "cdse",
+        "description": "Copernicus Data Space Ecosystem (OpenSearch STAC catalogue)"
+      },
       "services": {
-        "catalogue": { "stac": { "url": "https://stac.opensearch.dataspace.copernicus.eu/v1" } },
+        "catalogue": {
+          "stac": {
+            "url": "https://stac.opensearch.dataspace.copernicus.eu/v1"
+          }
+        },
         "data_access": {
           "s3": {
             "endpoint": "https://eodata.dataspace.copernicus.eu",
             "region": "default",
-            "credentials": { "url": "https://s3-keys-manager.cloudferro.com/api/user" }
+            "credentials": {
+              "url": "https://s3-keys-manager.cloudferro.com/api/user"
+            }
           }
         },
         "auth": {
@@ -19,18 +30,30 @@
           "client_id": "cdse-public"
         }
       },
-      "jstex": { "password_login": true, "s3_bucket": "eodata" }
+      "jstex": {
+        "password_login": true,
+        "s3_bucket": "eodata"
+      }
     },
     "cdse": {
       "discovery": "https://discover.dataspace.copernicus.eu",
-      "platform": { "name": "cdse", "description": "Copernicus Data Space Ecosystem (asset-level STAC catalogue)" },
+      "platform": {
+        "name": "cdse",
+        "description": "Copernicus Data Space Ecosystem (asset-level STAC catalogue)"
+      },
       "services": {
-        "catalogue": { "stac": { "url": "https://stac.dataspace.copernicus.eu/v1" } },
+        "catalogue": {
+          "stac": {
+            "url": "https://stac.dataspace.copernicus.eu/v1"
+          }
+        },
         "data_access": {
           "s3": {
             "endpoint": "https://eodata.dataspace.copernicus.eu",
             "region": "default",
-            "credentials": { "url": "https://s3-keys-manager.cloudferro.com/api/user" }
+            "credentials": {
+              "url": "https://s3-keys-manager.cloudferro.com/api/user"
+            }
           }
         },
         "auth": {
@@ -38,26 +61,50 @@
           "client_id": "cdse-public"
         }
       },
-      "jstex": { "password_login": true, "s3_bucket": "eodata" }
+      "jstex": {
+        "password_login": true,
+        "s3_bucket": "eodata"
+      }
     },
     "creodias": {
-      "platform": { "name": "creodias", "description": "CREODIAS" },
-      "services": {
-        "catalogue": { "stac": { "url": "https://stac.creodias.eu/v1" } },
-        "auth": { "issuer": "https://identity.cloudferro.com/auth/realms/Creodias-new" }
+      "platform": {
+        "name": "creodias",
+        "description": "CREODIAS"
       },
-      "jstex": { "password_login": false }
+      "services": {
+        "catalogue": {
+          "stac": {
+            "url": "https://stac.creodias.eu/v1"
+          }
+        },
+        "auth": {
+          "issuer": "https://identity.cloudferro.com/auth/realms/Creodias-new",
+          "client_id": "CLOUDFERRO_PUBLIC"
+        }
+      },
+      "jstex": {
+        "password_login": true
+      }
     },
     "codede": {
-      "platform": { "name": "codede", "description": "CODE-DE" },
+      "platform": {
+        "name": "codede",
+        "description": "CODE-DE"
+      },
       "services": {
-        "catalogue": { "stac": { "url": "https://stac.code-de.org/v1" } },
+        "catalogue": {
+          "stac": {
+            "url": "https://stac.code-de.org/v1"
+          }
+        },
         "auth": {
           "issuer": "https://identity.cloudferro.com/auth/realms/CODE-DE3",
           "client_id": "code-de3-public"
         }
       },
-      "jstex": { "password_login": false }
+      "jstex": {
+        "password_login": true
+      }
     }
   }
 }

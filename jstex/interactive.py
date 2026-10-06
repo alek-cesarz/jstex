@@ -212,3 +212,47 @@ class _CellDisplay:
             from IPython.display import HTML
 
             self._handle.update(HTML(message))
+
+
+def password_login(
+    cfg: Config, *, username: str, password: str, client_id: str | None = None
+) -> auth.TokenInfo:
+    """Resource-owner password grant. The password is sent once and never kept."""
+    cid = client_id or cfg.password_client_id
+    if not cfg.issuer or not cid:
+        raise LoginError(
+            "This profile has no client for password login.", "unsupported"
+        )
+    try:
+        tokens = oidc.token_request(
+            cfg.issuer,
+            {
+                "grant_type": "password",
+                "username": username,
+                "password": password,
+                "client_id": cid,
+                "scope": scope(cfg),
+            },
+        )
+    except oidc.OidcError as err:
+        text = err.description.lower()
+        if err.error == "invalid_grant" and (
+            "not fully set up" in text or "required action" in text or "otp" in text
+        ):
+            raise LoginError(
+                "This account needs a browser login (MFA or required action); use device login.",
+                "needs_browser",
+            ) from None
+        if err.error == "invalid_grant":
+            raise LoginError("Wrong username or password.", "bad_credentials") from None
+        if err.error in (
+            "unauthorized_client",
+            "unsupported_grant_type",
+            "invalid_client",
+        ):
+            raise LoginError(
+                "Password login is not allowed for this profile's client.",
+                "unsupported",
+            ) from None
+        raise LoginError(f"Password login failed ({err.error}).") from None
+    return _finish(cfg, tokens, cid, "password")
