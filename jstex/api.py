@@ -65,7 +65,7 @@ def login(
 
     token=...        use this access token (manual)
     method="device"  device code: open a link, confirm a code (default when possible)
-    method="password" username and password (Task 7)
+    method="password" username and password (where the profile allows it)
     client_id=...    device-login client id; asked for when none is configured
     save=True        also write that client id to ~/.config/jstex/config.toml
     """

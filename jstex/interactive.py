@@ -1,5 +1,5 @@
 """Interactive login (spec 2026-10-02 §4 steps 4-5): device code with PKCE,
-and (Task 7) the password grant. Runs only on user action."""
+and the password grant. Runs only on user action."""
 
 from __future__ import annotations
 
