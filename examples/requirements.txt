@@ -1,0 +1,8 @@
+jupyterlab-jstex[s3]
+numpy
+matplotlib
+rioxarray
+xarray
+pandas
+dask[array]
+# GDAL Python bindings: conda install -c conda-forge gdal (or your image's GDAL)

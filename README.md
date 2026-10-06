@@ -96,6 +96,14 @@ for item in ex.results:
     print(item.id, item.datetime, item.properties.get("eo:cloud_cover"))
 ```
 
+## Examples
+
+Notebooks in [`examples/`](examples/) (stored without outputs; `pip install -r examples/requirements.txt`):
+
+- [Download data](examples/01-download.ipynb) — selected assets over S3 or HTTPS, or a complete product.
+- [Sentinel-2 NDVI with GDAL](examples/02-ndvi-gdal.ipynb) — read bands through `/vsis3/`, write a Cloud-Optimised GeoTIFF.
+- [Working with xarray](examples/03-xarray.ipynb) — lazy bands, cloud mask, NDVI time series.
+
 ## Installation
 
 ```bash
