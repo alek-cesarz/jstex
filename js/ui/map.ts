@@ -322,19 +322,30 @@ export function mountMap(
 
   // The OL map is created asynchronously by eox-map: attach once it exists.
   let cancelled = false;
+  // eox-map creates its OL map in the constructor, but its shadow root only
+  // once the element is connected — which may be after this view rendered
+  // (anywidget can render into a detached element). Retry until it exists.
+  const injectControlsCss = () => {
+    if (cancelled) return;
+    const shadow = map.shadowRoot;
+    if (!shadow) {
+      requestAnimationFrame(injectControlsCss);
+      return;
+    }
+    if (!shadow.querySelector('style[data-jstex-controls]')) {
+      const sheet = document.createElement('style');
+      sheet.dataset.jstexControls = '';
+      sheet.textContent = CONTROLS_CSS;
+      shadow.appendChild(sheet);
+    }
+  };
+  injectControlsCss();
   const attachClick = () => {
     if (cancelled) return;
     const ol = map.map;
     if (!ol?.on) {
       requestAnimationFrame(attachClick);
       return;
-    }
-    const shadow = map.shadowRoot;
-    if (shadow && !shadow.querySelector('style[data-jstex-controls]')) {
-      const sheet = document.createElement('style');
-      sheet.dataset.jstexControls = '';
-      sheet.textContent = CONTROLS_CSS;
-      shadow.appendChild(sheet);
     }
     ol.on('singleclick', evt => {
       const s = store.get();
