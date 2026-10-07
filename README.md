@@ -94,6 +94,7 @@ item.assets["B04_10m"].href        # use it in your code
 | `ex.whoami()`, `ex.login()`, `ex.logout()`, `ex.access_token()`, `ex.item(href)`, `ex.s3` | The same as the `jstex.*` functions below, always for this explorer's profile and settings                                                                                                  |
 | `jstex.login()`, `logout()`, `whoami()`                                                   | Sign in, sign out, and how you are signed in (see [Signing in](#signing-in))                                                                                                                |
 | `jstex.access_token(profile=None)`                                                        | Your current access token (or `None`), for your own HTTP requests                                                                                                                           |
+| `jstex.help()`                                                                            | This list in the notebook, with a link to this README                                                                                                                                       |
 | `jstex.use_profile(name)`                                                                 | Make `name` the kernel's default profile for the `jstex.*` functions and new explorers                                                                                                      |
 | `jstex.s3.*`                                                                              | S3 clients and settings with managed keys (see [S3 access](#s3-access))                                                                                                                     |
 
@@ -217,24 +218,25 @@ Every setting can also come from an environment variable, e.g. on a server
 through `singleuser.extraEnv` in Zero to JupyterHub. Unset variables keep the
 profile's value.
 
-| Field / env var                                                    | Meaning                                                           |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `JSTEX_PROFILE`                                                    | Profile to use (default `cdse-opensearch`)                        |
-| `JSTEX_PROFILES_URL`                                               | Other profile registry URL, or `builtin` for no network           |
-| `stac_url` / `JSTEX_STAC_URL`                                      | STAC API                                                          |
-| `stex_url` / `JSTEX_STEX_URL`                                      | STEX base URL for `stex_url()` links                              |
-| `issuer` / `JSTEX_OIDC_ISSUER`                                     | Identity service (OpenID Connect issuer URL)                      |
-| `login_client_id` / `JSTEX_LOGIN_CLIENT_ID`                        | Client id for device login                                        |
-| `password_client_id` / `JSTEX_PASSWORD_CLIENT_ID`                  | Client id for password login                                      |
-| `password_login` / `JSTEX_PASSWORD_LOGIN`                          | Offer password login (`true`/`false`)                             |
-| `offline_access` / `JSTEX_OFFLINE_ACCESS`                          | Ask for a long-lived session (`offline_access` scope)             |
-| `s3_endpoint` / `JSTEX_S3_ENDPOINT`                                | S3 endpoint                                                       |
-| `s3_region` / `JSTEX_S3_REGION`                                    | S3 region                                                         |
-| `s3_keys_url` / `JSTEX_S3_KEYS_URL`                                | The platform's S3 keys manager                                    |
-| `s3_bucket` / `JSTEX_S3_BUCKET`                                    | Bucket used to check that a new key works                         |
-| `JSTEX_ACCESS_TOKEN`                                               | Access token to use (local development, scripts)                  |
-| `JSTEX_BASEMAP_LIGHT_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION` | Light-theme basemap (default OpenFreeMap Positron, no key needed) |
-| `JSTEX_BASEMAP_DARK_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION`  | Dark-theme basemap (default OpenFreeMap Positron, no key needed)  |
+| Field / env var                                                    | Meaning                                                                                                                                            |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `JSTEX_PROFILE`                                                    | Profile to use (default `cdse-opensearch`)                                                                                                         |
+| `JSTEX_PROFILES_URL`                                               | Other profile registry URL, or `builtin` for no network                                                                                            |
+| `stac_url` / `JSTEX_STAC_URL`                                      | STAC API                                                                                                                                           |
+| `stex_url` / `JSTEX_STEX_URL`                                      | STEX base URL for `stex_url()` links                                                                                                               |
+| `issuer` / `JSTEX_OIDC_ISSUER`                                     | Identity service (OpenID Connect issuer URL)                                                                                                       |
+| `login_client_id` / `JSTEX_LOGIN_CLIENT_ID`                        | Client id for device login                                                                                                                         |
+| `password_client_id` / `JSTEX_PASSWORD_CLIENT_ID`                  | Client id for password login                                                                                                                       |
+| `password_login` / `JSTEX_PASSWORD_LOGIN`                          | Offer password login (`true`/`false`)                                                                                                              |
+| `offline_access` / `JSTEX_OFFLINE_ACCESS`                          | Ask for a long-lived session (`offline_access` scope)                                                                                              |
+| `s3_endpoint` / `JSTEX_S3_ENDPOINT`                                | S3 endpoint                                                                                                                                        |
+| `s3_region` / `JSTEX_S3_REGION`                                    | S3 region                                                                                                                                          |
+| `s3_keys_url` / `JSTEX_S3_KEYS_URL`                                | The platform's S3 keys manager                                                                                                                     |
+| `s3_bucket` / `JSTEX_S3_BUCKET`                                    | Bucket used to check that a new key works                                                                                                          |
+| `JSTEX_TRACEBACK`                                                  | `1` shows the full Python traceback for jstex errors (normally one line, e.g. `JstexQueryError: Select at least one collection before searching.`) |
+| `JSTEX_ACCESS_TOKEN`                                               | Access token to use (local development, scripts)                                                                                                   |
+| `JSTEX_BASEMAP_LIGHT_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION` | Light-theme basemap (default OpenFreeMap Positron, no key needed)                                                                                  |
+| `JSTEX_BASEMAP_DARK_URL` / `_KEY` / `_KEY_PARAM` / `_ATTRIBUTION`  | Dark-theme basemap (default OpenFreeMap Positron, no key needed)                                                                                   |
 
 The default basemap is [OpenFreeMap](https://openfreemap.org) Positron
 (`https://tiles.openfreemap.org/styles/positron`) in both themes; it needs no

@@ -248,3 +248,129 @@ def access_token(profile: str | None = None) -> str | None:
 
 def _access_token(cfg: Config) -> str | None:
     return auth.get_token(cfg)
+
+
+README_URL = "https://github.com/alek-cesarz/jstex#readme"
+
+# (section, [(call, what it does)]) — keep in step with README "Using results in
+# Python"; tests/test_help.py checks that every public name is listed.
+HELP: list[tuple[str, list[tuple[str, str]]]] = [
+    (
+        "The explorer",
+        [
+            (
+                "jstex.Explorer(profile=None, stac_url=None, height=600)",
+                "The widget: search panel, map, results and item details",
+            ),
+            ("ex.results", "All loaded items (pystac.ItemCollection)"),
+            ("ex.selected_items", "The checked result rows (pystac.Item list)"),
+            ("ex.selected_item", "The item shown in Item details (None if none)"),
+            ("ex.query", "The current query (dict); assign to change the panel"),
+            (
+                "ex.search(wait=False)",
+                "Run the query; wait=True blocks until results are in",
+            ),
+            ("ex.cancel()", "Drop the running search; previous results stay"),
+            ("ex.query_url()", "Clickable STAC GET /search URL for the query"),
+            ("ex.stex_url()", "Clickable STEX link that opens the query"),
+            ("ex.config", "This explorer's effective settings"),
+        ],
+    ),
+    (
+        "This explorer's profile",
+        [
+            ("ex.whoami()", "How this explorer's profile is signed in"),
+            (
+                "ex.login(...)",
+                "Sign in for this explorer's profile (options as jstex.login)",
+            ),
+            ("ex.logout()", "Forget the stored login for this explorer's profile"),
+            ("ex.access_token()", "The current access token, for your own requests"),
+            ("ex.item(href)", "Open a STAC item URL with this explorer's settings"),
+            (
+                "ex.s3.client(asset)",
+                "S3 helpers for this explorer's profile (as jstex.s3.*)",
+            ),
+        ],
+    ),
+    (
+        "Profiles and sign-in (kernel default profile, or profile=)",
+        [
+            ("jstex.list_profiles()", "Ready-made and your own profiles"),
+            (
+                "jstex.show_config(profile=None)",
+                "Effective settings and where each came from",
+            ),
+            ("jstex.use_profile(name)", "Make name the kernel's default profile"),
+            (
+                "jstex.login(profile=None, ...)",
+                "Sign in: device login, password or token=",
+            ),
+            ("jstex.logout(profile=None)", "Forget the stored login"),
+            (
+                "jstex.whoami(profile=None)",
+                "How you are signed in; other profiles in use",
+            ),
+            (
+                "jstex.access_token(profile=None)",
+                "The current access token, for your own requests",
+            ),
+            (
+                "jstex.item(href, profile=None)",
+                "Open any STAC item URL with your token",
+            ),
+        ],
+    ),
+    (
+        'S3 access (pip install "jupyterlab-jstex[s3]")',
+        [
+            ("jstex.s3.client(asset=None)", "boto3 S3 client; keys renew themselves"),
+            ("jstex.s3.session()", "boto3 Session; keys renew themselves"),
+            ("jstex.s3.location(asset)", "{'Bucket': …, 'Key': …} of an S3 asset"),
+            (
+                "jstex.s3.storage_options(asset=None)",
+                "fsspec/s3fs options (key valid up to 8 h)",
+            ),
+            (
+                "jstex.s3.gdal_env(asset=None)",
+                "GDAL/rasterio /vsis3/ settings (key valid up to 8 h)",
+            ),
+            (
+                "jstex.s3.write_s3_profile(name='jstex')",
+                "S3 profile for R, Julia, GDAL and other tools",
+            ),
+        ],
+    ),
+    ("Help", [("jstex.help()", "This list")]),
+]
+
+
+class Help:
+    """`jstex.help()` result: a table in notebooks, aligned text elsewhere."""
+
+    def __repr__(self) -> str:
+        width = max(len(call) for _, rows in HELP for call, _ in rows)
+        lines = []
+        for section, rows in HELP:
+            lines += ["", section]
+            lines += [f"  {call:<{width}}  {what}" for call, what in rows]
+        lines += ["", f"More: {README_URL}"]
+        return "\n".join(lines).lstrip("\n")
+
+    def _repr_html_(self) -> str:
+        left = "style='text-align:left'"
+        body = ""
+        for section, rows in HELP:
+            body += f"<tr><th colspan='2' {left}>{html.escape(section)}</th></tr>"
+            body += "".join(
+                f"<tr><td {left}><code>{html.escape(call)}</code></td>"
+                f"<td {left}>{html.escape(what)}</td></tr>"
+                for call, what in rows
+            )
+        link = f'<a href="{README_URL}" target="_blank" rel="noopener">{README_URL}</a>'
+        return f"<table>{body}</table><p>More: {link}</p>"
+
+
+def show_help() -> Help:
+    """All jstex functions with a short description, and a link to the README."""
+    return Help()

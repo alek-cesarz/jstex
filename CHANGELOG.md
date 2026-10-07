@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - **Sign in without JupyterHub**: device-code login (PKCE) and, where the platform allows it, password login — from the widget's **Sign in** button or `jstex.login()`; stored sessions are reused by later kernels; `jstex.logout()`, `jstex.whoami()` (profile, sign-in method, user and expiry in local time; a dict that notebooks show as a short list), `jstex.access_token()`.
 - **S3 access** (`pip install "jupyterlab-jstex[s3]"`): S3 keys created and renewed automatically and shared by your kernels; `jstex.s3.client()`, `location()`, `session()`, `storage_options()`, `gdal_env()`, `write_s3_profile()` (an S3 profile in the shared `~/.aws` credentials files, for R, Julia, GDAL, rclone and the AWS CLI); "Copy boto3 snippet" per S3 asset in Item details.
 - **Per-explorer profile methods**: `ex.whoami()`, `ex.login()`, `ex.logout()`, `ex.access_token()`, `ex.item(href)` and `ex.s3.*` always use the explorer's own profile and settings; `jstex.use_profile(name)` sets the kernel's default profile for the `jstex.*` functions and new explorers; `jstex.whoami()` lists the other profiles the kernel's explorers use.
+- **`jstex.help()`**: every function and method with a short description, and a link to the README.
+- **Short error messages**: in notebooks, jstex errors show as one line (`JstexQueryError: Select at least one collection before searching.`) instead of a traceback through jstex's code; `JSTEX_TRACEBACK=1` brings the traceback back. `jstex.JstexError` is the base class of all of them.
 - **Example notebooks**: downloading data (S3, HTTPS, complete product), Sentinel-2 NDVI with GDAL, xarray NDVI time series.
 
 ### Changed

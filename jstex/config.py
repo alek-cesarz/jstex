@@ -21,7 +21,7 @@ else:  # pragma: no cover - exercised on 3.10 only
     import tomli as tomllib
 
 from . import profiles
-from .errors import JstexError, JstexWarning
+from .errors import JstexError, JstexSettingError, JstexWarning
 
 # Basemap default: OpenFreeMap Positron, a vector (MapLibre) style that needs
 # no key, in both themes. A deployment can set any other style URL or an XYZ
@@ -239,7 +239,9 @@ def load_config(
 ) -> Config:
     unknown = set(overrides) - set(FIELDS)
     if unknown:
-        raise TypeError(f"Unknown jstex setting(s): {', '.join(sorted(unknown))}")
+        raise JstexSettingError(
+            f"Unknown jstex setting(s): {', '.join(sorted(unknown))}"
+        )
     files = _files()
     name = _selected_profile(profile, files)
     values: dict[str, Any] = {}

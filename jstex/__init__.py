@@ -45,6 +45,14 @@ def __getattr__(name: str) -> Any:
         from . import api
 
         return getattr(api, name)
+    if name == "help":
+        from .api import show_help
+
+        return show_help
+    if name == "JstexError":
+        from .errors import JstexError
+
+        return JstexError
     if name == "s3":
         import importlib
 

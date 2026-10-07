@@ -124,6 +124,13 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
   refreshable credentials on a boto3 session); `tests/test_s3.py` pins both.
 - `filelock` also locks between threads (each lock opens its own file
   handle); the "concurrent kernels create one key" test relies on that.
+- Errors meant for users derive from `JstexError` (`jstex/errors.py`): IPython
+  shows them as one line through `_render_traceback_` (a property, so that
+  `JSTEX_TRACEBACK=1` can hide it and IPython falls back to its normal
+  traceback). Write their messages as complete sentences that say what to do.
+- `jstex.help()` lists `api.HELP`; `tests/test_help.py` fails when a public
+  name is missing from it. Keep it in step with the README's "Using results in
+  Python" table.
 - Warnings meant for users use `JstexWarning` (`jstex/errors.py`). Importing
   `jstex.errors` wraps `warnings.formatwarning` so that this category prints as
   just its message; every other warning keeps Python's format. Write those
