@@ -19,6 +19,7 @@ from urllib.parse import quote
 import requests
 
 from . import oidc
+from .errors import JstexWarning
 from .sessions import Session, SessionStore
 
 if TYPE_CHECKING:
@@ -35,7 +36,7 @@ _warned: set[str] = set()
 def _warn_once(key: str, message: str) -> None:
     if key not in _warned:
         _warned.add(key)
-        warnings.warn(message, UserWarning, stacklevel=3)
+        warnings.warn(message, JstexWarning, stacklevel=3)
 
 
 def _jwt_exp(token: str) -> float | None:

@@ -17,7 +17,7 @@ from typing import Any
 
 import requests
 
-from .errors import JstexError
+from .errors import JstexError, JstexWarning
 
 REGISTRY_URL = (
     "https://raw.githubusercontent.com/alek-cesarz/jstex/main/jstex/data/profiles.json"
@@ -53,7 +53,7 @@ def reset() -> None:
 def _warn_once(key: str, message: str) -> None:
     if key not in _warned:
         _warned.add(key)
-        warnings.warn(message, UserWarning, stacklevel=3)
+        warnings.warn(message, JstexWarning, stacklevel=3)
 
 
 def cache_dir() -> Path:
@@ -151,13 +151,13 @@ def load_registry() -> Registry:
     elif cached and cached.get("url") == url:
         _warn_once(
             "registry-stale",
-            f"jstex: profile registry {url} unreachable; using the cached copy.",
+            "Could not retrieve the profile registry. Using the cached copy.",
         )
         _registry = Registry(valid_profiles(cached["doc"], "cache"), "cache")
     else:
         _warn_once(
             "registry-packaged",
-            f"jstex: profile registry {url} unreachable; using the packaged copy.",
+            "Could not retrieve the profile registry. Using the packaged copy.",
         )
         _registry = Registry(valid_profiles(packaged, "packaged"), "packaged")
     return _registry

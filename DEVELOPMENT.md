@@ -124,6 +124,10 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
   refreshable credentials on a boto3 session); `tests/test_s3.py` pins both.
 - `filelock` also locks between threads (each lock opens its own file
   handle); the "concurrent kernels create one key" test relies on that.
+- Warnings meant for users use `JstexWarning` (`jstex/errors.py`). Importing
+  `jstex.errors` wraps `warnings.formatwarning` so that this category prints as
+  just its message; every other warning keeps Python's format. Write those
+  messages as plain sentences.
 - Example notebooks are committed without outputs
   (`scripts/check_notebooks.py`, also in CI). Clear them before committing:
   `jupyter nbconvert --clear-output --inplace examples/*.ipynb`.

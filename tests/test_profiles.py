@@ -213,3 +213,44 @@ def test_successful_discovery_is_fetched_once_per_kernel(monkeypatch):
     resolve("cdse")
     assert resolve("cdse").values["s3_endpoint"] == "https://eodata.example.eu"
     assert len([c for c in responses.calls if c.request.url == DISCOVERY]) == 1
+
+
+@responses.activate
+def test_registry_fallback_messages_are_plain_sentences(monkeypatch):
+    from jstex.errors import JstexWarning
+
+    monkeypatch.setenv("JSTEX_PROFILES_URL", REGISTRY_URL)
+    responses.get(REGISTRY_URL, status=503)
+    with pytest.warns(JstexWarning) as caught:
+        load_registry()
+    assert [str(w.message) for w in caught] == [
+        "Could not retrieve the profile registry. Using the packaged copy."
+    ]
+    # cached copy, when the network fails later
+    responses.replace(
+        responses.GET, REGISTRY_URL, json={"version": "1.0", "profiles": {"x": {}}}
+    )
+    profiles.reset()
+    load_registry()
+    cache = profiles.cache_dir() / "profiles.json"
+    data = json.loads(cache.read_text())
+    data["fetched_at"] = 0
+    cache.write_text(json.dumps(data))
+    responses.replace(responses.GET, REGISTRY_URL, status=503)
+    profiles.reset()
+    with pytest.warns(JstexWarning) as caught:
+        load_registry()
+    assert [str(w.message) for w in caught] == [
+        "Could not retrieve the profile registry. Using the cached copy."
+    ]
+
+
+def test_jstex_warnings_show_just_the_message():
+    import warnings
+
+    from jstex.errors import JstexWarning
+
+    shown = warnings.formatwarning("Hello.", JstexWarning, "/x/jstex/config.py", 226)
+    assert shown == "Hello.\n"
+    other = warnings.formatwarning("Hi", UserWarning, "/x/lib.py", 3, line="")
+    assert other == "/x/lib.py:3: UserWarning: Hi\n"  # other libraries keep theirs

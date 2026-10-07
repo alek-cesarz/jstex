@@ -20,7 +20,7 @@ else:  # pragma: no cover - exercised on 3.10 only
     import tomli as tomllib
 
 from . import profiles
-from .errors import JstexError
+from .errors import JstexError, JstexWarning
 
 # Basemap default: OpenFreeMap Positron, a vector (MapLibre) style that needs
 # no key, in both themes. A deployment can set any other style URL or an XYZ
@@ -112,7 +112,7 @@ def _read_toml(path: Path) -> dict:
     except (OSError, tomllib.TOMLDecodeError) as err:
         if str(path) not in _warned:
             _warned.add(str(path))
-            warnings.warn(f"jstex: ignoring {path}: {err}", UserWarning, stacklevel=3)
+            warnings.warn(f"jstex: ignoring {path}: {err}", JstexWarning, stacklevel=3)
         return {}
 
 
@@ -193,7 +193,7 @@ def _keep_identity_with_its_catalogue(
             f"jstex: stac_url {stac} is not profile {name!r}'s catalogue, so its "
             "identity service is not used and searches are anonymous. Set issuer "
             "(JSTEX_OIDC_ISSUER or issuer=) to sign in there.",
-            UserWarning,
+            JstexWarning,
             stacklevel=4,
         )
 
