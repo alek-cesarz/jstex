@@ -256,7 +256,11 @@ Steps 4 and 5 start when you click **Sign in** under the Search button, or run:
 ```python
 jstex.login()                     # device login if possible, else password
 jstex.login(method="password")    # username and password
-jstex.whoami()                    # {'source': 'session', 'user': '…', 'expires_at': …}
+jstex.whoami()                    # how you are signed in, shown as a list:
+                                  #   Profile:    cdse-opensearch
+                                  #   Signed in:  session
+                                  #   User:       alice
+                                  #   Expires:    2026-10-07 16:42:10 CEST (in 52 min)
 jstex.logout()                    # forget the stored session
 ```
 

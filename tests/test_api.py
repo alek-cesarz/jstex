@@ -1,3 +1,4 @@
+import pytest
 import responses
 from responses import matchers
 
@@ -72,3 +73,51 @@ def test_item_uses_the_profile_stac_host_for_the_token(monkeypatch):
     )
     jstex.item(href, profile="codede")
     assert responses.calls[0].request.headers["Authorization"] == "Bearer T"
+
+
+@pytest.fixture
+def utc(monkeypatch):
+    import time as _time
+
+    monkeypatch.setenv("TZ", "UTC")
+    _time.tzset()
+    yield
+    monkeypatch.undo()
+    _time.tzset()
+
+
+def test_whoami_shows_a_readable_expiry_and_list(utc, monkeypatch):
+    import datetime as dt
+
+    from jstex import auth
+
+    exp = dt.datetime(2026, 10, 7, 14, 0, tzinfo=dt.timezone.utc).timestamp()
+    monkeypatch.setattr(
+        auth,
+        "current",
+        lambda cfg=None, force_refresh=False: auth.TokenInfo(
+            "T", "session", exp, "alice"
+        ),
+    )
+    monkeypatch.setattr("time.time", lambda: exp - 52 * 60)
+    who = jstex.whoami()
+    assert dict(who) == {
+        "profile": "cdse-opensearch",
+        "source": "session",
+        "user": "alice",
+        "expires_at": "2026-10-07 14:00:00 UTC",
+    }
+    assert repr(who) == (
+        "Profile:    cdse-opensearch\n"
+        "Signed in:  session\n"
+        "User:       alice\n"
+        "Expires:    2026-10-07 14:00:00 UTC (in 52 min)"
+    )
+    html = who._repr_html_()
+    assert "<table" in html and "2026-10-07 14:00:00 UTC (in 52 min)" in html
+
+
+def test_whoami_when_not_signed_in(utc):
+    who = jstex.whoami()
+    assert who["source"] == "anonymous" and who["expires_at"] is None
+    assert repr(who) == "Profile:    cdse-opensearch\nSigned in:  no"

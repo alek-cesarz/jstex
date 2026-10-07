@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import getpass
+import html
+import time
 
 import pystac
 
 from . import auth
 from .config import ConfigView, _files, load_config, save_login_client_id
 from .interactive_login import (
+    LABELS,
     LoginError,
     _CellDisplay,
     device_login,
@@ -118,9 +122,60 @@ def logout(profile: str | None = None) -> str:
     return "Signed out."
 
 
-def whoami(profile: str | None = None) -> dict:
-    """How jstex is signed in for `profile`: source, user name and expiry."""
-    return auth.whoami(load_config(profile=profile))
+class SignInStatus(dict):
+    """`jstex.whoami()` result: a plain dict that a notebook shows as a list."""
+
+    _expires_ts: float = 0.0
+
+    def _rows(self) -> list[tuple[str, str]]:
+        rows = [("Profile", str(self["profile"]))]
+        if self["source"] == "anonymous":
+            return [*rows, ("Signed in", "no")]
+        rows.append(("Signed in", LABELS.get(self["source"], self["source"])))
+        if self["user"]:
+            rows.append(("User", self["user"]))
+        if self["expires_at"]:
+            rows.append(("Expires", f"{self['expires_at']} ({self._left()})"))
+        return rows
+
+    def _left(self) -> str:
+        minutes = int((self._expires_ts - time.time()) // 60)
+        if minutes < 0:
+            return "expired"
+        hours, minutes = divmod(minutes, 60)
+        return f"in {hours} h {minutes} min" if hours else f"in {minutes} min"
+
+    def __repr__(self) -> str:
+        return "\n".join(f"{label + ':':<11} {value}" for label, value in self._rows())
+
+    def _repr_html_(self) -> str:
+        rows = "".join(
+            f"<tr><th style='text-align:left'>{html.escape(label)}</th>"
+            f"<td style='text-align:left'>{html.escape(value)}</td></tr>"
+            for label, value in self._rows()
+        )
+        return f"<table>{rows}</table>"
+
+
+def _local_time(ts: float) -> str:
+    return dt.datetime.fromtimestamp(ts).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+def whoami(profile: str | None = None) -> SignInStatus:
+    """How jstex is signed in for `profile`: profile, source, user name and when
+    the access token expires (local time; None when not signed in). A dict;
+    notebooks show it as a short list."""
+    cfg = load_config(profile=profile)
+    info = auth.current(cfg)
+    signed_in = info.source != "anonymous"
+    status = SignInStatus(
+        profile=cfg.profile,
+        source=info.source,
+        user=info.user,
+        expires_at=_local_time(info.expires_at) if signed_in else None,
+    )
+    status._expires_ts = info.expires_at
+    return status
 
 
 def access_token(profile: str | None = None) -> str | None:
