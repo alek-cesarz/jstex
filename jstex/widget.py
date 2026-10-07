@@ -21,7 +21,7 @@ import traitlets
 
 from . import auth
 from .aoi import parse_aoi_upload
-from .config import Config, load_config
+from .config import Config, load_config, register_explorer
 from .errors import JstexError
 from .interactive_login import (
     LoginError,
@@ -133,6 +133,7 @@ class Explorer(anywidget.AnyWidget):
         self.login_methods = methods
         self._login_cancel = threading.Event()
         self.on_msg(self._on_msg)
+        register_explorer(self, config.profile)
 
     # ── messages from JS ────────────────────────────────────────────
 
@@ -329,6 +330,51 @@ class Explorer(anywidget.AnyWidget):
     def config(self) -> Config:
         """The effective settings of this explorer (see jstex.show_config())."""
         return self._config
+
+    # ── this explorer's profile: sign-in, items and S3 ──────────────
+
+    def whoami(self):
+        """How this explorer's profile is signed in (like jstex.whoami())."""
+        from .api import _whoami
+
+        return _whoami(self._config)
+
+    def login(self, **kwargs: Any) -> str:
+        """Sign in for this explorer's profile; same options as jstex.login().
+        The panel follows (collections reload)."""
+        from .api import _login
+
+        result = _login(self._config, **kwargs)
+        info = auth.current(self._config)
+        if info.source != "anonymous":
+            self._signed_in(info)
+        return result
+
+    def logout(self) -> str:
+        """Forget the stored login for this explorer's identity service."""
+        self._logout()
+        return "Signed out."
+
+    def access_token(self) -> str | None:
+        """The current access token for this explorer's profile, for your own
+        requests (jstex itself sends it only to the profile's services)."""
+        from .api import _access_token
+
+        return _access_token(self._config)
+
+    def item(self, href: str) -> pystac.Item:
+        """Open a STAC item by URL with this explorer's settings and token."""
+        from .api import _item
+
+        return _item(self._config, href)
+
+    @property
+    def s3(self):
+        """S3 helpers for this explorer's profile: ex.s3.client(asset),
+        location, session, storage_options, gdal_env, write_s3_profile."""
+        from .s3 import S3Access
+
+        return S3Access(self._config)
 
     # ── Python accessors ────────────────────────────────────────────
 

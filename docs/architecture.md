@@ -115,7 +115,7 @@ Notes:
 | `jstex/sessions.py`          | `SessionStore`: refresh tokens per issuer in `~/.local/share/jstex/sessions.json` (0600, atomic writes).                                                                                                    |
 | `jstex/interactive_login.py` | Device login (RFC 8628 + PKCE) and password login, run on user action; one login at a time.                                                                                                                 |
 | `jstex/profiles.py`          | Profile registry (GitHub → cache → packaged) and `eo-services.json` discovery: fetch, cache, validate, flatten (§9.1).                                                                                      |
-| `jstex/s3.py`                | S3 key manager (create, renew, cache, lock) and the helpers `client`, `session`, `location`, `storage_options`, `gdal_env`, `write_aws_profile` (§9.4).                                                     |
+| `jstex/s3.py`                | S3 key manager (create, renew, cache, lock) and the helpers `client`, `session`, `location`, `storage_options`, `gdal_env`, `write_s3_profile`, and `S3Access` (`ex.s3`) (§9.4).                            |
 | `jstex/query.py`             | `QueryState`, the STEX-compatible `?q=` codec, and `to_search_body()` (QueryState → STAC `/search` body incl. CQL2-JSON).                                                                                   |
 | `jstex/aoi.py`               | GeoJSON upload validation and normalisation; geometry repair (`make_valid`).                                                                                                                                |
 | `jstex/config.py`            | `load_config()`: registry profile → discovery → config files → `JSTEX_*` env vars → arguments, with each field's source. Basemaps. `ConfigView` for `show_config()`.                                        |
@@ -328,7 +328,8 @@ flowchart LR
   another host than the ready-made profile's and `issuer` still comes from the
   profile, `load_config()` drops `issuer` with one warning: the override's
   catalogue is searched anonymously unless the user sets `issuer` too.
-- **Selection.** `profile=` argument → `JSTEX_PROFILE` → `profile =` in the
+- **Selection.** `profile=` argument → `jstex.use_profile()` (kernel default,
+  `config._kernel_profile`) → `JSTEX_PROFILE` → `profile =` in the
   user file, then the system file → `cdse-opensearch`. `none` loads no
   ready-made profile.
 - **Merge (later wins).** The registry entry, then the discovery document
@@ -471,7 +472,9 @@ the store or a log.
   the manager. A `needs-retry` handler drops a key that S3 reports as
   `InvalidAccessKeyId` (unless it was created less than 60 s ago), creates a
   new one and retries once. `storage_options()`, `gdal_env()` and
-  `write_aws_profile()` hand out the current static key.
+  `write_s3_profile()` hand out the current static key. Each helper has a
+  `Config`-taking twin (`_client(cfg, …)` …); `S3Access(cfg)` bundles them
+  as `ex.s3`, bound to the explorer's own configuration.
 - `location(asset)` turns an `s3://bucket/key` (or `/bucket/key`) href, or the
   asset's `s3` alternate, into `{Bucket, Key}`. `endpoint_for()` resolves the
   asset's `storage:refs` through the item's `storage:schemes` and uses that

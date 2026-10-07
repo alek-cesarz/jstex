@@ -106,6 +106,7 @@ def test_whoami_shows_a_readable_expiry_and_list(utc, monkeypatch):
         "source": "session",
         "user": "alice",
         "expires_at": "2026-10-07 14:00:00 UTC",
+        "other_profiles": [],
     }
     assert repr(who) == (
         "Profile:    cdse-opensearch\n"

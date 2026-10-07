@@ -77,23 +77,25 @@ item.assets["B04_10m"].href        # use it in your code
 
 ## Using results in Python
 
-| Member                                                    | What it gives                                                                                                                                                                               |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `jstex.Explorer(profile=None, stac_url=None, height=600)` | The widget. `profile` selects a [profile](#profiles); `stac_url` overrides its STAC API; `height` is the panel/map height in px.                                                            |
-| `ex.results`                                              | All loaded items as a `pystac.ItemCollection`                                                                                                                                               |
-| `ex.selected_items`                                       | The checked result rows, as `pystac.Item`s                                                                                                                                                  |
-| `ex.selected_item`                                        | The item shown in Item details (`None` if none)                                                                                                                                             |
-| `ex.query`                                                | The current query as a dict. Assign to it to change the panel from Python.                                                                                                                  |
-| `ex.search(wait=False)`                                   | Run the current query. `wait=True` blocks until `ex.results` is filled.                                                                                                                     |
-| `ex.cancel()`                                             | Drop the running search; previous results stay                                                                                                                                              |
-| `ex.query_url()`                                          | Clickable STAC `GET /search` URL for the query (returns the results as JSON; carries no token). A complex area is sent as its bbox, with a warning, to keep the URL under 2,000 characters. |
-| `ex.stex_url()`                                           | Clickable STEX link that opens the query (needs `JSTEX_STEX_URL`)                                                                                                                           |
-| `jstex.item(href, profile=None)`                          | Open any STAC item URL with the user's token (what "Copy Python" pastes)                                                                                                                    |
-| `jstex.show_config(profile=None)`                         | The effective configuration: each field, its value and where it came from                                                                                                                   |
-| `jstex.list_profiles()`                                   | The ready-made and your own profiles                                                                                                                                                        |
-| `jstex.login()`, `logout()`, `whoami()`                   | Sign in, sign out, and how you are signed in (see [Signing in](#signing-in))                                                                                                                |
-| `jstex.access_token(profile=None)`                        | Your current access token (or `None`), for your own HTTP requests                                                                                                                           |
-| `jstex.s3.*`                                              | S3 clients and settings with managed keys (see [S3 access](#s3-access))                                                                                                                     |
+| Member                                                                                    | What it gives                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jstex.Explorer(profile=None, stac_url=None, height=600)`                                 | The widget. `profile` selects a [profile](#profiles); `stac_url` overrides its STAC API; `height` is the panel/map height in px.                                                            |
+| `ex.results`                                                                              | All loaded items as a `pystac.ItemCollection`                                                                                                                                               |
+| `ex.selected_items`                                                                       | The checked result rows, as `pystac.Item`s                                                                                                                                                  |
+| `ex.selected_item`                                                                        | The item shown in Item details (`None` if none)                                                                                                                                             |
+| `ex.query`                                                                                | The current query as a dict. Assign to it to change the panel from Python.                                                                                                                  |
+| `ex.search(wait=False)`                                                                   | Run the current query. `wait=True` blocks until `ex.results` is filled.                                                                                                                     |
+| `ex.cancel()`                                                                             | Drop the running search; previous results stay                                                                                                                                              |
+| `ex.query_url()`                                                                          | Clickable STAC `GET /search` URL for the query (returns the results as JSON; carries no token). A complex area is sent as its bbox, with a warning, to keep the URL under 2,000 characters. |
+| `ex.stex_url()`                                                                           | Clickable STEX link that opens the query (needs `JSTEX_STEX_URL`)                                                                                                                           |
+| `jstex.item(href, profile=None)`                                                          | Open any STAC item URL with the user's token (what "Copy Python" pastes)                                                                                                                    |
+| `jstex.show_config(profile=None)`                                                         | The effective configuration: each field, its value and where it came from                                                                                                                   |
+| `jstex.list_profiles()`                                                                   | The ready-made and your own profiles                                                                                                                                                        |
+| `ex.whoami()`, `ex.login()`, `ex.logout()`, `ex.access_token()`, `ex.item(href)`, `ex.s3` | The same as the `jstex.*` functions below, always for this explorer's profile and settings                                                                                                  |
+| `jstex.login()`, `logout()`, `whoami()`                                                   | Sign in, sign out, and how you are signed in (see [Signing in](#signing-in))                                                                                                                |
+| `jstex.access_token(profile=None)`                                                        | Your current access token (or `None`), for your own HTTP requests                                                                                                                           |
+| `jstex.use_profile(name)`                                                                 | Make `name` the kernel's default profile for the `jstex.*` functions and new explorers                                                                                                      |
+| `jstex.s3.*`                                                                              | S3 clients and settings with managed keys (see [S3 access](#s3-access))                                                                                                                     |
 
 Search from code, and the widget shows the same results:
 
@@ -152,11 +154,20 @@ service, sign-in options and S3 storage. jstex ships these:
 jstex.list_profiles()                # names, descriptions and where each comes from
 jstex.show_config()                  # effective settings: field, value, source
 ex = jstex.Explorer(profile="cdse")  # use another profile for this widget
+ex.whoami()                          # sign-in status for that profile
+jstex.use_profile("cdse")            # the kernel's default from now on
 ```
 
-Choose the profile with the `profile=` argument, the `JSTEX_PROFILE` variable,
-or `profile =` in `~/.config/jstex/config.toml` (or `/etc/jstex/config.toml`
-for everyone on a server). The default is `cdse-opensearch`.
+Choose the profile with the `profile=` argument, `jstex.use_profile()`, the
+`JSTEX_PROFILE` variable, or `profile =` in `~/.config/jstex/config.toml` (or
+`/etc/jstex/config.toml` for everyone on a server), in that order. The default
+is `cdse-opensearch`.
+
+A profile belongs to the explorer it was given to. The `jstex.*` functions
+(`jstex.whoami()`, `jstex.s3.client()`, …) use the kernel's default profile
+unless you pass `profile=`, so with an explorer on another profile, use its
+own methods: `ex.whoami()`, `ex.login()`, `ex.access_token()`, `ex.item()` and
+`ex.s3.*`. `jstex.whoami()` lists the other profiles your explorers use.
 
 Each setting is merged from these sources; later ones win:
 
@@ -255,6 +266,7 @@ Steps 4 and 5 start when you click **Sign in** under the Search button, or run:
 
 ```python
 jstex.login()                     # device login if possible, else password
+                                  # (ex.login() for an explorer's own profile)
 jstex.login(method="password")    # username and password
 jstex.whoami()                    # how you are signed in, shown as a list:
                                   #   Profile:    cdse-opensearch
@@ -305,21 +317,31 @@ be signed in.
 item = ex.selected_item
 asset = item.assets["B04_10m"]
 
-loc = jstex.s3.location(asset)               # {'Bucket': 'eodata', 'Key': 'Sentinel-2/…'}
-jstex.s3.client(asset).download_file(**loc, Filename="B04.jp2")   # boto3 client
-jstex.s3.session()                           # boto3 Session (keys renew themselves)
+loc = ex.s3.location(asset)                  # {'Bucket': 'eodata', 'Key': 'Sentinel-2/…'}
+ex.s3.client(asset).download_file(**loc, Filename="B04.jp2")   # boto3 client
+ex.s3.session()                              # boto3 Session (keys renew themselves)
 
 import s3fs                                  # fsspec / s3fs
-fs = s3fs.S3FileSystem(**jstex.s3.storage_options(asset))
+fs = s3fs.S3FileSystem(**ex.s3.storage_options(asset))
 
 import os                                    # GDAL, rasterio, rioxarray: /vsis3/…
-os.environ.update(jstex.s3.gdal_env(asset))
+os.environ.update(ex.s3.gdal_env(asset))
 
-jstex.s3.write_aws_profile("jstex")          # ~/.aws profile for R, Julia, the AWS CLI
+ex.s3.write_s3_profile("jstex")              # S3 profile "jstex" for other tools
 ```
 
+`ex.s3` uses the explorer's profile; `jstex.s3.client()`, `location()`,
+`session()`, `storage_options()`, `gdal_env()` and `write_s3_profile()` do the
+same for the kernel's default profile (or `profile=`).
+
+`write_s3_profile()` writes the key and endpoint to the shared S3 credentials
+files (`~/.aws/credentials` and `~/.aws/config`; the "aws" is only the
+files' conventional location). boto3, the AWS CLI, R (`aws.s3`, `paws`),
+Julia (`AWS.jl`), GDAL (`AWS_PROFILE=jstex`), rclone and s5cmd read them for
+any S3 storage.
+
 `client()` and `session()` renew their key on their own. `storage_options()`,
-`gdal_env()` and `write_aws_profile()` return a fixed key valid for up to 8
+`gdal_env()` and `write_s3_profile()` return a fixed key valid for up to 8
 hours; call them again for a fresh one. In Item details, **Copy boto3
 snippet** next to an S3 asset gives code that downloads it.
 

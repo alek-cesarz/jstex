@@ -334,21 +334,30 @@ def _retry_unknown_key(mgr, creds):
 
 
 def session(*, profile: str | None = None):
+    """A boto3 Session whose credentials renew themselves."""
+    return _session(load_config(profile=profile))
+
+
+def _session(cfg: Config):
     import boto3
     import botocore.session
 
-    cfg = load_config(profile=profile)
     core = botocore.session.get_session()
     core._credentials = _credentials(manager(cfg))  # boto3 has no public setter
     return boto3.Session(botocore_session=core, region_name=cfg.s3_region)
 
 
 def client(asset: Any = None, *, profile: str | None = None):
+    """A boto3 S3 client for `asset`'s storage (or the profile's), with keys that
+    renew themselves."""
+    return _client(load_config(profile=profile), asset)
+
+
+def _client(cfg: Config, asset: Any = None):
     from botocore.config import Config as BotoConfig
 
-    cfg = load_config(profile=profile)
     mgr = manager(cfg)
-    sess = session(profile=profile)
+    sess = _session(cfg)
     c = sess.client(
         "s3",
         endpoint_url=endpoint_for(asset, cfg) if asset is not None else cfg.s3_endpoint,
@@ -362,7 +371,10 @@ def client(asset: Any = None, *, profile: str | None = None):
 
 def storage_options(asset: Any = None, *, profile: str | None = None) -> dict:
     """fsspec/s3fs options (static key, valid up to 8 h — call again for a new one)."""
-    cfg = load_config(profile=profile)
+    return _storage_options(load_config(profile=profile), asset)
+
+
+def _storage_options(cfg: Config, asset: Any = None) -> dict:
     key = manager(cfg).credentials()
     endpoint = endpoint_for(asset, cfg) if asset is not None else cfg.s3_endpoint
     return {
@@ -375,7 +387,10 @@ def storage_options(asset: Any = None, *, profile: str | None = None) -> dict:
 
 def gdal_env(asset: Any = None, *, profile: str | None = None) -> dict[str, str]:
     """GDAL/rasterio settings for /vsis3/ (static key, valid up to 8 h)."""
-    cfg = load_config(profile=profile)
+    return _gdal_env(load_config(profile=profile), asset)
+
+
+def _gdal_env(cfg: Config, asset: Any = None) -> dict[str, str]:
     key = manager(cfg).credentials()
     endpoint = endpoint_for(asset, cfg) if asset is not None else str(cfg.s3_endpoint)
     parts = urlsplit(endpoint)
@@ -390,12 +405,18 @@ def gdal_env(asset: Any = None, *, profile: str | None = None) -> dict[str, str]
     }
 
 
-def write_aws_profile(name: str = "jstex", *, profile: str | None = None) -> Path:
-    """Write the current key as AWS profile `name` (for R, Julia and the AWS CLI).
-    The key is valid up to 8 h; call again for a new one. Other profiles are kept."""
+def write_s3_profile(name: str = "jstex", *, profile: str | None = None) -> Path:
+    """Write the current key and endpoint as S3 profile `name` in the shared
+    credentials files (~/.aws/credentials and ~/.aws/config), which boto3, the
+    AWS CLI, R (aws.s3, paws), Julia (AWS.jl), GDAL (AWS_PROFILE), rclone and
+    s5cmd read for any S3 storage. The key is valid up to 8 h; call again for a
+    new one. Other profiles in those files are kept."""
+    return _write_s3_profile(load_config(profile=profile), name)
+
+
+def _write_s3_profile(cfg: Config, name: str = "jstex") -> Path:
     import configparser
 
-    cfg = load_config(profile=profile)
     key = manager(cfg).credentials()
     creds_path = Path(
         os.environ.get("AWS_SHARED_CREDENTIALS_FILE")
@@ -426,3 +447,35 @@ def write_aws_profile(name: str = "jstex", *, profile: str | None = None) -> Pat
     with conf_path.open("w") as fh:
         conf.write(fh)
     return creds_path
+
+
+class S3Access:
+    """The S3 helpers bound to one configuration — `ex.s3` uses the explorer's."""
+
+    def __init__(self, cfg: Config):
+        self._cfg = cfg
+
+    def __repr__(self) -> str:
+        return f"<jstex S3 access for profile {self._cfg.profile!r}>"
+
+    location = staticmethod(location)
+
+    def client(self, asset: Any = None):
+        """A boto3 S3 client whose keys renew themselves."""
+        return _client(self._cfg, asset)
+
+    def session(self):
+        """A boto3 Session whose credentials renew themselves."""
+        return _session(self._cfg)
+
+    def storage_options(self, asset: Any = None) -> dict:
+        """fsspec/s3fs options (static key, valid up to 8 h)."""
+        return _storage_options(self._cfg, asset)
+
+    def gdal_env(self, asset: Any = None) -> dict[str, str]:
+        """GDAL/rasterio settings for /vsis3/ (static key, valid up to 8 h)."""
+        return _gdal_env(self._cfg, asset)
+
+    def write_s3_profile(self, name: str = "jstex") -> Path:
+        """Write the key and endpoint as S3 profile `name` (see jstex.s3.write_s3_profile)."""
+        return _write_s3_profile(self._cfg, name)

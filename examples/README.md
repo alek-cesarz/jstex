@@ -1,9 +1,9 @@
 # jstex examples
 
-Notebooks that use jstex to find Sentinel-2 L2A data over Lake Garda (July 2024) and work with it. Each starts the same way: check how you are signed in (`jstex.whoami()`), open the explorer, then either pick an item in the widget or run the search cell.
+Notebooks that use jstex to find Sentinel-2 L2A data over Lake Garda (July 2024) and work with it. Each starts the same way: open the explorer, check how you are signed in (`ex.whoami()`), then either pick an item in the widget or run the search cell.
 
-- **[01-download.ipynb](01-download.ipynb)**: download selected assets over S3 (`jstex.s3.client()`) and over HTTPS with your access token (`jstex.access_token()`), then a complete product (every file under its S3 folder). Needs `jupyterlab-jstex[s3]`.
-- **[02-ndvi-gdal.ipynb](02-ndvi-gdal.ipynb)**: Sentinel-2 NDVI with GDAL. Reads the red and near-infrared bands directly from S3 through `/vsis3/` (`jstex.s3.gdal_env()`), crops them to the area of interest, applies the STAC scale and offset, and writes a Cloud-Optimised GeoTIFF. Needs the GDAL Python bindings, numpy and matplotlib.
+- **[01-download.ipynb](01-download.ipynb)**: download selected assets over S3 (`ex.s3.client()`) and over HTTPS with your access token (`ex.access_token()`), then a complete product (every file under its S3 folder). Needs `jupyterlab-jstex[s3]`.
+- **[02-ndvi-gdal.ipynb](02-ndvi-gdal.ipynb)**: Sentinel-2 NDVI with GDAL. Reads the red and near-infrared bands directly from S3 through `/vsis3/` (`ex.s3.gdal_env()`), crops them to the area of interest, applies the STAC scale and offset, and writes a Cloud-Optimised GeoTIFF. Needs the GDAL Python bindings, numpy and matplotlib.
 - **[03-xarray.ipynb](03-xarray.ipynb)**: opens bands lazily with rioxarray, masks clouds with the scene classification (SCL), and plots an NDVI time series and a median map. Needs rioxarray, xarray, pandas and matplotlib (dask for larger areas).
 
 The notebooks are stored **without outputs**, so no token, key or personal data reaches git; CI checks this with `python scripts/check_notebooks.py`.

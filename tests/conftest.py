@@ -39,11 +39,13 @@ def _clean_env(monkeypatch, tmp_path):
     from jstex import config, oidc, profiles
 
     config._warned.clear()
+    config.reset_kernel_state()
     profiles.reset()
     oidc.reset()
     auth.reset_cache()
     auth._store = None  # bind the session store to this test's XDG_DATA_HOME
     yield
+    config.reset_kernel_state()
     profiles.reset()
     oidc.reset()
     auth.reset_cache()

@@ -252,12 +252,13 @@ def test_unknown_key_on_a_fresh_key_is_not_re_minted(monkeypatch):
     assert m.invalidated == []
 
 
-def test_write_aws_profile_keeps_other_profiles(fake, tmp_path, monkeypatch):
+def test_write_s3_profile_keeps_other_profiles(fake, tmp_path, monkeypatch):
     creds_file, conf_file = tmp_path / "credentials", tmp_path / "config"
     monkeypatch.setenv("AWS_SHARED_CREDENTIALS_FILE", str(creds_file))
     monkeypatch.setenv("AWS_CONFIG_FILE", str(conf_file))
     creds_file.write_text("[other]\naws_access_key_id = X\naws_secret_access_key = Y\n")
-    s3.write_aws_profile("jstex")
+    s3.write_s3_profile("jstex")
+    assert not hasattr(s3, "write_aws_profile")
     creds = configparser.ConfigParser()
     creds.read(creds_file)
     assert creds["other"]["aws_access_key_id"] == "X"

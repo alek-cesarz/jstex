@@ -20,7 +20,9 @@ __all__ = [
     "list_profiles",
     "login",
     "logout",
+    "s3",
     "show_config",
+    "use_profile",
     "whoami",
 ]
 
@@ -37,6 +39,7 @@ def __getattr__(name: str) -> Any:
         "login",
         "logout",
         "show_config",
+        "use_profile",
         "whoami",
     ):
         from . import api

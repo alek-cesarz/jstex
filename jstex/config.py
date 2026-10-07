@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import warnings
+import weakref
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -149,9 +150,40 @@ def _files() -> list[tuple[str, dict]]:
     ]
 
 
+# Kernel-wide profile state: the default set by jstex.use_profile(), and the
+# profiles of the explorers created in this kernel (for whoami()'s hint).
+_kernel_profile: str | None = None
+_explorer_profiles: weakref.WeakKeyDictionary[Any, str] = weakref.WeakKeyDictionary()
+
+
+def set_kernel_profile(name: str | None) -> None:
+    global _kernel_profile
+    _kernel_profile = name
+
+
+def register_explorer(explorer: Any, profile: str) -> None:
+    _explorer_profiles[explorer] = profile
+
+
+def profiles_in_use() -> set[str]:
+    """Profiles of this kernel's explorers that are still open."""
+    return {
+        name
+        for explorer, name in list(_explorer_profiles.items())
+        if getattr(explorer, "comm", None) is not None
+    }
+
+
+def reset_kernel_state() -> None:
+    set_kernel_profile(None)
+    _explorer_profiles.clear()
+
+
 def _selected_profile(argument: str | None, files: list[tuple[str, dict]]) -> str:
     if argument:
         return argument
+    if _kernel_profile:
+        return _kernel_profile
     if os.environ.get("JSTEX_PROFILE"):
         return os.environ["JSTEX_PROFILE"]
     for _, data in reversed(files):  # user file before system file
