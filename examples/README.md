@@ -11,8 +11,17 @@ The notebooks are stored **without outputs**, so no token, key or personal data 
 ## Running them
 
 ```bash
-pip install -r examples/requirements.txt   # plus GDAL for 02: conda install -c conda-forge gdal
+pip install -r examples/requirements.txt   # plus GDAL for 02, see below
 jupyter lab examples/
+```
+
+GDAL's Python bindings (`osgeo`, notebook 02) are not on PyPI as wheels. Use
+conda (`conda install -c conda-forge gdal`), or build them against the
+system GDAL:
+
+```bash
+sudo apt install libgdal-dev python3-dev
+pip install --no-build-isolation "gdal==$(gdal-config --version)"
 ```
 
 S3 and HTTPS downloads need a CDSE account. On a JupyterHub that signs you in with CDSE there is nothing to do; elsewhere click **Sign in** in the widget or run `jstex.login()`.

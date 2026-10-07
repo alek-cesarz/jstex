@@ -5,4 +5,5 @@ rioxarray
 xarray
 pandas
 dask[array]
-# GDAL Python bindings: conda install -c conda-forge gdal (or your image's GDAL)
+# GDAL Python bindings (notebook 02): conda install -c conda-forge gdal, or with the
+# system GDAL: apt install libgdal-dev python3-dev && pip install "gdal==$(gdal-config --version)"
