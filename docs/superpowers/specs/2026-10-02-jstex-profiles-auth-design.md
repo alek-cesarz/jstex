@@ -305,7 +305,7 @@ Main spec §6 applies, with these changes:
   files + env + kwargs; keeps today's `Config`/`Basemap` and adds the §3.2
   fields.
 - `jstex/auth.py` — the token chain (steps 1–3, refresh, session store,
-  issuer match); `jstex/interactive.py` (not `login.py`: `jstex.login` is the function) — device and password flows (steps 4–5) and
+  issuer match); `jstex/interactive_login.py` (not `login.py`: `jstex.login` is the function) — device and password flows (steps 4–5) and
   their notebook display.
 - `jstex/s3.py` — §5.
 - `jstex/stac.py` — token scoping by origin set (§3.6).

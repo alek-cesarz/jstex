@@ -23,7 +23,7 @@ from . import auth
 from .aoi import parse_aoi_upload
 from .config import Config, load_config
 from .errors import JstexError
-from .interactive import (
+from .interactive_login import (
     LoginError,
     device_login,
     exclusive,

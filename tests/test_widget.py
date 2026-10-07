@@ -5,7 +5,7 @@ import pytest
 from jstex import auth
 from jstex.config import DEFAULT_BASEMAP_ATTRIBUTION
 from jstex.errors import JstexError, JstexQueryError, JstexStacError
-from jstex.interactive import DeviceCode, LoginError
+from jstex.interactive_login import DeviceCode, LoginError
 from jstex.stac import Page
 from jstex.widget import Explorer, sync_runner
 

@@ -10,7 +10,7 @@ import responses
 
 from jstex import auth, oidc
 from jstex.config import load_config
-from jstex.interactive import (
+from jstex.interactive_login import (
     DeviceCode,
     LoginError,
     device_login,
@@ -177,7 +177,7 @@ def test_jstex_login_asks_for_a_client_id_and_can_save_it(cfg, monkeypatch):
     monkeypatch.setenv("JSTEX_STAC_URL", "https://stac.example.org/v1")
     monkeypatch.setenv("JSTEX_OIDC_ISSUER", ISSUER)
     monkeypatch.setattr("builtins.input", lambda prompt="": "typed-client")
-    monkeypatch.setattr("jstex.interactive.time.sleep", lambda s: None)
+    monkeypatch.setattr("jstex.interactive_login.time.sleep", lambda s: None)
     status = jstex.login(profile="none", method="device", save=False)
     assert status.startswith("Signed in (device login)")
     assert auth._store.get(ISSUER).client_id == "typed-client"

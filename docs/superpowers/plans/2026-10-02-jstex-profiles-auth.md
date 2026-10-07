@@ -19,7 +19,7 @@
 > code below changed during implementation, because a submodule shadows a
 > function of the same name on the package: the public helper `jstex.config()`
 > is `jstex.show_config()`, and the module `jstex/login.py` is
-> `jstex/interactive.py` (imports `from .login …` read `from .interactive …`).
+> `jstex/interactive_login.py` (imports `from .login …` read `from .interactive_login …`).
 > Other deviations are recorded as rulings in the execution ledger and the
 > merge summary.
 

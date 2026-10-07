@@ -45,7 +45,7 @@ flowchart LR
   subgraph Kernel["Python kernel (single-user server)"]
     E["Explorer<br/>jstex/widget.py"]
     B["StacBackend<br/>jstex/stac.py"]
-    A["auth / interactive<br/>jstex/auth.py, interactive.py"]
+    A["auth / interactive_login<br/>jstex/auth.py, interactive_login.py"]
     C["profiles / config<br/>jstex/profiles.py, config.py"]
     S3["S3 keys + clients<br/>jstex/s3.py"]
     Q["QueryState / codec<br/>jstex/query.py"]
@@ -105,22 +105,22 @@ Notes:
 
 ## 4. Python modules
 
-| Module                 | Responsibility                                                                                                                                                                                              |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `jstex/__init__.py`    | Lazy exports (`Explorer`, `item`, `show_config`, `list_profiles`, `login`, `logout`, `whoami`, `access_token`, `s3`) so the server can import the package cheaply (the translation entry point imports it). |
-| `jstex/widget.py`      | `Explorer` (anywidget): synced traitlets, the message handler, search generations, Python accessors.                                                                                                        |
-| `jstex/stac.py`        | `StacBackend`: every HTTP call to STAC, via pystac-client's `StacApiIO`: collections (paged), queryables (cached, merged), search, `rel=next`, item read. Retries, error messages.                          |
-| `jstex/auth.py`        | Token chain per issuer: manual token → hub `auth_state` (issuer must match) → stored session → anonymous (§9.2). Caching, refresh, forced refresh, logout.                                                  |
-| `jstex/oidc.py`        | OpenID Connect discovery (`.well-known/openid-configuration`, cached) and token-endpoint requests; `OidcError`.                                                                                             |
-| `jstex/sessions.py`    | `SessionStore`: refresh tokens per issuer in `~/.local/share/jstex/sessions.json` (0600, atomic writes).                                                                                                    |
-| `jstex/interactive.py` | Device login (RFC 8628 + PKCE) and password login, run on user action; one login at a time.                                                                                                                 |
-| `jstex/profiles.py`    | Profile registry (GitHub → cache → packaged) and `eo-services.json` discovery: fetch, cache, validate, flatten (§9.1).                                                                                      |
-| `jstex/s3.py`          | S3 key manager (create, renew, cache, lock) and the helpers `client`, `session`, `location`, `storage_options`, `gdal_env`, `write_aws_profile` (§9.4).                                                     |
-| `jstex/query.py`       | `QueryState`, the STEX-compatible `?q=` codec, and `to_search_body()` (QueryState → STAC `/search` body incl. CQL2-JSON).                                                                                   |
-| `jstex/aoi.py`         | GeoJSON upload validation and normalisation; geometry repair (`make_valid`).                                                                                                                                |
-| `jstex/config.py`      | `load_config()`: registry profile → discovery → config files → `JSTEX_*` env vars → arguments, with each field's source. Basemaps. `ConfigView` for `show_config()`.                                        |
-| `jstex/api.py`         | Public helpers: `item(href)` (used by copied snippets), `show_config`, `list_profiles`, `login`, `logout`, `whoami`, `access_token`.                                                                        |
-| `jstex/errors.py`      | `JstexError` → `JstexAuthError`, `JstexStacError(status)`, `JstexQueryError`.                                                                                                                               |
+| Module                       | Responsibility                                                                                                                                                                                              |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jstex/__init__.py`          | Lazy exports (`Explorer`, `item`, `show_config`, `list_profiles`, `login`, `logout`, `whoami`, `access_token`, `s3`) so the server can import the package cheaply (the translation entry point imports it). |
+| `jstex/widget.py`            | `Explorer` (anywidget): synced traitlets, the message handler, search generations, Python accessors.                                                                                                        |
+| `jstex/stac.py`              | `StacBackend`: every HTTP call to STAC, via pystac-client's `StacApiIO`: collections (paged), queryables (cached, merged), search, `rel=next`, item read. Retries, error messages.                          |
+| `jstex/auth.py`              | Token chain per issuer: manual token → hub `auth_state` (issuer must match) → stored session → anonymous (§9.2). Caching, refresh, forced refresh, logout.                                                  |
+| `jstex/oidc.py`              | OpenID Connect discovery (`.well-known/openid-configuration`, cached) and token-endpoint requests; `OidcError`.                                                                                             |
+| `jstex/sessions.py`          | `SessionStore`: refresh tokens per issuer in `~/.local/share/jstex/sessions.json` (0600, atomic writes).                                                                                                    |
+| `jstex/interactive_login.py` | Device login (RFC 8628 + PKCE) and password login, run on user action; one login at a time.                                                                                                                 |
+| `jstex/profiles.py`          | Profile registry (GitHub → cache → packaged) and `eo-services.json` discovery: fetch, cache, validate, flatten (§9.1).                                                                                      |
+| `jstex/s3.py`                | S3 key manager (create, renew, cache, lock) and the helpers `client`, `session`, `location`, `storage_options`, `gdal_env`, `write_aws_profile` (§9.4).                                                     |
+| `jstex/query.py`             | `QueryState`, the STEX-compatible `?q=` codec, and `to_search_body()` (QueryState → STAC `/search` body incl. CQL2-JSON).                                                                                   |
+| `jstex/aoi.py`               | GeoJSON upload validation and normalisation; geometry repair (`make_valid`).                                                                                                                                |
+| `jstex/config.py`            | `load_config()`: registry profile → discovery → config files → `JSTEX_*` env vars → arguments, with each field's source. Basemaps. `ConfigView` for `show_config()`.                                        |
+| `jstex/api.py`               | Public helpers: `item(href)` (used by copied snippets), `show_config`, `list_profiles`, `login`, `logout`, `whoami`, `access_token`.                                                                        |
+| `jstex/errors.py`            | `JstexError` → `JstexAuthError`, `JstexStacError(status)`, `JstexQueryError`.                                                                                                                               |
 
 ## 5. Front-end modules
 
@@ -407,7 +407,7 @@ sequenceDiagram
   run under an `flock` on `sessions.json.lock` (POSIX), so kernels refresh one
   at a time and the next one reads the rotated token; a drop only removes the
   token that failed.
-- **Device login** (`jstex/interactive.py`): RFC 8628 with PKCE S256 against
+- **Device login** (`jstex/interactive_login.py`): RFC 8628 with PKCE S256 against
   the issuer's `device_authorization_endpoint` (from
   `.well-known/openid-configuration`, `jstex/oidc.py`), scope `openid` (plus
   `offline_access` when configured). It honours `interval` and `slow_down` and
@@ -419,7 +419,7 @@ sequenceDiagram
 - **Password login:** resource-owner password grant with `password_client_id`.
   The password is used once and never stored, logged or put into an error
   message.
-- **One login at a time** (`interactive.exclusive()`); a lock in `auth.py`
+- **One login at a time** (`interactive_login.exclusive()`); a lock in `auth.py`
   serialises refreshes and session writes within a kernel.
 - **Errors.** A hub or session problem is warned about once and the chain
   moves on; a 401 from STAC triggers one forced refresh and one retry.

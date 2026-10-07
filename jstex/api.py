@@ -8,7 +8,7 @@ import pystac
 
 from . import auth
 from .config import ConfigView, _files, load_config, save_login_client_id
-from .interactive import (
+from .interactive_login import (
     LoginError,
     _CellDisplay,
     device_login,

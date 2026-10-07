@@ -39,7 +39,7 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
 - **Tokens:** `jstex/auth.py` runs the token chain (manual token → hub, if its
   issuer matches → stored session → anonymous) and refreshes tokens;
   `jstex/oidc.py` does the OpenID Connect discovery and token requests;
-  `jstex/sessions.py` stores refresh tokens; `jstex/interactive.py` runs device
+  `jstex/sessions.py` stores refresh tokens; `jstex/interactive_login.py` runs device
   and password login (from `jstex.login()` or the widget's Sign in).
 - **S3:** `jstex/s3.py` creates, renews and caches S3 keys through the
   platform's keys manager (a port of STEX's policy) and builds boto3 clients,
@@ -116,7 +116,7 @@ model) is in [docs/architecture.md](docs/architecture.md). In short:
 - Submodule names shadow functions on the package: `jstex.profiles` and
   `jstex.config` are modules, so the public helpers are
   `jstex.list_profiles()` and `jstex.show_config()`; the login module is
-  `jstex.interactive`, because `jstex.login` is the function.
+  `jstex.interactive_login`, because `jstex.login` is the function.
 - Registry data lives in `jstex/data/` (a `jstex/profiles/` folder would clash
   with `profiles.py`); `jstex/data/profiles.schema.json` validates it in tests.
 - `jstex/s3.py` uses botocore's private `_protected_refresh` and
