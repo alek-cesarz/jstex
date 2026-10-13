@@ -100,7 +100,11 @@ export function setupView(values: Record<string, unknown> = {}) {
     search: vi.fn(),
     cancel: vi.fn(),
     sync: vi.fn(),
-    dispose: vi.fn()
+    dispose: vi.fn(),
+    startLogin: vi.fn(),
+    submitPassword: vi.fn(),
+    cancelLogin: vi.fn(),
+    logout: vi.fn()
   };
   const actions = createActions(model, store, backend, S);
   // Pass-through spies: real behaviour, but tests can assert on calls.

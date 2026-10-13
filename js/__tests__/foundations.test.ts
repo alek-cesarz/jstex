@@ -16,7 +16,7 @@ import {
 } from '../format';
 import { applyPage, bindModel, stateFromModel } from '../model-sync';
 import { neighbour, scrollWithin, toggleId } from '../selection';
-import { pythonItemSnippet } from '../snippets';
+import { hasS3, pythonAssetSnippet, pythonItemSnippet } from '../snippets';
 import { createStore } from '../store';
 import { basemapLayer, DEFAULT_BASEMAP, isDark, watchTheme } from '../theme';
 import { BOX, FakeModel, FIELDS, item, setupView } from './helpers';
@@ -37,7 +37,7 @@ describe('store', () => {
 describe('CommBackend', () => {
   it('correlates replies by req_id', async () => {
     const m = new FakeModel();
-    const b = new CommBackend(m, { onPage: vi.fn() });
+    const b = new CommBackend(m, { onPage: vi.fn(), onLogin: vi.fn() });
     const p1 = b.listCollections();
     const p2 = b.listCollections();
     expect(m.sent).toEqual([
@@ -63,7 +63,7 @@ describe('CommBackend', () => {
   it('routes pages and sends search/cancel/sync', () => {
     const m = new FakeModel();
     const onPage = vi.fn();
-    const b = new CommBackend(m, { onPage });
+    const b = new CommBackend(m, { onPage, onLogin: vi.fn() });
     m.emit('msg:custom', { type: 'page', items: [], matched: 0 });
     expect(onPage).toHaveBeenCalledOnce();
     b.search({ collections: ['c'] } as never);
@@ -79,7 +79,7 @@ describe('CommBackend', () => {
   it('dispose rejects pending requests and stops listening', async () => {
     const m = new FakeModel();
     const onPage = vi.fn();
-    const b = new CommBackend(m, { onPage });
+    const b = new CommBackend(m, { onPage, onLogin: vi.fn() });
     const p = b.listCollections();
     b.dispose();
     await expect(p).rejects.toThrow('disposed');
@@ -538,5 +538,48 @@ describe('ex.query set from Python', () => {
     actions.addFilterRow();
     const ids = store.get().filterRows.map(r => r.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('asset snippet', () => {
+  it('downloads the asset over S3 with jstex', () => {
+    expect(pythonAssetSnippet('https://stac.test/items/a', 'B04')).toBe(
+      [
+        '# needs: pip install "jupyterlab-jstex[s3]"',
+        'import jstex',
+        '',
+        'item = jstex.item("https://stac.test/items/a")',
+        'asset = item.assets["B04"]',
+        'loc = jstex.s3.location(asset)',
+        'jstex.s3.client(asset).download_file(**loc, Filename=loc["Key"].rsplit("/", 1)[-1])'
+      ].join('\n')
+    );
+  });
+
+  it('knows which assets are on S3', () => {
+    expect(hasS3({ href: 's3://eodata/a' })).toBe(true);
+    expect(hasS3({ href: '/eodata/a' })).toBe(true);
+    expect(
+      hasS3({
+        href: 'https://x/a',
+        alternate: { s3: { href: 's3://eodata/a' } }
+      })
+    ).toBe(true);
+    expect(hasS3({ href: 'https://x/a' })).toBe(false);
+  });
+});
+
+describe('snippets carry the explorer profile', () => {
+  it('passes profile= so the snippet uses the same profile as the widget', () => {
+    expect(pythonItemSnippet('https://x/items/a', 'cdse')).toBe(
+      'import jstex\n\nitem = jstex.item("https://x/items/a", profile="cdse")'
+    );
+    const s = pythonAssetSnippet('https://x/items/a', 'B04', 'cdse');
+    expect(s).toContain(
+      'item = jstex.item("https://x/items/a", profile="cdse")'
+    );
+    expect(s).toContain(
+      'jstex.s3.client(asset, profile="cdse").download_file(**loc, Filename=loc["Key"].rsplit("/", 1)[-1])'
+    );
   });
 });

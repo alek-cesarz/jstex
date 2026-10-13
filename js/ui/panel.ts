@@ -17,6 +17,7 @@ import { mountCollections } from './collections';
 import { datesInverted, datesSummary, mountDates } from './dates';
 import { mountFiltersSection } from './filters-section';
 import { createSection } from './section';
+import { mountSignin } from './signin';
 
 /** Why Search is disabled ('' = enabled). */
 export function searchBlocker(s: ExplorerState): string {
@@ -48,7 +49,7 @@ export function mountPanel(
           <button type="button" class="jstex-control" data-ref="cancel">${escapeHtml(S.cancel)}</button>
         </div>
         <button type="button" class="jstex-hint jstex-reason" data-ref="reason"></button>
-        <div class="jstex-hint jstex-hint--icon" data-ref="auth">${ICON.info}<span data-ref="authText"></span></div>
+        <div data-slot="signin"></div>
         <div class="jstex-error" role="alert" data-ref="errorBanner">
           <span data-ref="errorText"></span>
           <button type="button" class="jstex-control" data-ref="retry">${escapeHtml(S.retry)}</button>
@@ -80,7 +81,12 @@ export function mountPanel(
     mountCollections(sections.collections.body, store, actions),
     mountDates(sections.dates.body, store, actions),
     mountAoiSection(sections.aoi.body, store, actions),
-    mountFiltersSection(sections.filters.body, store, actions)
+    mountFiltersSection(sections.filters.body, store, actions),
+    mountSignin(
+      el.querySelector('[data-slot="signin"]') as HTMLElement,
+      store,
+      actions
+    )
   ];
 
   const summaries = (
@@ -129,10 +135,6 @@ export function mountPanel(
     ref('reason').textContent = reason;
     ref('reason').hidden = !reason;
     ref('reason').classList.toggle('jstex-hint--warn', Boolean(reason));
-    ref('auth').hidden = s.collectionsLoading;
-    ref('auth').title = s.authSource === 'anonymous' ? S.anonymousHint : '';
-    ref('authText').textContent =
-      s.authSource === 'anonymous' ? S.anonymousNote : S.signedIn;
     ref('errorBanner').hidden = !s.error;
     ref('errorText').textContent = s.error;
   };

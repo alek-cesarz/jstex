@@ -11,9 +11,9 @@ import './define-guard'; // must stay first: see define-guard.ts
 import '@eox/map';
 import '@eox/drawtools';
 import type { RenderProps } from '@anywidget/types';
-import { createActions } from './actions';
+import { createActions, type Actions } from './actions';
 import { CommBackend } from './backend';
-import { applyPage, bindModel, stateFromModel } from './model-sync';
+import { applyLogin, applyPage, bindModel, stateFromModel } from './model-sync';
 import { createStore } from './store';
 import { S } from './strings';
 import { isDark, watchTheme } from './theme';
@@ -42,8 +42,13 @@ function render({ model, el }: RenderProps): () => void {
     root.querySelector(`[data-slot="${name}"]`) as HTMLElement;
 
   const store = createStore({ ...stateFromModel(m), dark: isDark() });
-  const backend = new CommBackend(m, { onPage: msg => applyPage(store, msg) });
-  const actions = createActions(m, store, backend, S);
+  // `actions` is created after the backend; onLogin only runs later.
+  let actions: Actions;
+  const backend = new CommBackend(m, {
+    onPage: msg => applyPage(store, msg),
+    onLogin: msg => applyLogin(store, msg, () => void actions.loadCollections())
+  });
+  actions = createActions(m, store, backend, S);
 
   const stopTheme = watchTheme(() => store.set({ dark: isDark() }));
   const unsubscribe = store.subscribe((s, prev) => {
@@ -66,19 +71,7 @@ function render({ model, el }: RenderProps): () => void {
     mountDetails(slot('details'), store, actions)
   ];
 
-  backend
-    .listCollections()
-    .then(collections =>
-      store.set({
-        collections,
-        collectionsLoading: false,
-        collectionsError: ''
-      })
-    )
-    .catch((err: Error) => {
-      if (err.message !== 'disposed')
-        store.set({ collectionsLoading: false, collectionsError: err.message });
-    });
+  void actions.loadCollections();
   if (store.get().query.collections.length) void actions.loadFields();
   backend.sync(); // a re-rendered view gets the kernel's current results
 

@@ -93,13 +93,11 @@ describe('search panel', () => {
     const { el, store, actions } = setupView();
     mountPanel(el, store, actions);
     store.set({ collectionsLoading: false, authSource: 'anonymous' });
-    expect(q(el, 'authText').textContent).toBe(
+    expect(q(el, 'statusText').textContent).toBe(
       'Not signed in — restricted collections are hidden.'
     );
     store.set({ authSource: 'hub' });
-    expect(q(el, 'authText').textContent).toBe(
-      'Signed in — restricted collections included.'
-    );
+    expect(q(el, 'statusText').textContent).toBe('Signed in (hub)');
     store.set({ status: 'searching', canCancel: true, error: 'Rate limited' });
     expect(q(el, 'cancel').hidden).toBe(false);
     expect(q(el, 'errorText').textContent).toBe('Rate limited');

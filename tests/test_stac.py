@@ -281,3 +281,31 @@ def test_token_is_sent_only_to_the_configured_stac_host(monkeypatch):
     b.read_item("https://evil.example.org/items/a")
     assert responses.calls[0].request.headers.get("Authorization") == "Bearer T"
     assert "Authorization" not in responses.calls[1].request.headers
+
+
+@responses.activate
+def test_token_goes_to_the_profile_origins_only(monkeypatch):
+    from jstex.config import load_config
+
+    monkeypatch.setenv("JSTEX_ACCESS_TOKEN", "T")
+    cfg = load_config(
+        profile="none",
+        stac_url=URL,
+        issuer="https://id.test/realms/r",
+        s3_keys_url="https://keys.test/api/user",
+    )
+    for href in (
+        "https://id.test/a",
+        "https://keys.test/a",
+        "https://evil.example.org/a",
+    ):
+        responses.get(href, json=item("a"))
+    b = StacBackend(cfg.stac_url, auth_config=cfg)
+    for href in (
+        "https://id.test/a",
+        "https://keys.test/a",
+        "https://evil.example.org/a",
+    ):
+        b.read_item(href)
+    sent = [c.request.headers.get("Authorization") for c in responses.calls]
+    assert sent == ["Bearer T", "Bearer T", None]

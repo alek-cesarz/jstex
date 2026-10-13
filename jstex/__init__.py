@@ -12,7 +12,19 @@ from typing import Any
 
 from .routes import setup_route_handlers
 
-__all__ = ["Explorer", "__version__", "item"]
+__all__ = [
+    "Explorer",
+    "__version__",
+    "access_token",
+    "item",
+    "list_profiles",
+    "login",
+    "logout",
+    "s3",
+    "show_config",
+    "use_profile",
+    "whoami",
+]
 
 
 def __getattr__(name: str) -> Any:
@@ -20,10 +32,31 @@ def __getattr__(name: str) -> Any:
         from .widget import Explorer
 
         return Explorer
-    if name == "item":
-        from .api import item
+    if name in (
+        "access_token",
+        "item",
+        "list_profiles",
+        "login",
+        "logout",
+        "show_config",
+        "use_profile",
+        "whoami",
+    ):
+        from . import api
 
-        return item
+        return getattr(api, name)
+    if name == "help":
+        from .api import show_help
+
+        return show_help
+    if name == "JstexError":
+        from .errors import JstexError
+
+        return JstexError
+    if name == "s3":
+        import importlib
+
+        return importlib.import_module(".s3", __name__)
     raise AttributeError(f"module 'jstex' has no attribute {name!r}")
 
 

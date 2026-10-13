@@ -21,7 +21,7 @@ from shapely.geometry import mapping, shape
 from shapely.ops import unary_union
 
 from .aoi import repair
-from .errors import JstexQueryError
+from .errors import JstexQueryError, JstexWarning
 
 DEFAULT_SORT = {"field": "properties.datetime", "direction": "desc"}
 # Open-ended ranges are sent closed: the CDSE endpoint's firewall rejects
@@ -307,14 +307,14 @@ def search_get_url(
         warnings.warn(
             f"The area makes the search URL longer than {max_length} characters; "
             "the link searches the area's bbox instead and may return extra items.",
-            UserWarning,
+            JstexWarning,
             stacklevel=2,
         )
     if len(url) > max_length:
         warnings.warn(
             f"The search URL is {len(url)} characters long; some servers (e.g. CDSE) "
             f"reject GET URLs over {max_length} characters.",
-            UserWarning,
+            JstexWarning,
             stacklevel=2,
         )
     return url

@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Profiles**: ready-made settings for CDSE (`cdse-opensearch` default, `cdse`), CREODIAS and CODE-DE, merged from the jstex profile registry on GitHub, the platform's `eo-services.json` discovery document, `/etc/jstex/config.toml` and `~/.config/jstex/config.toml`, `JSTEX_*` variables and arguments; own profiles for private catalogues; `jstex.show_config()` and `jstex.list_profiles()`; `Explorer(profile=…)`.
+- **Sign in without JupyterHub**: device-code login (PKCE) and, where the platform allows it, password login — from the widget's **Sign in** button or `jstex.login()`; stored sessions are reused by later kernels; `jstex.logout()`, `jstex.whoami()` (profile, sign-in method, user and expiry in local time; a dict that notebooks show as a short list), `jstex.access_token()`.
+- **S3 access** (`pip install "jupyterlab-jstex[s3]"`): S3 keys created and renewed automatically and shared by your kernels; `jstex.s3.client()`, `location()`, `session()`, `storage_options()`, `gdal_env()`, `write_s3_profile()` (an S3 profile in the shared `~/.aws` credentials files, for R, Julia, GDAL, rclone and the AWS CLI); "Copy boto3 snippet" per S3 asset in Item details.
+- **Per-explorer profile methods**: `ex.whoami()`, `ex.login()`, `ex.logout()`, `ex.access_token()`, `ex.item(href)` and `ex.s3.*` always use the explorer's own profile and settings; `jstex.use_profile(name)` sets the kernel's default profile for the `jstex.*` functions and new explorers; `jstex.whoami()` lists the other profiles the kernel's explorers use.
+- **`jstex.help()`**: every function and method with a short description, and a link to the README.
+- **Short error messages**: in notebooks, jstex errors show as one line (`JstexQueryError: Select at least one collection before searching.`) instead of a traceback through jstex's code; `JSTEX_TRACEBACK=1` brings the traceback back. `jstex.JstexError` is the base class of all of them.
+- **Example notebooks**: downloading data (S3, HTTPS, complete product), Sentinel-2 NDVI with GDAL, xarray NDVI time series.
+
+### Changed
+
+- The JupyterHub token is used only for the profile's own identity service; the user's token is sent only to the profile's STAC, identity and keys-manager hosts. A `JSTEX_STAC_URL`/`stac_url` on another host than the profile's catalogue is searched anonymously unless `JSTEX_OIDC_ISSUER`/`issuer` is set too (a v0.1 hub deployment with its own catalogue must add `JSTEX_OIDC_ISSUER`). `JSTEX_ACCESS_TOKEN` is not sent to an identity service other than the one that issued it.
+- jstex's notices (e.g. "Could not retrieve the profile registry. Using the packaged copy.") are shown as plain sentences, without Python's file/line prefix; they are `jstex.errors.JstexWarning` (a `UserWarning`), so `warnings.filterwarnings("ignore", category=JstexWarning)` silences them.
+- The status line shows how you are signed in (`hub`, `token`, `session`, `device login`, `password`); the source previously called `env` is now `token`.
+
+### Fixed
+
+- **Map controls**: zoom and credits buttons are styled even when the map is created after the widget (they could appear unstyled).
+
 ## [0.1.0] - 2026-09-30
 
 ### Added

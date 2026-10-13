@@ -30,6 +30,14 @@ jobs:
         jlpm
         jlpm run lint:check
 
+    - name: Check example notebooks
+      run: |
+        set -eux
+        python -m pip install nbformat ruff
+        python scripts/check_notebooks.py
+        ruff check examples
+        ruff format --check examples
+
     - name: Test the extension
       run: |
         set -eux

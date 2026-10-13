@@ -46,7 +46,7 @@ test.describe('jstex Explorer', () => {
     page
   }) => {
     const w = await explorerCell(page);
-    await expect(w.locator('[data-ref="authText"]')).toHaveText(
+    await expect(w.locator('[data-ref="statusText"]')).toHaveText(
       'Not signed in — restricted collections are hidden.'
     );
     await expect(w.locator('.jstex-panel [data-ref="search"]')).toBeDisabled();

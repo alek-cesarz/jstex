@@ -10,7 +10,7 @@ import {
 } from '../format';
 import { ICON } from '../icons';
 import { neighbour } from '../selection';
-import { pythonItemSnippet } from '../snippets';
+import { hasS3, pythonAssetSnippet, pythonItemSnippet } from '../snippets';
 import type { Store } from '../store';
 import { S } from '../strings';
 import type { ExplorerState, StacAsset, StacItem } from '../types';
@@ -27,7 +27,12 @@ const actionBtn = (text: string, label: string, icon: string) =>
 const hrefLine = (href: string, scheme = '') =>
   `<div class="jstex-href">${scheme ? `<span class="jstex-tag">${escapeHtml(scheme)}</span>` : ''}<span class="jstex-mono jstex-href__url">${escapeHtml(href)}</span>${copyBtn(href)}</div>`;
 
-function assetBlock(key: string, a: StacAsset): string {
+function assetBlock(
+  key: string,
+  a: StacAsset,
+  self?: string,
+  profile?: string
+): string {
   const tags = [a.type, ...(a.roles ?? [])]
     .filter(Boolean)
     .map(x => `<span class="jstex-tag">${escapeHtml(x)}</span>`)
@@ -36,13 +41,17 @@ function assetBlock(key: string, a: StacAsset): string {
     .filter(([, alt]) => alt?.href)
     .map(([name, alt]) => hrefLine(alt.href!, name))
     .join('');
+  const snippet =
+    self && hasS3(a)
+      ? `<div class="jstex-asset__actions"><button type="button" class="jstex-control jstex-btn-sm" data-snippet="${escapeHtml(key)}" data-copy="${escapeHtml(pythonAssetSnippet(self, key, profile))}">${ICON.code}<span>${escapeHtml(S.copyBoto3)}</span></button></div>`
+      : '';
   return `<div class="jstex-asset">
     <div class="jstex-asset__head"><span class="jstex-tag jstex-tag--key jstex-mono">${escapeHtml(key)}</span>${
       a.title
         ? `<span class="jstex-asset__title">${escapeHtml(a.title)}</span>`
         : ''
     }${tags}</div>
-    ${hrefLine(a.href)}${alternates}
+    ${hrefLine(a.href)}${alternates}${snippet}
   </div>`;
 }
 
@@ -50,7 +59,8 @@ function renderItem(
   item: StacItem,
   index: number,
   total: number,
-  open: Record<Section, boolean>
+  open: Record<Section, boolean>,
+  profile: string
 ): string {
   const self = selfHref(item);
   const props = Object.keys(item.properties ?? {}).sort();
@@ -83,7 +93,11 @@ function renderItem(
       <div class="jstex-details__actions">
         ${self ? actionBtn(self, S.copySelf, ICON.link) : ''}${actionBtn(item.id, S.copyId, ICON.copy)}${
           self
-            ? actionBtn(pythonItemSnippet(self), S.copyPython, ICON.code)
+            ? actionBtn(
+                pythonItemSnippet(self, profile),
+                S.copyPython,
+                ICON.code
+              )
             : ''
         }
       </div>
@@ -100,7 +114,7 @@ function renderItem(
         })
         .join('')}</dl>`
     )}
-    ${sec('assets', S.assets, assets.length, assets.map(([k, a]) => assetBlock(k, a)).join(''))}
+    ${sec('assets', S.assets, assets.length, assets.map(([k, a]) => assetBlock(k, a, self, profile)).join(''))}
     ${sec(
       'links',
       S.links,
@@ -134,13 +148,24 @@ export function mountDetails(
   const root = el.querySelector('[data-ref="root"]') as HTMLElement;
 
   const update = (state: ExplorerState, prev: ExplorerState | null) => {
-    if (prev && prev.activeId === state.activeId && prev.items === state.items)
+    if (
+      prev &&
+      prev.activeId === state.activeId &&
+      prev.items === state.items &&
+      prev.profileName === state.profileName
+    )
       return;
     const index = state.items.findIndex(i => i.id === state.activeId);
     root.innerHTML =
       index === -1
         ? `<p class="jstex-muted">${escapeHtml(S.detailsEmpty)}</p>`
-        : renderItem(state.items[index], index, state.items.length, open);
+        : renderItem(
+            state.items[index],
+            index,
+            state.items.length,
+            open,
+            state.profileName
+          );
   };
 
   root.addEventListener(

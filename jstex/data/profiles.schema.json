@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "jstex profile registry",
+  "type": "object",
+  "required": ["version", "profiles"],
+  "properties": {
+    "version": { "type": "string", "pattern": "^1\\." },
+    "profiles": { "type": "object", "additionalProperties": { "$ref": "#/$defs/profile" } }
+  },
+  "$defs": {
+    "https": { "type": "string", "pattern": "^https://" },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "discovery": { "$ref": "#/$defs/https" },
+        "pinned": { "type": "array", "items": { "type": "string" } },
+        "platform": {
+          "type": "object",
+          "properties": { "name": { "type": "string" }, "description": { "type": "string" } }
+        },
+        "services": {
+          "type": "object",
+          "properties": {
+            "catalogue": {
+              "type": "object",
+              "properties": { "stac": { "type": "object", "properties": { "url": { "$ref": "#/$defs/https" } } } }
+            },
+            "data_access": {
+              "type": "object",
+              "properties": {
+                "s3": {
+                  "type": "object",
+                  "properties": {
+                    "endpoint": { "$ref": "#/$defs/https" },
+                    "region": { "type": "string" },
+                    "credentials": { "type": "object", "properties": { "url": { "$ref": "#/$defs/https" } } }
+                  }
+                }
+              }
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "issuer": { "$ref": "#/$defs/https" },
+                "client_id": { "type": "string" },
+                "device_client_id": { "type": "string" }
+              }
+            }
+          }
+        },
+        "jstex": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "login_client_id": { "type": "string" },
+            "password_login": { "type": "boolean" },
+            "offline_access": { "type": "boolean" },
+            "s3_bucket": { "type": "string" },
+            "stex_url": { "anyOf": [{ "$ref": "#/$defs/https" }, { "type": "null" }] },
+            "basemap": { "type": "object" }
+          }
+        }
+      }
+    }
+  }
+}

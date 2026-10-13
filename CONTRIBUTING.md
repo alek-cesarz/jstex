@@ -115,9 +115,13 @@ jupyterlab-jstex is published to PyPI (not npm). The version comes from
 
 1. Bump the version, move the `[Unreleased]` entries in
    [CHANGELOG.md](CHANGELOG.md) under it, and merge to `main`.
-2. Push a `vX.Y.Z` tag: `.github/workflows/release.yml` builds the wheel and
+2. Run the three notebooks in `examples/` top to bottom against CDSE (signed
+   in, `pip install -r examples/requirements.txt`); check their results, then
+   clear the outputs (`jupyter nbconvert --clear-output --inplace examples/*.ipynb`)
+   and run `python scripts/check_notebooks.py`.
+3. Push a `vX.Y.Z` tag: `.github/workflows/release.yml` builds the wheel and
    attaches it to a GitHub Release.
-3. From a clean checkout of the tag, build and upload with a PyPI API token:
+4. From a clean checkout of the tag, build and upload with a PyPI API token:
 
    ```bash
    python -m build          # sdist + wheel in dist/

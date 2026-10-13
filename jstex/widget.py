@@ -21,8 +21,15 @@ import traitlets
 
 from . import auth
 from .aoi import parse_aoi_upload
-from .config import load_config
+from .config import Config, load_config, register_explorer
 from .errors import JstexError
+from .interactive_login import (
+    LoginError,
+    device_login,
+    exclusive,
+    login_client_id,
+    password_login,
+)
 from .query import QueryState, search_get_url, share_url, to_search_body
 from .stac import Page, StacBackend
 
@@ -74,6 +81,9 @@ class Explorer(anywidget.AnyWidget):
     basemap = traitlets.Dict().tag(
         sync=True
     )  # {"light": {url, attribution, kind: "style"|"xyz"}, "dark": {...}}
+    profile_name = traitlets.Unicode("").tag(sync=True)  # active profile
+    auth_user = traitlets.Unicode("").tag(sync=True)
+    login_methods = traitlets.List(traitlets.Unicode()).tag(sync=True)
     panel_collapsed = traitlets.Bool(False).tag(
         sync=True
     )  # search panel folded to a rail
@@ -83,6 +93,7 @@ class Explorer(anywidget.AnyWidget):
     def __init__(
         self,
         *,
+        profile: str | None = None,
         stac_url: str | None = None,
         height: int = 600,
         backend: StacBackend | None = None,
@@ -90,11 +101,12 @@ class Explorer(anywidget.AnyWidget):
         **kwargs: Any,
     ):
         run = runner or DEFAULT_RUNNER
-        config = load_config(stac_url=stac_url)
+        config = load_config(profile=profile, stac_url=stac_url)
         super().__init__(
             query=QueryState().to_dict(),
             map_height=height,
             can_cancel=run is not sync_runner,
+            profile_name=config.profile,
             basemap={
                 theme: {
                     "url": b.tile_url(),
@@ -109,13 +121,19 @@ class Explorer(anywidget.AnyWidget):
             **kwargs,
         )
         self._config = config
-        self._backend = backend or StacBackend(self._config.stac_url)
+        self._backend = backend or StacBackend(config.stac_url, auth_config=config)
         self._run = run
         self._items: dict[str, dict] = {}
         self._page: Page | None = None
         self._gen = 0
         self._lock = threading.Lock()
+        methods = ["device"] if config.issuer else []
+        if config.password_login and config.password_client_id and config.issuer:
+            methods.append("password")
+        self.login_methods = methods
+        self._login_cancel = threading.Event()
         self.on_msg(self._on_msg)
+        register_explorer(self, config.profile)
 
     # ── messages from JS ────────────────────────────────────────────
 
@@ -142,12 +160,95 @@ class Explorer(anywidget.AnyWidget):
                 self.error, self.status = str(err), "error"
         elif kind == "cancel":
             self.cancel()
+        elif kind == "login_start":
+            self._login_cancel = threading.Event()
+            self._run(
+                self._login_device
+                if content.get("method") == "device"
+                else self._login_ask_password,
+                str(content.get("client_id") or "") or None,
+            )
+        elif kind == "login_password":
+            # Local variables only: never stored, logged or echoed.
+            self._run(
+                self._login_password,
+                str(content.get("username") or ""),
+                str(content.get("password") or ""),
+            )
+        elif kind == "login_cancel":
+            self._login_cancel.set()
+        elif kind == "logout":
+            self._run(self._logout)
         elif kind == "sync":
             self._send_page()  # a (re-)rendered view asks for the current results
 
     def _reply_collections(self, req_id: Any) -> None:
-        self.auth_source = auth.current().source
+        info = auth.current(self._config)
+        self.auth_source, self.auth_user = info.source, info.user
         self._reply(req_id, self._backend.list_collections)
+
+    # ── sign-in (spec 2026-10-02 §4.1) ──────────────────────────────
+
+    def _login_send(self, state: str, **extra: Any) -> None:
+        self.send({"type": "login", "state": state, **extra})
+
+    def _signed_in(self, info: auth.TokenInfo) -> None:
+        self.auth_source, self.auth_user = info.source, info.user
+        self._login_send("done")
+
+    def _login_failed(self, err: LoginError) -> None:
+        extra: dict[str, str] = {}
+        if err.reason == "client_refused":
+            extra["next"] = (
+                "password" if "password" in self.login_methods else "client_id"
+            )
+        self._login_send("error", message=str(err), **extra)
+
+    def _login_device(self, client_id: str | None) -> None:
+        cid = client_id or login_client_id(self._config)
+        if cid is None:
+            self._login_send("need_client_id")
+            return
+        try:
+            with exclusive():
+                info = device_login(
+                    self._config,
+                    client_id=cid,
+                    show=lambda c: self._login_send(
+                        "device", uri=c.uri, code=c.code, expires_in=c.expires_in
+                    ),
+                    cancel=self._login_cancel,
+                )
+        except LoginError as err:
+            self._login_failed(err)
+            return
+        except Exception as err:  # noqa: BLE001 - the UI must leave the busy state
+            self._login_send("error", message=str(err) or type(err).__name__)
+            return
+        self._signed_in(info)
+
+    def _login_ask_password(self, _client_id: str | None) -> None:
+        self._login_send("password")
+
+    def _login_password(self, username: str, password: str) -> None:
+        try:
+            with exclusive():
+                info = password_login(
+                    self._config, username=username, password=password
+                )
+        except LoginError as err:
+            self._login_failed(err)
+            return
+        except Exception:  # noqa: BLE001 - never include anything that could hold the password
+            self._login_send("error", message="Password login failed.")
+            return
+        self._signed_in(info)
+
+    def _logout(self) -> None:
+        auth.logout(self._config)
+        info = auth.current(self._config)
+        self.auth_source, self.auth_user = info.source, info.user
+        self._login_send("signed_out")
 
     def _reply(self, req_id: Any, fn: Callable[[], Any]) -> None:
         try:
@@ -224,6 +325,56 @@ class Explorer(anywidget.AnyWidget):
                     "matched": self._page.matched,
                 }
             )
+
+    @property
+    def config(self) -> Config:
+        """The effective settings of this explorer (see jstex.show_config())."""
+        return self._config
+
+    # ── this explorer's profile: sign-in, items and S3 ──────────────
+
+    def whoami(self):
+        """How this explorer's profile is signed in (like jstex.whoami())."""
+        from .api import _whoami
+
+        return _whoami(self._config)
+
+    def login(self, **kwargs: Any) -> str:
+        """Sign in for this explorer's profile; same options as jstex.login().
+        The panel follows (collections reload)."""
+        from .api import _login
+
+        result = _login(self._config, **kwargs)
+        info = auth.current(self._config)
+        if info.source != "anonymous":
+            self._signed_in(info)
+        return result
+
+    def logout(self) -> str:
+        """Forget the stored login for this explorer's identity service."""
+        self._logout()
+        return "Signed out."
+
+    def access_token(self) -> str | None:
+        """The current access token for this explorer's profile, for your own
+        requests (jstex itself sends it only to the profile's services)."""
+        from .api import _access_token
+
+        return _access_token(self._config)
+
+    def item(self, href: str) -> pystac.Item:
+        """Open a STAC item by URL with this explorer's settings and token."""
+        from .api import _item
+
+        return _item(self._config, href)
+
+    @property
+    def s3(self):
+        """S3 helpers for this explorer's profile: ex.s3.client(asset),
+        location, session, storage_options, gdal_env, write_s3_profile."""
+        from .s3 import S3Access
+
+        return S3Access(self._config)
 
     # ── Python accessors ────────────────────────────────────────────
 
