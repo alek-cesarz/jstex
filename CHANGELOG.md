@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-13
+
 ### Added
 
 - **Profiles**: ready-made settings for CDSE (`cdse-opensearch` default, `cdse`), CREODIAS and CODE-DE, merged from the jstex profile registry on GitHub, the platform's `eo-services.json` discovery document, `/etc/jstex/config.toml` and `~/.config/jstex/config.toml`, `JSTEX_*` variables and arguments; own profiles for private catalogues; `jstex.show_config()` and `jstex.list_profiles()`; `Explorer(profile=…)`.
