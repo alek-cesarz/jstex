@@ -1,5 +1,6 @@
 /**
- * Copied from STEX src/utils/antimeridian.ts @ d360627 — keep in sync by hand.
+ * Copied from STEX src/utils/antimeridian.ts @ 883a78b (also in STEX v0.2.10;
+ * unchanged through 0.2.11) — reformatted by Prettier; keep in sync by hand.
  */
 /**
  * Antimeridian-crossing geometry utilities.
