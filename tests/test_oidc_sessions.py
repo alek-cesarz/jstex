@@ -4,9 +4,9 @@ import stat
 
 import pytest
 import responses
-from jstex.sessions import Session, SessionStore
 
 from jstex import oidc
+from jstex.sessions import Session, SessionStore
 from tests.conftest import make_jwt
 
 ISSUER = "https://id.example.org/realms/r"
