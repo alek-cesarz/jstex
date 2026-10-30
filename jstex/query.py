@@ -226,7 +226,7 @@ def share_url(state: QueryState, base: str | None) -> str:
 def _predicate(f: dict) -> dict:
     value = f["value"]
     if f["op"] == "IN" and not isinstance(value, list):
-        raise JstexQueryError(f"Filter {f['field']}: IN needs a list of values.")
+        value = [value]  # as STEX: a single IN value goes on the wire as a list
     return {"op": CQL2_OPS[f["op"]], "args": [{"property": f["field"]}, value]}
 
 

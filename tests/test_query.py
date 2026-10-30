@@ -108,8 +108,14 @@ def test_cql2_maps_ui_operators_to_standard_names():
     assert build_cql2([{"field": "platform", "op": "!=", "value": "s2a"}])["op"] == "<>"
     got = build_cql2([{"field": "platform", "op": "IN", "value": ["s2a", "s2b"]}])
     assert got == {"op": "in", "args": [{"property": "platform"}, ["s2a", "s2b"]]}
-    with pytest.raises(JstexQueryError, match="IN needs a list"):
-        build_cql2([{"field": "platform", "op": "IN", "value": "s2a"}])
+
+
+def test_cql2_in_with_a_single_value_is_sent_as_a_list():
+    # As STEX 0.2.11: a scalar IN value (e.g. from a STEX link or ex.query) is
+    # wrapped on the wire; the query keeps the value as given.
+    f = {"field": "platform", "op": "IN", "value": "s2a"}
+    assert build_cql2([f]) == {"op": "in", "args": [{"property": "platform"}, ["s2a"]]}
+    assert f["value"] == "s2a"
 
 
 def test_search_body_repairs_self_crossing_aoi():
