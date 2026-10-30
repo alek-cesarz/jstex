@@ -189,21 +189,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eox/map@npm:^2.8.0":
-  version: 2.8.0
-  resolution: "@eox/map@npm:2.8.0"
+"@eox/map@npm:^2.8.1":
+  version: 2.8.3
+  resolution: "@eox/map@npm:2.8.3"
   dependencies:
     "@eox/elements-utils": ^1.2.0
     "@eox/ui": ^1.1.0
     "@openglobus/og": ^0.28.6
-    flatgeobuf: ^4.4.0
+    flatgeobuf: ^4.6.0
     lit: ^3.3.3
-    ol: ^10.10.0
-    ol-mapbox-style: ^13.5.0
-    ol-stac: ^1.7.0
+    ol: ^10.11.0
+    ol-mapbox-style: ^13.5.1
+    ol-stac: ^1.7.1
     proj4: ^2.22.0
     serialize-javascript: ^7.0.1
-  checksum: edbb07fccb367946ae963965f543a1ba829c8271fec40bab8527c90fd2eb6eeb4f86a1801febd0d9f8f7cb5897c8b0619809894035d60b1bab3a51b4346708c5
+  checksum: ff6d89c0cfb42487b1fdd477b000e7bd022064fa2fe5ce17cd7bf83017f16cb344f82f574b121d00809ec38cd5cc112ddb28bcdf829d870794cb03f8da883806
   languageName: node
   linkType: hard
 
@@ -3441,9 +3441,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flatgeobuf@npm:^4.4.0":
-  version: 4.5.0
-  resolution: "flatgeobuf@npm:4.5.0"
+"flatgeobuf@npm:^4.6.0":
+  version: 4.6.1
+  resolution: "flatgeobuf@npm:4.6.1"
   dependencies:
     "@bokuweb/zstd-wasm": 0.0.27
     "@repeaterjs/repeater": 3.1.0
@@ -3453,7 +3453,7 @@ __metadata:
   dependenciesMeta:
     ol:
       optional: true
-  checksum: dd60261043484c74e84a5cc2daba794775b5712cd67614821c12011e0237c1226331d33a13079e40cdee3ebcdf0a35837e51ca4712d0641640c7774e91c23908
+  checksum: df0f3e8ad989f5a0391d0d19c70837e3add4cb6b19e4196ed9d87b3b6a5e90461694854ebdb4f489436a3d487a52670b2a99c0ff9ae03e0c390ab10fa986dc7d
   languageName: node
   linkType: hard
 
@@ -4141,7 +4141,7 @@ __metadata:
   dependencies:
     "@anywidget/types": ^0.4.0
     "@eox/drawtools": ^1.6.0
-    "@eox/map": ^2.8.0
+    "@eox/map": ^2.8.1
     "@eslint/js": ^9.0.0
     "@jupyter/builder": ^1.2.0
     "@jupyter/eslint-plugin": ^1.1.0
@@ -4695,15 +4695,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^13.5.0":
-  version: 13.5.1
-  resolution: "ol-mapbox-style@npm:13.5.1"
+"ol-mapbox-style@npm:^13.5.1":
+  version: 13.8.0
+  resolution: "ol-mapbox-style@npm:13.8.0"
   dependencies:
     "@maplibre/maplibre-gl-style-spec": ^26.4.1
     mapbox-to-css-font: ^3.2.0
   peerDependencies:
     ol: "*"
-  checksum: 4f56c1774b94cf14061ff79e07d2e7b1f66830098eb3672da906911725584a5723bbe0a8fe10801d11afbc516f296226100515e5f7ea8235954320754b86bb24
+  checksum: a78b2dc0dccc5f59bc49f290c02fb640f6306b2451cd3f651d8d3decc3970b680a81ae2bced543d94cb1b6624031267a4be8319b98721fa2ff02123a5aa6f34e
   languageName: node
   linkType: hard
 
@@ -4718,9 +4718,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-stac@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "ol-stac@npm:1.7.0"
+"ol-stac@npm:^1.7.1":
+  version: 1.7.1
+  resolution: "ol-stac@npm:1.7.1"
   dependencies:
     ol-pmtiles: ^2.0.0
     proj4: ^2.16.1
@@ -4728,13 +4728,13 @@ __metadata:
     zarrita: ^0.7.3
   peerDependencies:
     ol: ">=9.0.0"
-  checksum: 8906ff42a03fc256a43fd1dd40bf60d18a9340d92b828c5e1eb18a4c5f92a2ed9ace95c0665a9c45f32b9ed8b739c0a152af0c49873001bd40e7cd8bd47a7acc
+  checksum: dcdd3b0e8d1348e75b8ec68b24f10b0b4442685afe6593c7fc653e5f2175981a27a1ba85f71ab67eeeaa0ce3d4df89ad98bf40d90c097d0254fbf718dbb858c3
   languageName: node
   linkType: hard
 
-"ol@npm:>=10, ol@npm:^10.10.0, ol@npm:^10.9.0":
-  version: 10.10.0
-  resolution: "ol@npm:10.10.0"
+"ol@npm:>=10, ol@npm:^10.11.0, ol@npm:^10.9.0":
+  version: 10.11.0
+  resolution: "ol@npm:10.11.0"
   dependencies:
     "@types/rbush": 4.0.0
     earcut: ^3.0.0
@@ -4742,7 +4742,7 @@ __metadata:
     pbf: 5.1.2
     rbush: ^4.0.0
     zarrita: ^0.7.1
-  checksum: 69fd9a162df992621013ed41a59a3b5a8ba3fd34587171e9e008a8bac30939cce6ff685037bf0ce90911613874550055cd51da2935b8933c075fcf68474e8d0b
+  checksum: e979f529dd51a8086d8123ba11b5555a1877f5241239475b656b8a6d6759e8217060e5d8493c543e71149bbaaac899fad6e019cf855217afa0756c5baecf3efe
   languageName: node
   linkType: hard
 
