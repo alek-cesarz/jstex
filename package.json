@@ -1,6 +1,6 @@
 {
     "name": "jupyterlab-jstex",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "STEX-light: STAC explorer widget for JupyterLab",
     "keywords": [
         "jupyter",

@@ -4,6 +4,19 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-30
+
+In step with STEX 0.2.11.
+
+### Added
+
+- **Select all**: a checkbox in the results header selects every loaded result, or clears the selection when all are selected (`ex.selected_items` follows).
+
+### Changed
+
+- **`IN` filters with a single value** (e.g. from `ex.query` or a STEX link) are sent as a one-element list instead of failing with "IN needs a list of values", as STEX does.
+- **Map**: `@eox/map` 2.8.3 and OpenLayers 10.11 (patch updates).
+
 ## [0.2.0] - 2026-10-13
 
 ### Added

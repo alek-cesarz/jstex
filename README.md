@@ -35,7 +35,7 @@ download data from Python.
     `<`, `<=`, `>`, `>=`, `IN`), checked by field type before sending.
 - **Results ↔ map.** Clicking a row highlights its footprint. Clicking a
   footprint opens that item; where footprints overlap, a popup lists them, as
-  in STEX.
+  in STEX. A checkbox in the table header selects all loaded results.
 - **Item details** (sections folded by default) with Prev/Next and copy
   buttons for:
   - the self link and id;
