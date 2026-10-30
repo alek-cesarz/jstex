@@ -144,6 +144,9 @@ export function createStrings(trans: TranslationBundle) {
     dismiss: trans.__('Dismiss'),
     // ── results ──
     select: trans.__('Select'),
+    selectAll: (n: number) =>
+      trans._n('Select all %1 result', 'Select all %1 results', n, n),
+    clearSelection: trans.__('Clear selection'),
     results: trans.__('Results'),
     resultsIdle: trans.__('Run a search to see items.'),
     resultsSearching: trans.__('Searching…'),

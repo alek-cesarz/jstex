@@ -1,12 +1,15 @@
 /** Results table: own scroll area, sticky header, checkbox + row activation. */
 import type { Actions } from '../actions';
 import { cloudCover, escapeHtml, formatItemDate, shortId } from '../format';
-import { scrollWithin } from '../selection';
+import { scrollWithin, selectAllState } from '../selection';
 import type { Store } from '../store';
 import { S } from '../strings';
 import type { ExplorerState } from '../types';
 
-type ResultsActions = Pick<Actions, 'activate' | 'toggleSelected'>;
+type ResultsActions = Pick<
+  Actions,
+  'activate' | 'toggleSelected' | 'setSelected'
+>;
 
 export function mountResults(
   el: HTMLElement,
@@ -32,7 +35,7 @@ export function mountResults(
   const renderRows = (state: ExplorerState) => {
     const withCloud = state.items.some(i => cloudCover(i) !== undefined);
     ref('head').innerHTML =
-      `<tr><th></th><th class="jstex-col-id">${S.colId}</th><th>${S.colDatetime}</th><th class="jstex-col-collection">${S.colCollection}</th>${
+      `<tr><th><input type="checkbox" data-select-all></th><th class="jstex-col-id">${S.colId}</th><th>${S.colDatetime}</th><th class="jstex-col-collection">${S.colCollection}</th>${
         withCloud ? `<th class="jstex-num">${S.colCloud}</th>` : ''
       }</tr>`;
     body.innerHTML = state.items
@@ -58,6 +61,21 @@ export function mountResults(
       (tr.querySelector('input[data-toggle]') as HTMLInputElement).checked =
         selected.has(id);
     });
+    // Select all (scope: loaded items): none/some → select all, all → clear.
+    const all = ref('head').querySelector<HTMLInputElement>(
+      'input[data-select-all]'
+    );
+    if (all) {
+      const loaded = state.items.map(i => i.id);
+      const sel = selectAllState(state.selectedIds, loaded);
+      all.checked = sel === 'all';
+      all.indeterminate = sel === 'some';
+      all.setAttribute(
+        'aria-label',
+        sel === 'all' ? S.clearSelection : S.selectAll(loaded.length)
+      );
+      all.title = all.getAttribute('aria-label')!;
+    }
     const parts = [
       S.loaded(state.items.length),
       S.selected(state.selectedIds.length)
@@ -85,6 +103,18 @@ export function mountResults(
         scrollWithin(scroll, row, ref('head').getBoundingClientRect().height);
     }
   };
+
+  ref('head').addEventListener('click', e => {
+    const all = (e.target as HTMLElement).closest<HTMLInputElement>(
+      'input[data-select-all]'
+    );
+    if (!all) return;
+    const state = store.get();
+    const loaded = state.items.map(i => i.id);
+    actions.setSelected(
+      selectAllState(state.selectedIds, loaded) === 'all' ? [] : loaded
+    );
+  });
 
   body.addEventListener('click', e => {
     const target = e.target as HTMLElement;

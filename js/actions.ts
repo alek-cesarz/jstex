@@ -40,6 +40,7 @@ export interface Actions {
   dismissError(): void;
   activate(id: string | null): void;
   toggleSelected(id: string): void;
+  setSelected(ids: string[]): void;
   loadCollections(): Promise<void>;
   startLogin(method: 'device' | 'password', clientId?: string): void;
   submitPassword(username: string, password: string): void;
@@ -189,6 +190,11 @@ export function createActions(
     },
     toggleSelected(id) {
       const selectedIds = toggleId(store.get().selectedIds, id);
+      store.set({ selectedIds });
+      push('selected_ids', selectedIds);
+    },
+    setSelected(ids) {
+      const selectedIds = [...ids];
       store.set({ selectedIds });
       push('selected_ids', selectedIds);
     },

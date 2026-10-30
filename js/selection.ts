@@ -13,6 +13,16 @@ export function neighbour(
   return items[at + dir]?.id ?? null;
 }
 
+/** Select-all checkbox state: how many of the loaded items are selected. */
+export function selectAllState(
+  selected: string[],
+  loaded: string[]
+): 'none' | 'some' | 'all' {
+  const chosen = new Set(selected);
+  const n = loaded.filter(id => chosen.has(id)).length;
+  return n === 0 ? 'none' : n === loaded.length ? 'all' : 'some';
+}
+
 export function toggleId(ids: string[], id: string): string[] {
   return ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id];
 }

@@ -61,3 +61,26 @@ describe('results — empty state', () => {
     expect(table.hidden).toBe(true);
   });
 });
+
+describe('results — select all', () => {
+  it('header checkbox: none → all, some (mixed) → all, all → none', () => {
+    const { el, store, actions } = setup();
+    mountResults(el, store, actions);
+    store.set({ items: [item('a'), item('b'), item('c')], searched: true });
+    const all = () =>
+      el.querySelector<HTMLInputElement>('thead input[data-select-all]')!;
+    expect(all().checked).toBe(false);
+    expect(all().indeterminate).toBe(false);
+    all().click();
+    expect(actions.setSelected).toHaveBeenLastCalledWith(['a', 'b', 'c']);
+    expect(all().checked).toBe(true);
+    expect(all().getAttribute('aria-label')).toBe('Clear selection');
+    all().click();
+    expect(actions.setSelected).toHaveBeenLastCalledWith([]);
+    store.set({ selectedIds: ['b'] });
+    expect(all().indeterminate).toBe(true);
+    expect(all().getAttribute('aria-label')).toBe('Select all 3 results');
+    all().click();
+    expect(store.get().selectedIds).toEqual(['a', 'b', 'c']);
+  });
+});

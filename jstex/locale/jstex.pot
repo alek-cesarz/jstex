@@ -146,94 +146,92 @@ msgstr ""
 msgid "Select"
 msgstr ""
 
-#: js/strings.ts:147
-msgid "Results"
-msgstr ""
-
 #: js/strings.ts:148
-msgid "Run a search to see items."
-msgstr ""
+msgid "Select all %1 result"
+msgid_plural "Select all %1 results"
+msgstr[0] ""
+msgstr[1] ""
 
 #: js/strings.ts:149
-msgid "Searching…"
+msgid "Clear selection"
 msgstr ""
 
 #: js/strings.ts:150
-msgid "No items match this query."
+msgid "Results"
 msgstr ""
 
 #: js/strings.ts:151
+msgid "Run a search to see items."
+msgstr ""
+
+#: js/strings.ts:152
+msgid "Searching…"
+msgstr ""
+
+#: js/strings.ts:153
+msgid "No items match this query."
+msgstr ""
+
+#: js/strings.ts:154
 msgid "%1 loaded"
 msgid_plural "%1 loaded"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:152
+#: js/strings.ts:155
 msgid "%1 selected"
 msgid_plural "%1 selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:154
+#: js/strings.ts:157
 msgid "%1 matched"
 msgid_plural "%1 matched"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:155
+#: js/strings.ts:158
 msgid "ID"
 msgstr ""
 
-#: js/strings.ts:156
+#: js/strings.ts:159
 msgid "Datetime"
 msgstr ""
 
-#: js/strings.ts:157
+#: js/strings.ts:160
 msgid "Collection"
 msgstr ""
 
-#: js/strings.ts:158
+#: js/strings.ts:161
 msgid "Cloud %"
 msgstr ""
 
-#: js/strings.ts:160
+#: js/strings.ts:163
 msgid "Item details"
 msgstr ""
 
-#: js/strings.ts:161
+#: js/strings.ts:164
 msgid "Click a result or a footprint to see its details."
 msgstr ""
 
-#: js/strings.ts:162
+#: js/strings.ts:165
 msgid "Prev"
 msgstr ""
 
-#: js/strings.ts:163
+#: js/strings.ts:166
 msgid "Next"
 msgstr ""
 
-#: js/strings.ts:164
+#: js/strings.ts:167
 msgid "Previous item"
 msgstr ""
 
-#: js/strings.ts:165
+#: js/strings.ts:168
 msgid "Next item"
 msgstr ""
 
-#: js/strings.ts:166
-msgid "Copy self link"
-msgstr ""
-
-#: js/strings.ts:167
-msgid "Copy id"
-msgstr ""
-
-#: js/strings.ts:168
-msgid "Copy Python"
-msgstr ""
-
 #: js/strings.ts:169
-msgid "Copy boto3 snippet"
+msgid "Copy self link"
 msgstr ""
 
 #: js/strings.ts:17
@@ -241,30 +239,42 @@ msgid "Map"
 msgstr ""
 
 #: js/strings.ts:170
-msgid "Copy"
+msgid "Copy id"
 msgstr ""
 
 #: js/strings.ts:171
-msgid "Copied"
+msgid "Copy Python"
 msgstr ""
 
 #: js/strings.ts:172
-msgid "Copy failed"
+msgid "Copy boto3 snippet"
 msgstr ""
 
 #: js/strings.ts:173
-msgid "Properties"
+msgid "Copy"
 msgstr ""
 
 #: js/strings.ts:174
-msgid "Assets"
+msgid "Copied"
 msgstr ""
 
 #: js/strings.ts:175
-msgid "Links"
+msgid "Copy failed"
 msgstr ""
 
 #: js/strings.ts:176
+msgid "Properties"
+msgstr ""
+
+#: js/strings.ts:177
+msgid "Assets"
+msgstr ""
+
+#: js/strings.ts:178
+msgid "Links"
+msgstr ""
+
+#: js/strings.ts:179
 msgid "In Python, .selected_item on your Explorer returns this item as a pystac.Item."
 msgstr ""
 
@@ -272,13 +282,13 @@ msgstr ""
 msgid "Hide map"
 msgstr ""
 
-#: js/strings.ts:181
+#: js/strings.ts:184
 msgid "%1 overlapping item"
 msgid_plural "%1 overlapping items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:182
+#: js/strings.ts:185
 msgid "Close"
 msgstr ""
 

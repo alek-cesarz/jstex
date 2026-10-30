@@ -15,7 +15,12 @@ import {
   unionBbox
 } from '../format';
 import { applyPage, bindModel, stateFromModel } from '../model-sync';
-import { neighbour, scrollWithin, toggleId } from '../selection';
+import {
+  neighbour,
+  scrollWithin,
+  selectAllState,
+  toggleId
+} from '../selection';
 import { hasS3, pythonAssetSnippet, pythonItemSnippet } from '../snippets';
 import { createStore } from '../store';
 import { basemapLayer, DEFAULT_BASEMAP, isDark, watchTheme } from '../theme';
@@ -171,6 +176,9 @@ describe('actions', () => {
     const { model: m, store, actions: a, backend } = setupView({ query: {} });
     a.setQuery({ collections: ['c1'] });
     a.setAoi(BOX);
+    a.setSelected(['x', 'y']);
+    expect(m.values.selected_ids).toEqual(['x', 'y']);
+    a.setSelected([]);
     a.toggleSelected('x');
     a.activate('x');
     a.setPanelCollapsed(true);
@@ -581,5 +589,15 @@ describe('snippets carry the explorer profile', () => {
     expect(s).toContain(
       'jstex.s3.client(asset, profile="cdse").download_file(**loc, Filename=loc["Key"].rsplit("/", 1)[-1])'
     );
+  });
+});
+
+describe('select-all state', () => {
+  it('is none, some or all of the loaded items', () => {
+    expect(selectAllState([], ['a', 'b'])).toBe('none');
+    expect(selectAllState(['b'], ['a', 'b'])).toBe('some');
+    expect(selectAllState(['b', 'a'], ['a', 'b'])).toBe('all');
+    expect(selectAllState(['gone'], ['a'])).toBe('none'); // only loaded items count
+    expect(selectAllState([], [])).toBe('none');
   });
 });
