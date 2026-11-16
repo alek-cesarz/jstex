@@ -26,9 +26,11 @@ download data from Python.
   the results:
   - **Collections:** search by title or id, "only selected", ⓘ for the
     description, time extent and license.
-  - **Dates and times (UTC):** a calendar with a 24-hour time picker, as in
-    STEX, or type `YYYY-MM-DD [HH:MM]`; either end may be left open, and From
-    after To is flagged.
+  - **Dates and times (UTC):** one range calendar for both ends: pick the
+    start day, then the end day, and it closes. From and To each have their
+    own 24-hour time, and **Done** closes it at any point. You can also type
+    `YYYY-MM-DD [HH:MM]`. Either end may be left open, and From after To is
+    flagged.
   - **Area of interest:** one area. Draw a polygon or a box, or upload
     GeoJSON; invalid geometries are repaired before searching.
   - **Attribute filters:** built from the collections' queryables (`=`, `!=`,

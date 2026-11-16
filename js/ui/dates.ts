@@ -1,11 +1,13 @@
 /**
- * Date range (UTC), as in STEX: From / To text fields that open a
- * vanilla-calendar-pro popup (date grid + 24 h time picker, Today / Clear).
+ * Date range (UTC), as in STEX: From / To text fields. Clicking either opens
+ * one vanilla-calendar-pro range calendar: the first day picked sets From, the
+ * second sets To and closes it (clicking To with From set picks To directly).
+ * Each end has its own 24 h time field in the popup; Today / Clear / Done.
  * Typing "YYYY-MM-DD" or "YYYY-MM-DD HH:MM" works too. Without a time, From
  * starts the day and To ends it. Either end may be empty; the search sends it
  * closed (1900 / 2099). From after To is flagged here and blocks Search.
  */
-import { Calendar, time as timePicker, type Range } from 'vanilla-calendar-pro';
+import { Calendar, type Range } from 'vanilla-calendar-pro';
 import 'vanilla-calendar-pro/styles/index.css';
 import 'vanilla-calendar-pro/styles/themes/light.css';
 import 'vanilla-calendar-pro/styles/themes/dark.css';
@@ -28,8 +30,69 @@ const POPUP_VARS = [
   '--jstex-bg',
   '--jstex-bg2',
   '--jstex-border',
+  '--jstex-error',
   '--jstex-font'
 ];
+
+export type RangeEnd = 'from' | 'to';
+/** The two fields' text ("YYYY-MM-DD" or "YYYY-MM-DD HH:MM[:SS]"), or two times. */
+export interface RangeFields {
+  from: string;
+  to: string;
+}
+
+const TIME_RE = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/;
+const dayOf = (text: string) => text.trim().slice(0, 10);
+const timeOf = (text: string) => text.trim().slice(11).trim();
+const withTime = (day: string, time: string) =>
+  day && time ? `${day} ${time}` : day;
+
+/** A 24 h time as typed -> "HH:MM[:SS]"; "" for none; null when invalid. */
+export function normTime(text: string): string | null {
+  const t = text.trim();
+  if (!t) return '';
+  const m = TIME_RE.exec(t);
+  if (!m || +m[1] > 23 || +m[2] > 59 || +(m[3] ?? 0) > 59) return null;
+  return `${m[1].padStart(2, '0')}:${m[2]}${m[3] ? `:${m[3]}` : ''}`;
+}
+
+/**
+ * A day clicked in the range calendar. `next` is the end it sets; `times` are
+ * the popup's time fields. Setting To ends the pick (`done`); a day before
+ * From, or a new From after To, starts the range again from that day.
+ */
+export function pickDay(
+  state: { fields: RangeFields; times: RangeFields; next: RangeEnd },
+  day: string
+): { fields: RangeFields; next: RangeEnd; done: boolean } {
+  const { fields, times, next } = state;
+  const fromDay = dayOf(fields.from);
+  if (next === 'to' && (!fromDay || day >= fromDay))
+    return {
+      fields: { ...fields, to: withTime(day, times.to) },
+      next: 'from',
+      done: true
+    };
+  const toDay = dayOf(fields.to);
+  return {
+    fields: {
+      from: withTime(day, times.from),
+      to: toDay && toDay < day ? '' : fields.to
+    },
+    next: 'to',
+    done: false
+  };
+}
+
+/** A time typed in the popup, applied to its end (which needs a day already). */
+export function setTime(
+  fields: RangeFields,
+  end: RangeEnd,
+  time: string
+): RangeFields {
+  const day = dayOf(fields[end]);
+  return day ? { ...fields, [end]: withTime(day, time) } : { ...fields };
+}
 
 export function datesSummary(datetime: Datetime): string {
   if (!datetime?.from && !datetime?.to) return '';
@@ -102,107 +165,36 @@ export function mountDates(
     actions.setQuery({ datetime });
   };
 
-  // ── calendar popups (created on first use; jsdom tests never open them) ──
-  // One calendar per field for the life of the view. Destroying it from its own
-  // click handler (as an earlier version did after each pick) reset the field
-  // and left the next calendar on that input unable to open.
-  const calendars = new Map<
-    HTMLInputElement,
-    { cal: Calendar; destroy: () => void }
-  >();
+  // ── range calendar popup (created on first use; jsdom tests never open it) ──
+  // One calendar per view for both fields: it is anchored to the To field
+  // (below both) and positioned against the whole dates block. Destroying it
+  // from its own click handler (an earlier version did) broke reopening, so it
+  // lives for the life of the view.
+  let popup: Popup | null = null;
   const closeCalendars = () => {
-    calendars.forEach(c => c.destroy());
-    calendars.clear();
+    popup?.destroy();
+    popup = null;
   };
-  /** Selection, month shown and time for a field's calendar, from its text. */
-  const pickerState = (input: HTMLInputElement, endOfDay: boolean) => {
-    const iso = dateInputToIso(input.value, endOfDay);
-    // An empty field opens on the other end's month (else the current month).
-    const other = endOfDay ? from : to;
-    const shown = iso || dateInputToIso(other.value, !endOfDay);
-    const noTime = !iso || isoToDateInput(iso, endOfDay).length === 10;
-    const now = new Date();
-    return {
-      selectedDates: iso ? [iso.slice(0, 10)] : [],
-      selectedMonth: (shown
-        ? Number(shown.slice(5, 7)) - 1
-        : now.getUTCMonth()) as Range<12>,
-      selectedYear: shown ? Number(shown.slice(0, 4)) : now.getUTCFullYear(),
-      selectedTime: noTime ? '00:00' : iso!.slice(11, 16)
-    };
+  const fields = (): RangeFields => ({ from: from.value, to: to.value });
+  const write = (f: RangeFields) => {
+    from.value = f.from;
+    to.value = f.to;
+    commit();
   };
-  const openCalendar = (input: HTMLInputElement, endOfDay: boolean) => {
-    const existing = calendars.get(input);
-    if (existing) {
-      // Re-sync with the field (typed text, Python, the other end) and open.
-      existing.cal.set(pickerState(input, endOfDay));
-      existing.cal.show();
-      return;
+  // The library clicks its anchor (To) while it shows the popup; that click
+  // must not re-open it for To.
+  let opening = false;
+  const openCalendar = (opener: RangeEnd) => {
+    if (opening) return;
+    // Clicking To with From set completes the range; else start at the field clicked.
+    const next: RangeEnd = opener === 'to' && from.value ? 'to' : opener;
+    if (!popup) popup = createPopup(el, to, store.get().dark, fields, write);
+    opening = true;
+    try {
+      popup.open(next);
+    } finally {
+      opening = false;
     }
-    let onScroll: (() => void) | null = null;
-    const pick = (date: string | undefined, hhmm: string) => {
-      if (!date) return;
-      input.value = hhmm && hhmm !== '00:00' ? `${date} ${hhmm}` : date;
-      commit();
-    };
-    const cal = new Calendar(input, {
-      inputMode: true,
-      extensions: [timePicker], // the 24 h time picker is an extension in v3.4
-      positionToInput: 'auto',
-      locale: languageCode().replace('_', '-'),
-      selectedTheme: store.get().dark ? 'dark' : 'light',
-      themeAttrDetect: '',
-      selectionDatesMode: 'single',
-      selectionTimeMode: 24,
-      timeStepMinute: 1,
-      ...pickerState(input, endOfDay),
-      onClickDate(self) {
-        pick(self.context.selectedDates[0], self.context.selectedTime);
-      },
-      onChangeTime(self) {
-        pick(self.context.selectedDates[0], self.context.selectedTime);
-      },
-      onShow(self) {
-        const popup = self.context.mainElement;
-        popup.classList.add('jstex-vc');
-        const styles = getComputedStyle(el);
-        for (const name of POPUP_VARS)
-          popup.style.setProperty(name, styles.getPropertyValue(name));
-        requestAnimationFrame(() => reposition(input, popup));
-        // The notebook scrolls inside its panel: close instead of floating away.
-        onScroll = () => self.hide();
-        window.addEventListener('scroll', onScroll, true);
-        if (popup.querySelector('.jstex-vc__actions')) return;
-        const bar = document.createElement('div');
-        bar.className = 'jstex-vc__actions';
-        bar.innerHTML = `<button type="button" data-vc-act="today">${escapeHtml(S.today)}</button><button type="button" data-vc-act="clear">${escapeHtml(S.clear)}</button>`;
-        bar.addEventListener('click', e => {
-          const act = (e.target as HTMLElement).closest<HTMLElement>(
-            '[data-vc-act]'
-          )?.dataset.vcAct;
-          if (!act) return;
-          input.value =
-            act === 'today' ? new Date().toISOString().slice(0, 10) : '';
-          self.hide();
-          commit();
-        });
-        popup.appendChild(bar);
-      },
-      onHide() {
-        if (onScroll) window.removeEventListener('scroll', onScroll, true);
-        onScroll = null;
-      }
-    });
-    const cleanup = cal.init();
-    calendars.set(input, {
-      cal,
-      destroy: () => {
-        if (onScroll) window.removeEventListener('scroll', onScroll, true);
-        cleanup?.();
-        cal.destroy();
-      }
-    });
-    cal.show();
   };
 
   for (const [input, endOfDay] of [
@@ -213,7 +205,9 @@ export function mountDates(
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter') commit();
     });
-    input.addEventListener('click', () => openCalendar(input, endOfDay));
+    input.addEventListener('click', () =>
+      openCalendar(endOfDay ? 'to' : 'from')
+    );
   }
   clear.addEventListener('click', () => {
     from.value = '';
@@ -232,13 +226,186 @@ export function mountDates(
   };
 }
 
+interface Popup {
+  open(next: RangeEnd): void;
+  destroy(): void;
+}
+
+/** The range calendar: one per view, for both fields (see mountDates). */
+function createPopup(
+  root: HTMLElement,
+  anchor: HTMLInputElement,
+  dark: boolean,
+  getFields: () => RangeFields,
+  write: (f: RangeFields) => void
+): Popup {
+  const block = root.querySelector('.jstex-dates') as HTMLElement;
+  let next: RangeEnd = 'from';
+  let times: RangeFields = { from: '', to: '' };
+  let main: HTMLElement | null = null;
+  let onScroll: (() => void) | null = null;
+
+  const paintDay = (dateEl: HTMLElement, a: string, b: string) => {
+    const day = dateEl.dataset.vcDate ?? '';
+    const mark =
+      day === a
+        ? 'from'
+        : day === b
+          ? 'to'
+          : a && b && day > a && day < b
+            ? 'in'
+            : '';
+    if (mark) dateEl.dataset.jstexRange = mark;
+    else delete dateEl.dataset.jstexRange;
+  };
+  const paint = () => {
+    if (!main) return;
+    const f = getFields();
+    main
+      .querySelectorAll<HTMLElement>('[data-vc-date]')
+      .forEach(d => paintDay(d, dayOf(f.from), dayOf(f.to)));
+    const hint = main.querySelector<HTMLElement>('.jstex-vc__hint');
+    if (hint) hint.textContent = next === 'from' ? S.pickStart : S.pickEnd;
+    main.querySelectorAll<HTMLInputElement>('[data-vc-time]').forEach(input => {
+      const end = input.dataset.vcTime as RangeEnd;
+      if (document.activeElement !== input) input.value = times[end];
+      input.closest('label')!.classList.toggle('jstex-vc__next', end === next);
+      input.classList.remove('jstex-invalid');
+    });
+  };
+  const pick = (day: string) => {
+    const r = pickDay({ fields: getFields(), times, next }, day);
+    next = r.next;
+    write(r.fields);
+    if (r.done) cal?.hide();
+    else paint();
+  };
+  const panel = () => {
+    const bar = document.createElement('div');
+    bar.className = 'jstex-vc__panel';
+    const timeField = (end: RangeEnd, label: string, placeholder: string) =>
+      `<label><span>${escapeHtml(label)}</span><input type="text" data-vc-time="${end}" placeholder="${placeholder}" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="${escapeHtml(S.timeOf(label))}"></label>`;
+    bar.innerHTML = `
+      <div class="jstex-vc__hint"></div>
+      <div class="jstex-vc__times">${timeField('from', S.from, '00:00')}${timeField('to', S.to, '23:59')}</div>
+      <div class="jstex-vc__actions"><button type="button" data-vc-act="today">${escapeHtml(S.today)}</button><button type="button" data-vc-act="clear">${escapeHtml(S.clear)}</button><button type="button" data-vc-act="done">${escapeHtml(S.done)}</button></div>`;
+    bar.addEventListener('click', e => {
+      const act = (e.target as HTMLElement).closest<HTMLElement>(
+        '[data-vc-act]'
+      )?.dataset.vcAct;
+      if (act === 'today') pick(new Date().toISOString().slice(0, 10));
+      else if (act === 'clear') {
+        times = { from: '', to: '' };
+        next = 'from';
+        write({ from: '', to: '' });
+        paint();
+      } else if (act === 'done') cal?.hide();
+    });
+    const applyTime = (input: HTMLInputElement) => {
+      const end = input.dataset.vcTime as RangeEnd;
+      const time = normTime(input.value);
+      input.classList.toggle('jstex-invalid', time === null);
+      if (time === null) return;
+      input.value = time;
+      times = { ...times, [end]: time };
+      write(setTime(getFields(), end, time));
+    };
+    bar.querySelectorAll<HTMLInputElement>('[data-vc-time]').forEach(input => {
+      input.addEventListener('change', () => applyTime(input));
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyTime(input);
+      });
+    });
+    return bar;
+  };
+
+  const now = new Date();
+  const options = (): ConstructorParameters<typeof Calendar>[1] => ({
+    inputMode: true,
+    positionToInput: 'auto',
+    locale: languageCode().replace('_', '-'),
+    selectedTheme: dark ? 'dark' : 'light',
+    themeAttrDetect: '',
+    // The range is ours (pickDay + data-jstex-range); the library only reports clicks.
+    selectionDatesMode: 'single',
+    enableDateToggle: false,
+    onClickDate(_self, event) {
+      const day = (event.target as HTMLElement).closest<HTMLElement>(
+        '[data-vc-date]'
+      )?.dataset.vcDate;
+      if (day) pick(day);
+    },
+    onCreateDateEls(_self, dateEl) {
+      const f = getFields();
+      paintDay(dateEl, dayOf(f.from), dayOf(f.to));
+    },
+    onShow(self) {
+      main = self.context.mainElement;
+      main.classList.add('jstex-vc');
+      const styles = getComputedStyle(root);
+      for (const name of POPUP_VARS)
+        main.style.setProperty(name, styles.getPropertyValue(name));
+      if (!main.querySelector('.jstex-vc__panel')) main.appendChild(panel());
+      paint();
+      const shown = main;
+      requestAnimationFrame(() => reposition(block, shown));
+      // The notebook scrolls inside its panel: close instead of floating away.
+      onScroll = () => self.hide();
+      window.addEventListener('scroll', onScroll, true);
+    },
+    onHide() {
+      if (onScroll) window.removeEventListener('scroll', onScroll, true);
+      onScroll = null;
+    }
+  });
+  // Created on first open: in input mode set() throws until it has been shown.
+  let cal: Calendar | null = null;
+  let cleanup: (() => void) | undefined;
+
+  return {
+    open(end) {
+      next = end;
+      const f = getFields();
+      times = { from: timeOf(f.from), to: timeOf(f.to) };
+      // Show the month of the end being picked (else the other end, else today).
+      const shown =
+        dateInputToIso(f[end], end === 'to') ||
+        dateInputToIso(f[end === 'to' ? 'from' : 'to'], end === 'from');
+      const view = {
+        selectedDates: [],
+        selectedMonth: (shown
+          ? Number(shown.slice(5, 7)) - 1
+          : now.getUTCMonth()) as Range<12>,
+        selectedYear: shown ? Number(shown.slice(0, 4)) : now.getUTCFullYear()
+      };
+      if (cal) cal.set(view);
+      else {
+        cal = new Calendar(anchor, { ...options(), ...view });
+        cleanup = cal.init();
+      }
+      cal.show();
+      paint();
+    },
+    destroy() {
+      if (onScroll) window.removeEventListener('scroll', onScroll, true);
+      cleanup?.();
+      cal?.destroy();
+    }
+  };
+}
+
 /**
- * Re-apply the popup's vertical position with measured sizes (from STEX: the
- * library can read offsetHeight before layout and overlap the input).
+ * Re-apply the popup's vertical position with measured sizes, against the
+ * whole From/To block so neither field is covered (the library can also read
+ * offsetHeight before layout and overlap the input; from STEX).
  */
-function reposition(input: HTMLInputElement, popup: HTMLElement): void {
+function reposition(block: HTMLElement, popup: HTMLElement): void {
   const position = popup.dataset.vcPosition;
   if (position !== 'top' && position !== 'bottom') return;
-  const top = input.getBoundingClientRect().top + window.scrollY;
-  popup.style.top = `${position === 'top' ? top - popup.offsetHeight : top + input.offsetHeight}px`;
+  const rect = block.getBoundingClientRect();
+  popup.style.top = `${
+    position === 'top'
+      ? rect.top + window.scrollY - popup.offsetHeight
+      : rect.bottom + window.scrollY
+  }px`;
 }

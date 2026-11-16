@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { datesSummary, mountDates } from '../ui/dates';
+import {
+  datesSummary,
+  mountDates,
+  normTime,
+  pickDay,
+  setTime
+} from '../ui/dates';
 import { byRef as q, setupView } from './helpers';
 
 describe('dates section', () => {
@@ -83,5 +89,91 @@ describe('dates section', () => {
       'open → 2023-02-01'
     );
     expect(datesSummary(null)).toBe('');
+  });
+});
+
+describe('range calendar logic', () => {
+  const none = { from: '', to: '' };
+
+  it('the first day sets From, the second sets To and closes', () => {
+    const a = pickDay(
+      { fields: none, times: none, next: 'from' },
+      '2024-07-01'
+    );
+    expect(a).toEqual({
+      fields: { from: '2024-07-01', to: '' },
+      next: 'to',
+      done: false
+    });
+    const b = pickDay(
+      { fields: a.fields, times: none, next: a.next },
+      '2024-07-31'
+    );
+    expect(b).toEqual({
+      fields: { from: '2024-07-01', to: '2024-07-31' },
+      next: 'from',
+      done: true
+    });
+  });
+
+  it('each end keeps its own time', () => {
+    const times = { from: '06:15', to: '18:45' };
+    const a = pickDay({ fields: none, times, next: 'from' }, '2024-07-01');
+    const b = pickDay({ fields: a.fields, times, next: a.next }, '2024-07-02');
+    expect(b.fields).toEqual({
+      from: '2024-07-01 06:15',
+      to: '2024-07-02 18:45'
+    });
+  });
+
+  it('a second day before From restarts the range from it', () => {
+    const fields = { from: '2024-07-10', to: '' };
+    expect(pickDay({ fields, times: none, next: 'to' }, '2024-07-05')).toEqual({
+      fields: { from: '2024-07-05', to: '' },
+      next: 'to',
+      done: false
+    });
+  });
+
+  it('the same day twice is a one-day range', () => {
+    const fields = { from: '2024-07-10', to: '' };
+    expect(
+      pickDay({ fields, times: none, next: 'to' }, '2024-07-10').fields
+    ).toEqual({ from: '2024-07-10', to: '2024-07-10' });
+  });
+
+  it('a new From after the old To drops To', () => {
+    const fields = { from: '2024-07-01', to: '2024-07-31' };
+    expect(
+      pickDay({ fields, times: none, next: 'from' }, '2024-08-05').fields
+    ).toEqual({ from: '2024-08-05', to: '' });
+    expect(
+      pickDay({ fields, times: none, next: 'from' }, '2024-07-20').fields
+    ).toEqual({ from: '2024-07-20', to: '2024-07-31' });
+  });
+
+  it('setTime changes one end only, and needs that end to have a day', () => {
+    const fields = { from: '2024-07-01 06:00', to: '2024-07-31' };
+    expect(setTime(fields, 'to', '12:30')).toEqual({
+      from: '2024-07-01 06:00',
+      to: '2024-07-31 12:30'
+    });
+    expect(setTime(fields, 'from', '')).toEqual({
+      from: '2024-07-01',
+      to: '2024-07-31'
+    });
+    expect(setTime({ from: '', to: '' }, 'from', '10:00')).toEqual({
+      from: '',
+      to: ''
+    });
+  });
+
+  it('normTime accepts H:MM / HH:MM[:SS] (24 h) and rejects the rest', () => {
+    expect(normTime('')).toBe('');
+    expect(normTime(' 7:05 ')).toBe('07:05');
+    expect(normTime('23:59:30')).toBe('23:59:30');
+    expect(normTime('24:00')).toBeNull();
+    expect(normTime('12:60')).toBeNull();
+    expect(normTime('noon')).toBeNull();
   });
 });

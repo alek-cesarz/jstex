@@ -1195,6 +1195,8 @@ body > .vc.jstex-vc [data-vc='time'] {
   padding-top: 0.5rem;
   gap: 0.5rem;
 }
+body > .vc.jstex-vc [data-jstex-range='from'] [data-vc-date-btn],
+body > .vc.jstex-vc [data-jstex-range='to'] [data-vc-date-btn],
 body > .vc.jstex-vc [data-vc-date-selected] [data-vc-date-btn] {
   background-color: var(--jstex-accent, #ff8225) !important;
   color: #fff !important;
@@ -1202,11 +1204,63 @@ body > .vc.jstex-vc [data-vc-date-selected] [data-vc-date-btn] {
 body > .vc.jstex-vc [data-vc-date-today] [data-vc-date-btn] {
   color: var(--jstex-accent, #ff8225);
 }
+body > .vc.jstex-vc [data-jstex-range='in'] [data-vc-date-btn] {
+  background-color: color-mix(
+    in srgb,
+    var(--jstex-accent, #ff8225) 18%,
+    transparent
+  );
+}
+body > .vc.jstex-vc .jstex-vc__panel {
+  border-top: 1px solid var(--jstex-border, #d1d9e0);
+}
+body > .vc.jstex-vc .jstex-vc__hint {
+  padding: 0.4rem 0.5rem 0;
+  font-size: 0.75rem;
+  color: var(--jstex-muted, #59636e);
+}
+body > .vc.jstex-vc .jstex-vc__times {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem 0;
+}
+body > .vc.jstex-vc .jstex-vc__times label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jstex-muted, #59636e);
+}
+body > .vc.jstex-vc .jstex-vc__times label.jstex-vc__next {
+  color: var(--jstex-accent, #ff8225);
+}
+body > .vc.jstex-vc .jstex-vc__times input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3px 6px;
+  border: 1px solid var(--jstex-border, #d1d9e0);
+  border-radius: 4px;
+  background: var(--jstex-bg, #fff);
+  color: var(--jstex-fg, #1f2328);
+  font: inherit;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+body > .vc.jstex-vc .jstex-vc__times label.jstex-vc__next input {
+  border-color: var(--jstex-accent, #ff8225);
+}
+body > .vc.jstex-vc .jstex-vc__times input.jstex-invalid {
+  border-color: var(--jstex-error, #d1242f);
+}
 body > .vc.jstex-vc .jstex-vc__actions {
   display: flex;
   gap: 0.5rem;
   padding: 0.4rem 0.5rem;
-  border-top: 1px solid var(--jstex-border, #d1d9e0);
 }
 body > .vc.jstex-vc .jstex-vc__actions button {
   flex: 1;

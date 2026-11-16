@@ -44,6 +44,10 @@ export function createStrings(trans: TranslationBundle) {
     fromAfterTo: trans.__('From is after To.'),
     today: trans.__('Today'),
     clear: trans.__('Clear'),
+    done: trans.__('Done'),
+    pickStart: trans.__('Pick the start day'),
+    pickEnd: trans.__('Pick the end day'),
+    timeOf: (end: string) => trans.__('%1 time (HH:MM, UTC)', end),
     // area of interest (one area)
     aoi: trans.__('Area of interest'),
     polygon: trans.__('Polygon'),

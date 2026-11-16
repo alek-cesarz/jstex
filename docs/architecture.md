@@ -145,7 +145,7 @@ that render into plain DOM, with EOX custom elements for the map.
 | `js/ui/panel.ts`                                                           | Search panel: collapsible sections, pinned Search button with a "why disabled" hint, collapse to an icon rail.                                         |
 | `js/ui/section.ts`                                                         | Generic collapsible section (caret, title, summary, badge).                                                                                            |
 | `js/ui/layout.ts`                                                          | Theme and height, the panel/map splitter (drag, arrow keys, double-click resets) and the collapsible map.                                              |
-| `js/ui/collections.ts`, `dates.ts`, `aoi-section.ts`, `filters-section.ts` | The four panel sections. Dates use `vanilla-calendar-pro` (as STEX) for the date + 24 h time popup.                                                    |
+| `js/ui/collections.ts`, `dates.ts`, `aoi-section.ts`, `filters-section.ts` | The four panel sections. Dates use one `vanilla-calendar-pro` range popup with a time field per end.                                                   |
 | `js/ui/map.ts`                                                             | `eox-map` + `eox-drawtools`: basemap, AOI, footprints, highlight; click-to-activate; drawing.                                                          |
 | `js/ui/footprint-popup.ts`                                                 | List of items under a clicked point when footprints overlap.                                                                                           |
 | `js/ui/results.ts`                                                         | Results table (checkbox selection, row activation).                                                                                                    |
@@ -556,11 +556,17 @@ GeoJSON data URLs.
   cell width, not the window: below 760 px the panel stacks above the map (no
   splitter; a hidden map becomes a bar), and below 600 px the results table
   drops the collection column.
-- **Dates.** From/To are text fields (`YYYY-MM-DD [HH:MM]`, UTC) that open a
-  `vanilla-calendar-pro` popup with a 24 h time picker, as in STEX. Without a
-  time, From starts the day and To ends it. The popup is appended to `<body>`
-  (outside the widget), so it gets the widget colours as inline custom
-  properties.
+- **Dates.** From/To are text fields (`YYYY-MM-DD [HH:MM]`, UTC). Either
+  opens one `vanilla-calendar-pro` popup per view, used as a range picker: the
+  library runs in single-date mode and only reports clicks; `pickDay()` decides
+  which end a day sets (first From, then To, which closes it; To directly when
+  To is clicked with From set) and `data-jstex-range` marks the range. Each end
+  has its own time field in the popup (`setTime()`), plus Today / Clear / Done.
+  Without a time, From starts the day and To ends it. The calendar is created
+  on first open (in input mode `set()` throws before that) and anchored to To;
+  the library clicks its anchor while showing, which `openCalendar` ignores.
+  The popup is appended to `<body>` (outside the widget), so it gets the widget
+  colours as inline custom properties.
 - **Theme.** `js/theme.ts` follows the host: JupyterLab
   (`body[data-jp-theme-light]`), VS Code, Colab, then the OS preference. It
   watches for changes and sets `data-theme` on the widget root. All colours are

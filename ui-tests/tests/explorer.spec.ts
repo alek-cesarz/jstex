@@ -206,6 +206,60 @@ test.describe('jstex Explorer', () => {
     await expect(to).not.toHaveValue('');
   });
 
+  test('the range calendar: start day, end day, a time for each end', async ({
+    page
+  }) => {
+    const w = await explorerCell(page);
+    const popup = page.locator(
+      'body > .vc.jstex-vc:not([data-vc-calendar-hidden])'
+    );
+    const from = w.locator('[data-ref="from"]');
+    const to = w.locator('[data-ref="to"]');
+    const hint = popup.locator('.jstex-vc__hint');
+    await from.click();
+    await expect(popup).toBeVisible();
+    await expect(hint).toHaveText('Pick the start day');
+    // The 16th cell of the grid is always in the month shown.
+    const month = (await popup
+      .locator('[data-vc-date]')
+      .nth(15)
+      .getAttribute('data-vc-date'))!.slice(0, 8); // "YYYY-MM-"
+    const day = (d: string) =>
+      popup.locator(`[data-vc-date="${month}${d}"] [data-vc-date-btn]`);
+
+    await popup.locator('[data-vc-time="from"]').fill('6:15');
+    await popup.locator('[data-vc-time="from"]').press('Enter');
+    await day('10').click();
+    await expect(from).toHaveValue(`${month}10 06:15`);
+    await expect(popup).toBeVisible(); // still open for the end day
+    await expect(hint).toHaveText('Pick the end day');
+    await popup.locator('[data-vc-time="to"]').fill('18:45');
+    await popup.locator('[data-vc-time="to"]').press('Enter');
+    await day('20').click();
+    await expect(popup).toBeHidden(); // the second day closes it
+    await expect(to).toHaveValue(`${month}20 18:45`);
+
+    // Clicking To with From set picks the end day directly; its time stays.
+    await to.click();
+    await expect(hint).toHaveText('Pick the end day');
+    await expect(popup.locator('[data-jstex-range="in"]')).toHaveCount(9);
+    await day('25').click();
+    await expect(popup).toBeHidden();
+    await expect(to).toHaveValue(`${month}25 18:45`);
+    await expect(from).toHaveValue(`${month}10 06:15`);
+
+    // Done closes it without changing anything.
+    await from.click();
+    await popup.locator('[data-vc-act="done"]').click();
+    await expect(popup).toBeHidden();
+
+    await page.notebook.addCell('code', 'print(ex.query["datetime"])');
+    await runLastCell(page);
+    await expect(page.locator('.jp-OutputArea-output').last()).toContainText(
+      `'from': '${month}10T06:15:00Z', 'to': '${month}25T18:45:00Z'`
+    );
+  });
+
   test('the divider resizes the panel and the map can be hidden', async ({
     page
   }) => {
