@@ -39,6 +39,12 @@ export type DrawMode = 'Polygon' | 'Box';
 export type SectionId = 'collections' | 'dates' | 'aoi' | 'filters';
 
 /** QueryState dict form — identical keys to jstex.query.QueryState.to_dict(). */
+/** "Copy query": the STAC GET /search URL and Python's notices about it. */
+export interface QueryUrl {
+  url: string;
+  notes: string[];
+}
+
 export interface QueryStateDict {
   collections: string[];
   datetime: { from?: string; to?: string } | null;

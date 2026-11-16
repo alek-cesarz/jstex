@@ -11,6 +11,7 @@ import type {
   FilterRow,
   MinimalModel,
   QueryStateDict,
+  QueryUrl,
   SectionId
 } from './types';
 
@@ -36,6 +37,8 @@ export interface Actions {
   setPanelWidth(width: number, save?: boolean): void;
   setMapCollapsed(collapsed: boolean): void;
   search(): void;
+  /** The current query as a STAC GET /search URL (what Search would POST). */
+  queryUrl(): Promise<QueryUrl>;
   cancel(): void;
   dismissError(): void;
   activate(id: string | null): void;
@@ -177,6 +180,9 @@ export function createActions(
     search() {
       store.set({ error: '', drawMode: null });
       backend.search(store.get().query);
+    },
+    queryUrl() {
+      return backend.queryUrl(store.get().query);
     },
     cancel() {
       backend.cancel();

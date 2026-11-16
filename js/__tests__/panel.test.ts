@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mountPanel, searchBlocker } from '../ui/panel';
-import { BOX, byRef as q, setupView } from './helpers';
+import { BOX, byRef as q, flush, setupView } from './helpers';
 
 describe('search panel', () => {
   it('Search needs a collection and valid filters; the reason is shown', async () => {
@@ -126,5 +126,75 @@ describe('search panel — jump to the problem', () => {
     actions.toggleSection('collections');
     q(el, 'reason').click();
     expect(store.get().sections.collections).toBe(true);
+  });
+});
+
+describe('search panel — Copy query', () => {
+  const clip = () => {
+    const writeText = vi.fn(async (_t: string) => {});
+    Object.defineProperty(window, 'isSecureContext', {
+      value: true,
+      configurable: true
+    });
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true
+    });
+    return writeText;
+  };
+  afterEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: undefined,
+      configurable: true
+    });
+  });
+
+  it('copies the STAC GET /search URL for the current query', async () => {
+    const writeText = clip();
+    const { el, store, actions, backend } = setupView();
+    backend.queryUrl.mockResolvedValue({
+      url: 'https://stac.test/v1/search?collections=c1&limit=50',
+      notes: []
+    });
+    mountPanel(el, store, actions);
+    const btn = q(el, 'copyQuery') as HTMLButtonElement;
+    expect(btn.textContent!.trim()).toBe('Copy query');
+    expect(btn.disabled).toBe(true); // same rule as Search
+    actions.setQuery({ collections: ['c1'] });
+    expect(btn.disabled).toBe(false);
+    btn.click();
+    await flush();
+    await flush();
+    expect(backend.queryUrl).toHaveBeenCalledWith(store.get().query);
+    expect(writeText).toHaveBeenCalledWith(
+      'https://stac.test/v1/search?collections=c1&limit=50'
+    );
+    expect(q(el, 'copyNote').textContent).toBe(
+      'Copied the STAC GET /search URL of this query.'
+    );
+  });
+
+  it("shows Python's notice (e.g. the bbox fallback) and errors", async () => {
+    clip();
+    const { el, store, actions, backend } = setupView();
+    backend.queryUrl.mockResolvedValueOnce({
+      url: 'https://stac.test/v1/search?bbox=1,2,3,4',
+      notes: ['The area makes the search URL longer than 2000 characters.']
+    });
+    mountPanel(el, store, actions);
+    actions.setQuery({ collections: ['c1'] });
+    (q(el, 'copyQuery') as HTMLButtonElement).click();
+    await flush();
+    await flush();
+    expect(q(el, 'copyNote').textContent).toContain('longer than 2000');
+    expect(q(el, 'copyNote').classList.contains('jstex-hint--warn')).toBe(true);
+    backend.queryUrl.mockRejectedValueOnce(new Error('Invalid query URL'));
+    (q(el, 'copyQuery') as HTMLButtonElement).click();
+    await flush();
+    await flush();
+    expect(q(el, 'copyNote').textContent).toBe('Invalid query URL');
+    // the note goes when the query changes
+    actions.setQuery({ pageSize: 20 });
+    expect(q(el, 'copyNote').hidden).toBe(true);
   });
 });

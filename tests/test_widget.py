@@ -6,6 +6,7 @@ from jstex import auth
 from jstex.config import DEFAULT_BASEMAP_ATTRIBUTION
 from jstex.errors import JstexError, JstexQueryError, JstexStacError
 from jstex.interactive_login import DeviceCode, LoginError
+from jstex.query import QueryState, search_get_url
 from jstex.stac import Page
 from jstex.widget import Explorer, sync_runner
 
@@ -183,6 +184,52 @@ def test_instances_are_independent():
 def test_sync_runner_disables_cancel():
     assert make(FakeBackend(), runner=sync_runner)[0].can_cancel is False
     assert make(FakeBackend(), runner=lambda fn, *a: None)[0].can_cancel is True
+
+
+def test_query_url_message_replies_with_the_get_url_for_the_sent_query(monkeypatch):
+    monkeypatch.setenv("JSTEX_STAC_URL", URL)
+    ex, sent = make(FakeBackend())
+    query = search_msg()["query"]
+    query["filters"] = [{"field": "eo:cloud_cover", "op": "<=", "value": 10}]
+    ex._on_msg(ex, {"type": "query_url", "req_id": 4, "query": query}, [])
+    reply = sent[0]
+    assert reply["ok"] is True and reply["req_id"] == 4
+    assert reply["data"]["url"] == search_get_url(QueryState.from_dict(query), URL)
+    assert reply["data"]["notes"] == []
+    assert "filter-lang=cql2-json" in reply["data"]["url"]
+
+
+def test_query_url_message_reports_the_bbox_fallback_and_missing_collection(
+    monkeypatch,
+):
+    import math
+
+    monkeypatch.setenv("JSTEX_STAC_URL", URL)
+    ex, sent = make(FakeBackend())
+    ring = [
+        [
+            10.5 + 0.4 * math.cos(2 * math.pi * i / 300),
+            45.5 + 0.4 * math.sin(2 * math.pi * i / 300),
+        ]
+        for i in range(300)
+    ]
+    query = search_msg()["query"]
+    query["aois"] = [
+        {
+            "geometry": {"type": "Polygon", "coordinates": [ring + [ring[0]]]},
+            "selected": True,
+        }
+    ]
+    ex._on_msg(ex, {"type": "query_url", "req_id": 1, "query": query}, [])
+    data = sent[0]["data"]
+    assert "bbox=" in data["url"] and "intersects" not in data["url"]
+    assert len(data["notes"]) == 1 and "bbox" in data["notes"][0]
+
+    ex._on_msg(
+        ex, {"type": "query_url", "req_id": 2, "query": search_msg(())["query"]}, []
+    )
+    assert sent[1]["ok"] is False
+    assert sent[1]["error"] == "Select at least one collection before searching."
 
 
 def test_query_url_is_a_clickable_get_search_url(monkeypatch):

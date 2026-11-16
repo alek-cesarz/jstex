@@ -98,6 +98,10 @@ export function setupView(values: Record<string, unknown> = {}) {
     queryables: vi.fn(async (_c: string[]): Promise<FilterField[]> => FIELDS),
     uploadAoi: vi.fn(async (_t: string): Promise<AoiGeometry> => BOX),
     search: vi.fn(),
+    queryUrl: vi.fn(async (_q: unknown) => ({
+      url: '',
+      notes: [] as string[]
+    })),
     cancel: vi.fn(),
     sync: vi.fn(),
     dispose: vi.fn(),

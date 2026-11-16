@@ -101,6 +101,11 @@ export function createStrings(trans: TranslationBundle) {
     ),
     // footer
     search: trans.__('Search'),
+    copyQuery: trans.__('Copy query'),
+    copyQueryTitle: trans.__(
+      'Copy this query as a STAC GET /search URL (the same search as Search)'
+    ),
+    queryCopied: trans.__('Copied the STAC GET /search URL of this query.'),
     cancel: trans.__('Cancel'),
     needCollection: trans.__('Select at least one collection.'),
     fixFilters: trans.__('Fix the filters above to search.'),

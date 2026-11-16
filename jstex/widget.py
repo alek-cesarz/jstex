@@ -12,6 +12,7 @@ from __future__ import annotations
 import html
 import pathlib
 import threading
+import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -158,6 +159,8 @@ class Explorer(anywidget.AnyWidget):
                 self.search()
             except JstexError as err:
                 self.error, self.status = str(err), "error"
+        elif kind == "query_url":
+            self._reply_query_url(content.get("req_id"), content.get("query"))
         elif kind == "cancel":
             self.cancel()
         elif kind == "login_start":
@@ -181,6 +184,19 @@ class Explorer(anywidget.AnyWidget):
             self._run(self._logout)
         elif kind == "sync":
             self._send_page()  # a (re-)rendered view asks for the current results
+
+    def _reply_query_url(self, req_id: Any, query: Any) -> None:
+        """ "Copy query": the GET /search URL of the query the view sends, plus
+        the notices (e.g. the bbox fallback) that ``query_url()`` would warn."""
+
+        def build() -> dict[str, Any]:
+            state = QueryState.from_dict(query if isinstance(query, dict) else {})
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                url = search_get_url(state, self._config.stac_url)
+            return {"url": url, "notes": [str(w.message) for w in caught]}
+
+        self._reply(req_id, build)
 
     def _reply_collections(self, req_id: Any) -> None:
         info = auth.current(self._config)

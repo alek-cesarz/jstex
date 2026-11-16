@@ -53,8 +53,10 @@ download data from Python.
   kernels (`pip install "jupyterlab-jstex[s3]"`).
 - **Light and dark mode** follow JupyterLab (also VS Code and Colab),
   including the basemap.
-- **Links to the search**: `ex.query_url()` gives a clickable STAC
-  `GET /search` URL; `ex.stex_url()` opens the same query in STEX.
+- **Links to the search**: **Copy query** (next to Search) and
+  `ex.query_url()` give the STAC `GET /search` URL of the same search that
+  Search sends as POST, so no STEX is needed; `ex.stex_url()` opens the query
+  in STEX.
 - **Translatable** following the JupyterLab i18n standard; English ships
   today.
 

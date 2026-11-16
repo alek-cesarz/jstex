@@ -5,6 +5,7 @@
  * rail of icons with badges; a rail icon re-opens the panel at its section.
  */
 import type { Actions } from '../actions';
+import { copyTextLater } from '../clipboard';
 import { escapeHtml } from '../format';
 import { filterSummary } from '../filters';
 import { ICON } from '../icons';
@@ -47,8 +48,10 @@ export function mountPanel(
         <div class="jstex-row">
           <button type="button" class="jstex-control jstex-primary jstex-grow" data-ref="search">${ICON.search}<span>${escapeHtml(S.search)}</span></button>
           <button type="button" class="jstex-control" data-ref="cancel">${escapeHtml(S.cancel)}</button>
+          <button type="button" class="jstex-control" data-ref="copyQuery" title="${escapeHtml(S.copyQueryTitle)}">${ICON.link}<span>${escapeHtml(S.copyQuery)}</span></button>
         </div>
         <button type="button" class="jstex-hint jstex-reason" data-ref="reason"></button>
+        <div class="jstex-hint" role="status" data-ref="copyNote" hidden></div>
         <div data-slot="signin"></div>
         <div class="jstex-error" role="alert" data-ref="errorBanner">
           <span data-ref="errorText"></span>
@@ -69,6 +72,15 @@ export function mountPanel(
   const ref = <T extends HTMLElement = HTMLElement>(name: string) =>
     el.querySelector(`[data-ref="${name}"]`) as T;
   const scroll = ref('scroll');
+  const copyNote = ref('copyNote');
+  /** The query the Copy query note is about; the note goes when it changes. */
+  let noteFor: ExplorerState['query'] | null = null;
+  const showNote = (text: string, warn: boolean) => {
+    copyNote.textContent = text;
+    copyNote.classList.toggle('jstex-hint--warn', warn);
+    copyNote.hidden = false;
+    noteFor = store.get().query;
+  };
 
   const sections = {
     collections: createSection('collections', S.collections),
@@ -125,6 +137,11 @@ export function mountPanel(
     const hasArea = s.query.aois.some(a => a.selected);
     const hasDates = Boolean(s.query.datetime?.from || s.query.datetime?.to);
     ref<HTMLButtonElement>('search').disabled = Boolean(blocker) || searching;
+    ref<HTMLButtonElement>('copyQuery').disabled = Boolean(blocker);
+    if (noteFor && s.query !== noteFor) {
+      copyNote.hidden = true;
+      noteFor = null;
+    }
     el.querySelector<HTMLButtonElement>('[data-rail="search"]')!.disabled =
       Boolean(blocker) || searching;
     ref('search').classList.toggle('jstex-busy', searching);
@@ -162,6 +179,21 @@ export function mountPanel(
   });
   ref('search').addEventListener('click', () => actions.search());
   ref('cancel').addEventListener('click', () => actions.cancel());
+  ref('copyQuery').addEventListener('click', async () => {
+    const pending = actions.queryUrl();
+    try {
+      const ok = await copyTextLater(pending.then(r => r.url));
+      const { notes } = await pending;
+      if (!ok) showNote(S.copyFailed, true);
+      else
+        showNote(
+          notes.length ? notes.join(' ') : S.queryCopied,
+          notes.length > 0
+        );
+    } catch (err) {
+      showNote(err instanceof Error ? err.message : String(err), true);
+    }
+  });
   ref('retry').addEventListener('click', () => actions.search());
   ref('dismiss').addEventListener('click', () => actions.dismissError());
   ref('collapse').addEventListener('click', () =>

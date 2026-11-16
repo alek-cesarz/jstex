@@ -192,6 +192,7 @@ state.
 | JS → Py   | `queryables`                 | `req_id`, `collections`           | `reply` with the fields shared by all collections               |
 | JS → Py   | `aoi_upload`                 | `req_id`, `text`                  | `reply` with one Polygon/MultiPolygon, or an error              |
 | JS → Py   | `search`                     | `query`                           | none directly; `status` changes, then `page`                    |
+| JS → Py   | `query_url`                  | `req_id`, `query`                 | `reply` with `{url, notes}` (Copy query; notes = warnings)      |
 | JS → Py   | `cancel`                     | —                                 | `status` → `idle`                                               |
 | JS → Py   | `sync`                       | —                                 | `page` with the current results (a re-rendered view catches up) |
 | Py → JS   | `reply`                      | `req_id`, `ok`, `data` \| `error` | resolves/rejects the pending request                            |
@@ -295,6 +296,14 @@ the link sends the area's `bbox` instead and warns that it may return extra
 items. The URL carries no token, so restricted collections need a signed-in
 client. Both methods return a `Url` (a `str` with `_repr_html_`), which
 notebooks show as a clickable link.
+
+The widget's **Copy query** button asks the kernel for the same URL
+(`query_url` message, with the view's current query) instead of rebuilding it
+in JavaScript, so it gets the same AOI repair and union as the POST search.
+The reply carries the warnings as `notes` (shown under the button). The
+clipboard write starts inside the click (`copyTextLater()`: a `ClipboardItem`
+whose text is a promise) so browsers still treat it as a user action when the
+reply arrives.
 
 `QueryState` is the same shape as STEX's (`collections`, `datetime`, `aois`,
 `filters`, `sort`, `pageSize`). `ex.stex_url()` (needs `JSTEX_STEX_URL`)

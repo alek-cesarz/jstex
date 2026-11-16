@@ -11,7 +11,8 @@ import type {
   MinimalModel,
   LoginMessage,
   PageMessage,
-  QueryStateDict
+  QueryStateDict,
+  QueryUrl
 } from './types';
 
 export interface Backend {
@@ -21,6 +22,8 @@ export interface Backend {
   /** Validate an uploaded GeoJSON text; resolves to one Polygon/MultiPolygon. */
   uploadAoi(text: string): Promise<AoiGeometry>;
   search(query: QueryStateDict): void;
+  /** The GET /search URL equivalent to the POST search of `query` (built in Python). */
+  queryUrl(query: QueryStateDict): Promise<QueryUrl>;
   cancel(): void;
   sync(): void;
   startLogin(method: 'device' | 'password', clientId?: string): void;
@@ -77,6 +80,10 @@ export class CommBackend implements Backend {
 
   search(query: QueryStateDict): void {
     this.model.send({ type: 'search', query });
+  }
+
+  queryUrl(query: QueryStateDict): Promise<QueryUrl> {
+    return this.request('query_url', { query });
   }
 
   cancel(): void {
