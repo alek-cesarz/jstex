@@ -46,9 +46,10 @@ export function formatValue(value: unknown): string {
   return String(value);
 }
 
+/** `eo:cloud_cover` in percent; out-of-range values (-1 = unknown) are skipped, as in STEX. */
 export function cloudCover(item: StacItem): number | undefined {
   const v = item.properties?.['eo:cloud_cover'];
-  return typeof v === 'number' ? v : undefined;
+  return typeof v === 'number' && v >= 0 && v <= 100 ? v : undefined;
 }
 
 export type Bbox = [number, number, number, number];

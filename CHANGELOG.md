@@ -17,6 +17,10 @@ In step with STEX 0.2.11.
 - **`IN` filters with a single value** (e.g. from `ex.query` or a STEX link) are sent as a one-element list instead of failing with "IN needs a list of values", as STEX does.
 - **Map**: `@eox/map` 2.8.3 and OpenLayers 10.11 (patch updates).
 
+### Fixed
+
+- **Cloud cover**: values outside 0–100 (catalogues use -1 for "unknown") are no longer shown in the results table, item details and map popup, as in STEX.
+
 ## [0.2.0] - 2026-10-13
 
 ### Added

@@ -3,6 +3,7 @@ import { CommBackend } from '../backend';
 import {
   boxAreaKm2,
   bboxTo3857,
+  cloudCover,
   dateInputToIso,
   isoToDateInput,
   formatItemDate,
@@ -316,6 +317,18 @@ describe('format', () => {
     ).toBe('2021-01-01 – 2021-12-31');
     expect(formatItemDate(item('n', { properties: {} }))).toBe('—');
     expect(formatIso('not a date')).toBe('not a date');
+  });
+
+  it('cloudCover skips values outside 0-100 (-1 means unknown)', () => {
+    const cc = (v: unknown) =>
+      cloudCover(item('c', { properties: { 'eo:cloud_cover': v } }));
+    expect(cc(0)).toBe(0);
+    expect(cc(42.5)).toBe(42.5);
+    expect(cc(100)).toBe(100);
+    expect(cc(-1)).toBeUndefined();
+    expect(cc(101)).toBeUndefined();
+    expect(cc(Number.NaN)).toBeUndefined();
+    expect(cc('12')).toBeUndefined();
   });
 
   it('formatValue stringifies objects compactly', () => {
