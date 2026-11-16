@@ -11,11 +11,14 @@ In step with STEX 0.2.11.
 ### Added
 
 - **Select all**: a checkbox in the results header selects every loaded result, or clears the selection when all are selected (`ex.selected_items` follows).
+- **Copy query**: a button next to Search copies the STAC `GET /search` URL of the same search that Search sends as POST (built in the kernel by `search_get_url()`, as `ex.query_url()`). It works without STEX; a notice under the button says when a long area was replaced by its bbox.
 
 ### Changed
 
 - **`IN` filters with a single value** (e.g. from `ex.query` or a STEX link) are sent as a one-element list instead of failing with "IN needs a list of values", as STEX does.
 - **Map**: `@eox/map` 2.8.3 and OpenLayers 10.11 (patch updates).
+- **Date range picker**: From and To now share one calendar. The first day picked sets From, the second sets To and closes it; clicking To with From set picks To directly. Each end has its own 24-hour time field in the calendar, and **Done** closes it.
+- **Item details copy buttons**: one pattern everywhere. Every value (id, self link, property, asset href, link) has a copy icon beside it, and code has a **Copy Python** button: for the item, and the boto3 code for each S3 asset (formerly "Copy boto3 snippet"). The "Copy self link" and "Copy id" buttons are gone.
 
 ### Fixed
 
