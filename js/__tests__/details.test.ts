@@ -63,12 +63,16 @@ describe('details', () => {
     ).toBe(true);
   });
 
-  it('omits self-link actions when the item has no self link', () => {
+  it('omits the self link and Python code when the item has no self link', () => {
     const { el, store, actions } = setup();
     mountDetails(el, store, actions);
     store.set({ items: [item('a', { links: [] })], activeId: 'a' });
-    expect(el.textContent).not.toContain('Copy self link');
-    expect(el.textContent).toContain('Copy id');
+    expect(el.querySelector('[data-ref="self"]')).toBeNull();
+    expect(el.querySelector('[data-code]')).toBeNull();
+    expect(
+      el.querySelector<HTMLButtonElement>('[data-ref="id"] [data-copy]')!
+        .dataset.copy
+    ).toBe('a');
   });
 
   it('copied snippets use the explorer profile', () => {
@@ -81,12 +85,13 @@ describe('details', () => {
     expect(copies.filter(c => c.includes('profile="cdse"'))).toHaveLength(2);
   });
 
-  it('offers a boto3 snippet for S3 assets', () => {
+  it('offers Python (boto3) code for S3 assets', () => {
     const { el, store, actions } = setup();
     mountDetails(el, store, actions);
     store.set({ items: [item('a')], activeId: 'a' });
     const btn = el.querySelector<HTMLButtonElement>('[data-snippet="B04"]')!;
-    expect(btn.textContent).toContain('Copy boto3 snippet');
+    expect(btn.textContent!.trim()).toBe('Copy Python');
+    expect(btn.title).toContain('boto3');
     expect(btn.dataset.copy).toContain('item.assets["B04"]');
   });
 });
@@ -105,5 +110,36 @@ describe('details header and copy buttons', () => {
     ) as HTMLButtonElement;
     expect(rowCopy.getAttribute('aria-label')).toBe('Copy');
     expect(rowCopy.textContent!.trim()).toBe('');
+  });
+});
+
+describe('details copy controls are uniform', () => {
+  it('values get an icon-only Copy button; code gets a "Copy Python" button', () => {
+    const { el, store, actions } = setup();
+    mountDetails(el, store, actions);
+    store.set({ items: [item('a')], activeId: 'a' });
+    const all = [...el.querySelectorAll<HTMLButtonElement>('[data-copy]')];
+    const code = all.filter(b => b.hasAttribute('data-code'));
+    const values = all.filter(b => !b.hasAttribute('data-code'));
+    // item code + the S3 asset's code
+    expect(code).toHaveLength(2);
+    for (const b of code) {
+      expect(b.textContent!.trim()).toBe('Copy Python');
+      expect(b.querySelector('svg')).not.toBeNull();
+    }
+    for (const b of values) {
+      expect(b.textContent!.trim()).toBe('');
+      expect(b.getAttribute('aria-label')).toBe('Copy');
+    }
+    // the id and the self link are shown as values, like asset hrefs
+    expect(
+      el.querySelector<HTMLButtonElement>('[data-ref="id"] [data-copy]')!
+        .dataset.copy
+    ).toBe('a');
+    const self = el.querySelector('[data-ref="self"]')!;
+    expect(self.textContent).toContain(
+      'https://stac.test/v1/collections/sentinel-2-l2a/items/a'
+    );
+    expect(self.querySelector('.jstex-tag')!.textContent).toBe('self');
   });
 });

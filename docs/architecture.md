@@ -127,30 +127,30 @@ Notes:
 The widget is framework-free TypeScript: a small observable store plus views
 that render into plain DOM, with EOX custom elements for the map.
 
-| Module                                                                     | Responsibility                                                                                                                   |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `js/define-guard.ts`                                                       | **First import.** Makes re-defining a custom element a no-op (each `Explorer()` re-evaluates the bundle).                        |
-| `js/widget.ts`                                                             | anywidget `render()`: builds the layout, creates one store, backend and actions per view, mounts the views, returns the cleanup. |
-| `js/store.ts`                                                              | `createStore()`: `get` / `set(patch)` / `subscribe((state, prev) => …)`.                                                         |
-| `js/types.ts`                                                              | Shared types; mirrors the Python protocol.                                                                                       |
-| `js/backend.ts`                                                            | `Backend` interface and `CommBackend` (request/reply over custom messages; search is push-based).                                |
-| `js/model-sync.ts`                                                         | Initial state from the model; mirrors trait changes into the store; applies result pages.                                        |
-| `js/actions.ts`                                                            | User intents. The only place views change state or talk to the backend.                                                          |
-| `js/filters.ts`                                                            | Pure filter logic: operators by field type, value parsing, validation, rows ↔ predicates.                                        |
-| `js/format.ts`                                                             | Formatting and geometry helpers (bbox, area, dates, footprint features).                                                         |
-| `js/antimeridian.ts`                                                       | Splits footprints crossing ±180° (copied from STEX).                                                                             |
-| `js/theme.ts`                                                              | Host theme detection and watching; basemap layer.                                                                                |
-| `js/i18n.ts`, `js/strings.ts`                                              | Translation lookup; every UI string as a literal `trans.__()` call.                                                              |
-| `js/selection.ts`, `js/clipboard.ts`, `js/snippets.ts`, `js/icons.ts`      | Small helpers.                                                                                                                   |
-| `js/ui/panel.ts`                                                           | Search panel: collapsible sections, pinned Search button with a "why disabled" hint, collapse to an icon rail.                   |
-| `js/ui/section.ts`                                                         | Generic collapsible section (caret, title, summary, badge).                                                                      |
-| `js/ui/layout.ts`                                                          | Theme and height, the panel/map splitter (drag, arrow keys, double-click resets) and the collapsible map.                        |
-| `js/ui/collections.ts`, `dates.ts`, `aoi-section.ts`, `filters-section.ts` | The four panel sections. Dates use `vanilla-calendar-pro` (as STEX) for the date + 24 h time popup.                              |
-| `js/ui/map.ts`                                                             | `eox-map` + `eox-drawtools`: basemap, AOI, footprints, highlight; click-to-activate; drawing.                                    |
-| `js/ui/footprint-popup.ts`                                                 | List of items under a clicked point when footprints overlap.                                                                     |
-| `js/ui/results.ts`                                                         | Results table (checkbox selection, row activation).                                                                              |
-| `js/ui/details.ts`                                                         | Item details: header actions, Prev/Next, Properties / Assets / Links with copy buttons; boto3 snippet per S3 asset.              |
-| `js/ui/signin.ts`                                                          | Panel footer sign-in line and the inline sign-in area (device code, client id, password form) (§9.3).                            |
+| Module                                                                     | Responsibility                                                                                                                                         |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `js/define-guard.ts`                                                       | **First import.** Makes re-defining a custom element a no-op (each `Explorer()` re-evaluates the bundle).                                              |
+| `js/widget.ts`                                                             | anywidget `render()`: builds the layout, creates one store, backend and actions per view, mounts the views, returns the cleanup.                       |
+| `js/store.ts`                                                              | `createStore()`: `get` / `set(patch)` / `subscribe((state, prev) => …)`.                                                                               |
+| `js/types.ts`                                                              | Shared types; mirrors the Python protocol.                                                                                                             |
+| `js/backend.ts`                                                            | `Backend` interface and `CommBackend` (request/reply over custom messages; search is push-based).                                                      |
+| `js/model-sync.ts`                                                         | Initial state from the model; mirrors trait changes into the store; applies result pages.                                                              |
+| `js/actions.ts`                                                            | User intents. The only place views change state or talk to the backend.                                                                                |
+| `js/filters.ts`                                                            | Pure filter logic: operators by field type, value parsing, validation, rows ↔ predicates.                                                              |
+| `js/format.ts`                                                             | Formatting and geometry helpers (bbox, area, dates, footprint features).                                                                               |
+| `js/antimeridian.ts`                                                       | Splits footprints crossing ±180° (copied from STEX).                                                                                                   |
+| `js/theme.ts`                                                              | Host theme detection and watching; basemap layer.                                                                                                      |
+| `js/i18n.ts`, `js/strings.ts`                                              | Translation lookup; every UI string as a literal `trans.__()` call.                                                                                    |
+| `js/selection.ts`, `js/clipboard.ts`, `js/snippets.ts`, `js/icons.ts`      | Small helpers.                                                                                                                                         |
+| `js/ui/panel.ts`                                                           | Search panel: collapsible sections, pinned Search button with a "why disabled" hint, collapse to an icon rail.                                         |
+| `js/ui/section.ts`                                                         | Generic collapsible section (caret, title, summary, badge).                                                                                            |
+| `js/ui/layout.ts`                                                          | Theme and height, the panel/map splitter (drag, arrow keys, double-click resets) and the collapsible map.                                              |
+| `js/ui/collections.ts`, `dates.ts`, `aoi-section.ts`, `filters-section.ts` | The four panel sections. Dates use `vanilla-calendar-pro` (as STEX) for the date + 24 h time popup.                                                    |
+| `js/ui/map.ts`                                                             | `eox-map` + `eox-drawtools`: basemap, AOI, footprints, highlight; click-to-activate; drawing.                                                          |
+| `js/ui/footprint-popup.ts`                                                 | List of items under a clicked point when footprints overlap.                                                                                           |
+| `js/ui/results.ts`                                                         | Results table (checkbox selection, row activation).                                                                                                    |
+| `js/ui/details.ts`                                                         | Item details: id + self link, Prev/Next, Properties / Assets / Links; icon Copy beside every value, "Copy Python" for code (item; boto3 per S3 asset). |
+| `js/ui/signin.ts`                                                          | Panel footer sign-in line and the inline sign-in area (device code, client id, password form) (§9.3).                                                  |
 
 Everything is per view: nothing is module-global except the define guard and
 the translation lookup. That is why two explorers (or two views of one

@@ -36,13 +36,10 @@ download data from Python.
 - **Results ↔ map.** Clicking a row highlights its footprint. Clicking a
   footprint opens that item; where footprints overlap, a popup lists them, as
   in STEX. A checkbox in the table header selects all loaded results.
-- **Item details** (sections folded by default) with Prev/Next and copy
-  buttons for:
-  - the self link and id;
-  - every property value;
-  - asset hrefs, including alternates such as S3;
-  - links;
-  - a ready-to-run Python snippet, and a boto3 snippet per S3 asset.
+- **Item details** (sections folded by default) with Prev/Next. Every value
+  has a copy icon beside it: the id, the self link, property values, asset
+  hrefs (including alternates such as S3) and links. **Copy Python** copies
+  ready-to-run code: for the item, and a boto3 snippet for each S3 asset.
 - **Python access** to results, selection and the current query (see below).
 - **Profiles** for CDSE, CREODIAS and CODE-DE, or your own catalogue (see
   [Profiles](#profiles)).

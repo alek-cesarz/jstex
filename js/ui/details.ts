@@ -1,4 +1,8 @@
-/** Item details: header copy actions, Prev/Next, Properties / Assets / Links. */
+/**
+ * Item details: id and self link, Prev/Next, Properties / Assets / Links.
+ * Two copy controls only: a value (id, href, property) has an icon-only Copy
+ * button beside it; code has a "Copy Python" button (item and S3 assets).
+ */
 import type { Actions } from '../actions';
 import { copyText } from '../clipboard';
 import {
@@ -21,11 +25,11 @@ type Section = 'properties' | 'assets' | 'links';
 const copyBtn = (text: string) =>
   `<button type="button" class="jstex-icon jstex-copy" data-copy="${escapeHtml(text)}" title="${escapeHtml(S.copy)}" aria-label="${escapeHtml(S.copy)}">${ICON.copy}</button>`;
 
-const actionBtn = (text: string, label: string, icon: string) =>
-  `<button type="button" class="jstex-control jstex-btn-sm" data-copy="${escapeHtml(text)}">${icon}<span>${escapeHtml(label)}</span></button>`;
+const codeBtn = (code: string, title: string, attrs = '') =>
+  `<button type="button" class="jstex-control jstex-btn-sm" data-code data-copy="${escapeHtml(code)}" title="${escapeHtml(title)}"${attrs}>${ICON.code}<span>${escapeHtml(S.copyPython)}</span></button>`;
 
-const hrefLine = (href: string, scheme = '') =>
-  `<div class="jstex-href">${scheme ? `<span class="jstex-tag">${escapeHtml(scheme)}</span>` : ''}<span class="jstex-mono jstex-href__url">${escapeHtml(href)}</span>${copyBtn(href)}</div>`;
+const hrefLine = (href: string, scheme = '', ref = '') =>
+  `<div class="jstex-href"${ref ? ` data-ref="${ref}"` : ''}>${scheme ? `<span class="jstex-tag">${escapeHtml(scheme)}</span>` : ''}<span class="jstex-mono jstex-href__url">${escapeHtml(href)}</span>${copyBtn(href)}</div>`;
 
 function assetBlock(
   key: string,
@@ -43,7 +47,11 @@ function assetBlock(
     .join('');
   const snippet =
     self && hasS3(a)
-      ? `<div class="jstex-asset__actions"><button type="button" class="jstex-control jstex-btn-sm" data-snippet="${escapeHtml(key)}" data-copy="${escapeHtml(pythonAssetSnippet(self, key, profile))}">${ICON.code}<span>${escapeHtml(S.copyBoto3)}</span></button></div>`
+      ? `<div class="jstex-asset__actions">${codeBtn(
+          pythonAssetSnippet(self, key, profile),
+          S.copyPythonAsset,
+          ` data-snippet="${escapeHtml(key)}"`
+        )}</div>`
       : '';
   return `<div class="jstex-asset">
     <div class="jstex-asset__head"><span class="jstex-tag jstex-tag--key jstex-mono">${escapeHtml(key)}</span>${
@@ -84,23 +92,14 @@ function renderItem(
       </span>
     </div>
     <div class="jstex-details__head">
-      <h3 class="jstex-mono jstex-details__id">${escapeHtml(item.id)}</h3>
+      <div class="jstex-details__idrow" data-ref="id"><h3 class="jstex-mono jstex-details__id">${escapeHtml(item.id)}</h3>${copyBtn(item.id)}</div>
       <div class="jstex-details__meta">
         ${item.collection ? `<span class="jstex-tag">${escapeHtml(item.collection)}</span>` : ''}
         <span class="jstex-meta">${ICON.clock}${escapeHtml(formatItemDate(item))}</span>
         ${cc === undefined ? '' : `<span class="jstex-meta">${ICON.cloud}${escapeHtml(cc.toFixed(1))} %</span>`}
       </div>
-      <div class="jstex-details__actions">
-        ${self ? actionBtn(self, S.copySelf, ICON.link) : ''}${actionBtn(item.id, S.copyId, ICON.copy)}${
-          self
-            ? actionBtn(
-                pythonItemSnippet(self, profile),
-                S.copyPython,
-                ICON.code
-              )
-            : ''
-        }
-      </div>
+      ${self ? hrefLine(self, 'self', 'self') : ''}
+      ${self ? `<div class="jstex-details__actions">${codeBtn(pythonItemSnippet(self, profile), S.copyPythonItem)}</div>` : ''}
       <p class="jstex-note">${ICON.info}<span>${escapeHtml(S.pythonHint)}</span></p>
     </div>
     ${sec(

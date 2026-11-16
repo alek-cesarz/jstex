@@ -231,7 +231,7 @@ msgid "Next item"
 msgstr ""
 
 #: js/strings.ts:169
-msgid "Copy self link"
+msgid "Copy Python"
 msgstr ""
 
 #: js/strings.ts:17
@@ -239,56 +239,52 @@ msgid "Map"
 msgstr ""
 
 #: js/strings.ts:170
-msgid "Copy id"
+msgid "Python code that opens this item"
 msgstr ""
 
 #: js/strings.ts:171
-msgid "Copy Python"
-msgstr ""
-
-#: js/strings.ts:172
-msgid "Copy boto3 snippet"
-msgstr ""
-
-#: js/strings.ts:173
-msgid "Copy"
+msgid "Python (boto3) code that reads this asset over S3"
 msgstr ""
 
 #: js/strings.ts:174
-msgid "Copied"
+msgid "Copy"
 msgstr ""
 
 #: js/strings.ts:175
-msgid "Copy failed"
+msgid "Copied"
 msgstr ""
 
 #: js/strings.ts:176
-msgid "Properties"
+msgid "Copy failed"
 msgstr ""
 
 #: js/strings.ts:177
-msgid "Assets"
+msgid "Properties"
 msgstr ""
 
 #: js/strings.ts:178
-msgid "Links"
+msgid "Assets"
 msgstr ""
 
 #: js/strings.ts:179
-msgid "In Python, .selected_item on your Explorer returns this item as a pystac.Item."
+msgid "Links"
 msgstr ""
 
 #: js/strings.ts:18
 msgid "Hide map"
 msgstr ""
 
-#: js/strings.ts:184
+#: js/strings.ts:180
+msgid "In Python, .selected_item on your Explorer returns this item as a pystac.Item."
+msgstr ""
+
+#: js/strings.ts:185
 msgid "%1 overlapping item"
 msgid_plural "%1 overlapping items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: js/strings.ts:185
+#: js/strings.ts:186
 msgid "Close"
 msgstr ""
 

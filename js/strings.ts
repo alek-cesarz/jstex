@@ -166,10 +166,11 @@ export function createStrings(trans: TranslationBundle) {
     next: trans.__('Next'),
     prevItem: trans.__('Previous item'),
     nextItem: trans.__('Next item'),
-    copySelf: trans.__('Copy self link'),
-    copyId: trans.__('Copy id'),
     copyPython: trans.__('Copy Python'),
-    copyBoto3: trans.__('Copy boto3 snippet'),
+    copyPythonItem: trans.__('Python code that opens this item'),
+    copyPythonAsset: trans.__(
+      'Python (boto3) code that reads this asset over S3'
+    ),
     copy: trans.__('Copy'),
     copied: trans.__('Copied'),
     copyFailed: trans.__('Copy failed'),

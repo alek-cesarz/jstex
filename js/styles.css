@@ -862,7 +862,14 @@
   flex-direction: column;
   gap: 8px;
 }
+.jstex .jstex-details__idrow {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
 .jstex .jstex-details__id {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: 1.15em;
   font-weight: 600;
