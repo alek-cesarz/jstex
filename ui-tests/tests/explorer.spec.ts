@@ -79,6 +79,47 @@ test.describe('jstex Explorer', () => {
     ).toContainText(`${SELF('S2B_T32TPS_20240717')} ['S2A_T32TPS_20240722']`);
   });
 
+  test('a footprint clicked on the map scrolls its row into the results list', async ({
+    page
+  }) => {
+    const w = await explorerCell(page);
+    await w.locator('input[value="sentinel-1-grd"]').check();
+    await w.locator('.jstex-panel [data-ref="search"]').click();
+    await expect(w.locator('tr[data-id]')).toHaveCount(30);
+    await page.waitForTimeout(1000); // zoom-to-results
+    await w.locator('eox-map').scrollIntoViewIfNeeded();
+    // The 26th footprint (lon 20.0-20.3) — its row is far below the list's view.
+    const target = 'S1A_IW_GRDH_20240726';
+    const [px, py] = await w.locator('eox-map').evaluate((el: any) => {
+      const R = 20037508.34;
+      const x = (20.15 * R) / 180;
+      const y =
+        ((Math.log(Math.tan(((90 + 45.5) * Math.PI) / 360)) / (Math.PI / 180)) *
+          R) /
+        180;
+      return el.map.getPixelFromCoordinate([x, y]);
+    });
+    const box = (await w.locator('eox-map').boundingBox())!;
+    await page.mouse.click(box.x + px, box.y + py);
+    await expect(w.locator('.jstex-details__id')).toHaveText(target);
+    const row = w.locator(`tr[data-id="${target}"]`);
+    await expect(row).toHaveClass(/jstex-active/);
+    const list = (await w.locator('.jstex-results__scroll').boundingBox())!;
+    const r = (await row.boundingBox())!;
+    expect(r.y).toBeGreaterThanOrEqual(list.y);
+    expect(r.y + r.height).toBeLessThanOrEqual(list.y + list.height + 1);
+    // ...so its checkbox is right there.
+    await row.locator('input[data-toggle]').check();
+    await page.notebook.addCell(
+      'code',
+      'print([i.id for i in ex.selected_items])'
+    );
+    await runLastCell(page);
+    await expect(page.locator('.jp-OutputArea-output').last()).toContainText(
+      `['${target}']`
+    );
+  });
+
   test('clicking stacked footprints lists them in a popup, like STEX', async ({
     page
   }) => {

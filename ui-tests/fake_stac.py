@@ -3,6 +3,7 @@
 GET  /v1/collections                      -> three collections (with description / license / extent)
 GET  /v1/collections/<id>/queryables      -> number, enum and integer fields
 POST /v1/search                           -> three items with IDENTICAL footprints
+                                             (sentinel-1-grd: 30 items side by side)
 GET  /v1/collections/<c>/items/<id>       -> one item
 GET  /__last_search                       -> the last POST /v1/search body (for assertions)
 """
@@ -20,6 +21,8 @@ BASE = f"http://127.0.0.1:{PORT}/v1/"
 COLLECTION = "sentinel-2-l2a"
 GEOMETRY = {"type": "Polygon", "coordinates": [[[10, 45], [11, 45], [11, 46], [10, 46], [10, 45]]]}
 IDS = ["S2A_T32TPS_20240712", "S2B_T32TPS_20240717", "S2A_T32TPS_20240722"]
+# A long result list (more rows than the results table shows): separate footprints in a row.
+MANY = [f"S1A_IW_GRDH_202407{n:02d}" for n in range(1, 31)]
 last_search: dict = {}
 ISSUER = f"http://127.0.0.1:{PORT}/oidc/realms/test"
 OIDC = "/oidc/realms/test"
@@ -71,14 +74,20 @@ QUERYABLES = {
 }
 
 
-def item(i: str) -> dict:
+def box(n: int) -> dict:
+    w = 10 + 0.4 * n
+    return {"type": "Polygon", "coordinates": [[[w, 45], [w + 0.3, 45], [w + 0.3, 46], [w, 46], [w, 45]]]}
+
+
+def item(i: str, geometry: dict = GEOMETRY) -> dict:
+    xs = [c[0] for c in geometry["coordinates"][0]]
     return {
         "type": "Feature",
         "stac_version": "1.0.0",
         "id": i,
         "collection": COLLECTION,
-        "geometry": GEOMETRY,
-        "bbox": [10, 45, 11, 46],
+        "geometry": geometry,
+        "bbox": [min(xs), 45, max(xs), 46],
         "properties": {"datetime": f"{i[-8:-4]}-{i[-4:-2]}-{i[-2:]}T10:30:00Z", "eo:cloud_cover": 12.5},
         "assets": {"B04": {"href": f"s3://eodata/{i}/B04.jp2", "type": "image/jp2", "title": "Red"}},
         "links": [{"rel": "self", "href": f"{BASE}collections/{COLLECTION}/items/{i}"}],
@@ -149,7 +158,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(tokens())
             return self._json({"error": "unsupported_grant_type"}, 400)
         last_search = json.loads(raw or b"{}")
-        if path == "/v1/search":
+        if path == "/v1/search" and last_search.get("collections") == ["sentinel-1-grd"]:
+            features = [item(i, box(n)) for n, i in enumerate(MANY)]
+            self._json({"type": "FeatureCollection", "features": features, "links": [], "numberMatched": len(MANY)})
+        elif path == "/v1/search":
             self._json({"type": "FeatureCollection", "features": [item(i) for i in IDS], "links": [], "numberMatched": 3})
         else:
             self._json({"detail": "not found"}, 404)
